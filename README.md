@@ -1,1 +1,1 @@
-# GridFCM.practicum
+# GridFCM-UI
