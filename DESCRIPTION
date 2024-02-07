@@ -12,6 +12,8 @@ License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.0
+Depends:
+    OpenRepGrid (>= 0.1.14),
 Imports:
     bs4Dash (>= 2.3.0),
     colorspace (>= 2.1-0),
@@ -24,7 +26,6 @@ Imports:
     knitr (>= 1.43),
     httr (>= 1.4.7),
     MESS (>= 0.5.9),
-    OpenRepGrid (>= 0.1.14),
     openxlsx (>= 4.2.5.2),
     plotly (>= 4.10.2),
     readxl (>= 1.4.3),

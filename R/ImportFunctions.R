@@ -24,7 +24,7 @@ importwimp <- function(path, sheet = 1, opr = TRUE){
   xlsx <- readxl::read_excel(path, sheet = sheet)
 
   n.constructs <- dim(xlsx)[1]
-  
+
   # Scale -------------------------------------------------------------------
 
   scale.min <- as.numeric(names(xlsx)[1])
@@ -118,6 +118,6 @@ importwimp <- function(path, sheet = 1, opr = TRUE){
 #'
 
 print.wimp <- function(x){
+  OpenRepGrid::bertin(x$openrepgrid)
   print(x$openrepgrid)
-  bertin(x$openrepgrid)
 }
