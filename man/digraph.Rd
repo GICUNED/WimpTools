@@ -2,7 +2,7 @@
 % Please edit documentation in R/GraphFunctions.R
 \name{digraph}
 \alias{digraph}
-\title{Sustituto para Selfdigraph}
+\title{Selfdigraph -- digraph()}
 \usage{
 digraph(
   wimp,
@@ -20,5 +20,5 @@ digraph(
 \item{hide.inverse}{}
 }
 \description{
-Sustituto para Selfdigraph
+Selfdigraph -- digraph()
 }

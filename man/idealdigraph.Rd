@@ -2,7 +2,7 @@
 % Please edit documentation in R/GraphFunctions.R
 \name{idealdigraph}
 \alias{idealdigraph}
-\title{idealdigraph}
+\title{Ideal digraph -- idealdigraph()}
 \usage{
 idealdigraph(wimp, inc = TRUE, layout = "circle", ...)
 }
@@ -10,5 +10,5 @@ idealdigraph(wimp, inc = TRUE, layout = "circle", ...)
 \item{layout}{}
 }
 \description{
-idealdigraph
+Ideal digraph -- idealdigraph()
 }

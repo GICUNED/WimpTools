@@ -2,7 +2,7 @@
 % Please edit documentation in R/GraphFunctions.R
 \name{simdigraph}
 \alias{simdigraph}
-\title{simdigraph}
+\title{Simulation digraph -- simdigraph()}
 \usage{
 simdigraph(scn, niter = 0, ...)
 }
@@ -10,5 +10,5 @@ simdigraph(scn, niter = 0, ...)
 \item{...}{}
 }
 \description{
-simdigraph
+Simulation digraph -- simdigraph()
 }
