@@ -11,7 +11,7 @@
 #' @param wimp An object of class 'wimp', which contains an implication grid
 #'   and associated constructs.
 #' @param method A character string specifying the method used to calculate
-#'   the degree indices. Default is "simple". Other methods may be available
+#'   the degree indices. Default is "weight". Other methods may be available
 #'   depending on the implementation of 'degree_index' function.
 #' @param std A logical value indicating whether to standardize the P and H
 #'   indices based on the maximum total degree of the constructs. Defaults to TRUE.
@@ -28,7 +28,7 @@
 #' ph_indices_non_std <- ph_index(wimp, std = FALSE)
 #'
 
-ph_index <- function(wimp, method = "simple", std = TRUE){
+ph_index <- function(wimp, method = "weight", std = TRUE){
 
   # Connectivity of constructs
   c.io <- degree_index(wimp, method = method)
