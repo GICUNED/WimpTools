@@ -2,13 +2,23 @@
 % Please edit documentation in R/ImportFunctions.R
 \name{importwimp}
 \alias{importwimp}
-\title{Import Weighted ImpGrid}
+\title{Import Weighted Implication Grid}
 \usage{
 importwimp(path, sheet = 1, opr = TRUE)
 }
 \arguments{
-\item{sheet}{}
+\item{path}{Path to the excel file on your computer. The file suffix has to be .xlsx.}
+
+\item{sheet}{Number of the Excel sheet that contains the WimpGrid data}
+}
+\value{
+A wimp S3 object.
 }
 \description{
-Import Weighted ImpGrid
+Function to transform the data of a WimpGrid contained in an
+Excel file into an S3 object of class wimp.
+}
+\examples{
+ wimp <- importwimp(file.choose())
+ wimp
 }

@@ -2,18 +2,26 @@
 
 # Import Weigthed ImpGrid -------------------------------------------------
 
-#' Import Weighted ImpGrid
+#' Import Weighted Implication Grid
 #'
-#' @param path
-#' @param sheet
+#' @description Function to transform the data of a WimpGrid contained in an
+#' Excel file into an S3 object of class wimp.
 #'
-#' @return
+#'
+#' @param path Path to the excel file on your computer. The file suffix has to be .xlsx.
+#' @param sheet Number of the Excel sheet that contains the WimpGrid data
+#'
+#' @return A wimp S3 object.
+#'
 #' @export
 #'
 #' @import readxl
 #' @import OpenRepGrid
 #'
 #' @examples
+#'  wimp <- importwimp(file.choose())
+#'  wimp
+
 
 
 importwimp <- function(path, sheet = 1, opr = TRUE){
@@ -65,21 +73,9 @@ importwimp <- function(path, sheet = 1, opr = TRUE){
 
   # Hypothetical vector -----------------------------------------------------
 
-  standarized.hypothetical <- rep(0,n.constructs)
-  n <- 1
-  for (i in standarized.self) {
-    if(i != 0){
-      standarized.hypothetical[n] <- standarized.self[n] / (-1 * abs(standarized.self[n]))
-    }
-    if(i == 0 && !(0 %in% standarized.ideal[n])){
-      standarized.hypothetical[n] <- standarized.ideal[n] / abs(standarized.ideal[n])
-    }
-    if(i == 0 && (0 %in% standarized.ideal[n])){
-      standarized.hypothetical[n] <- 1
-    }
-    n <- n + 1
-  }
+  standarized.hypothetical <- mapply(.calc.hypo, standarized.self,standarized.ideal)
   direct.hypothetical <- (scale.center * rep(1,n.constructs)) + (standarized.hypothetical * (0.5 * (scale.max - scale.min)))
+
   wimp$hypothetical[[1]] <- direct.hypothetical
   wimp$hypothetical[[2]] <- standarized.hypothetical
   names(wimp$hypothetical) <- c("direct","standarized")

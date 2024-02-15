@@ -130,3 +130,19 @@
   return(wimp)
 }
 
+
+
+
+# Hypothetical calculation ------------------------------------------------
+
+.calc.hypo <- function(self, ideal) {
+  if (self != 0) {
+    return(self / (-1 * abs(self)))
+
+  } else if (self == 0 && !(0 %in% ideal)) {
+    return(ideal / abs(ideal))
+
+  } else if (self == 0 && (0 %in% ideal)) {
+    return(1)
+  }
+}
