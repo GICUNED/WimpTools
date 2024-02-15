@@ -25,7 +25,7 @@
 #' # Assuming 'wimp' is an object with an implication grid
 #' ph_indices <- ph_index(wimp)
 #' ph_indices_std <- ph_index(wimp, std = TRUE)
-#' ph_indices_non_std <- ph_index(wimp, std = FALSE)
+#' ph_indices_wnorm_non_std <- ph_index(wimp, method = "wnorm", std = FALSE)
 #'
 
 ph_index <- function(wimp, method = "weight", std = FALSE){
