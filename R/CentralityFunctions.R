@@ -14,7 +14,7 @@
 #'   the degree indices. Default is "weight". Other methods may be available
 #'   depending on the implementation of 'degree_index' function.
 #' @param std A logical value indicating whether to standardize the P and H
-#'   indices based on the maximum total degree of the constructs. Defaults to TRUE.
+#'   indices based on the maximum total degree of the constructs. Defaults to FALSE
 #'
 #' @return A 2-column matrix with the presence index 'p' and the hierarchy index 'h'
 #'   for each construct. If 'std' is TRUE, these values are standardized.
@@ -28,7 +28,7 @@
 #' ph_indices_non_std <- ph_index(wimp, std = FALSE)
 #'
 
-ph_index <- function(wimp, method = "weight", std = TRUE){
+ph_index <- function(wimp, method = "weight", std = FALSE){
 
   # Connectivity of constructs
   c.io <- degree_index(wimp, method = method)
