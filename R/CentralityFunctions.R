@@ -36,7 +36,7 @@ ph_index <- function(wimp, method = "weight", std = FALSE){
   # Rearrange In - Out columns
   c.io <- c.io[, c(2,1,3)]
 
-    # Extract In and Out columns
+  # Extract In and Out columns
   in.out <- c.io[, 1:2]
 
   # Linear Transformation matrix
@@ -44,7 +44,7 @@ ph_index <- function(wimp, method = "weight", std = FALSE){
   coef.matrix <- matrix(c(coef, -coef, coef, coef), nrow = 2)
 
   # Calculate P - H matrix
-  ph.mat <- in.out %*% t(coef_matrix)
+  ph.mat <- in.out %*% t(coef.matrix)
   colnames(ph.mat) <- c("p", "h")
 
   # Standardization
@@ -54,4 +54,65 @@ ph_index <- function(wimp, method = "weight", std = FALSE){
   }
 
   return(ph.mat)
+}
+
+# Mahalanobis Indices ------------------------------------------------------------
+
+#' Calculate Mahalanobis Indices for Constructs
+#'
+#' This function calculates the Mahalanobis distance for each construct
+#' in a given PH matrix obtained from a `wimp` object. It also determines
+#' whether each construct is considered "central" based on a chi-square
+#' cutoff, which is calculated using a specified significance level.
+#'
+#' @param wimp A `wimp` object containing the data from which the PH matrix
+#'   is derived.
+#' @param method A character string specifying the method used for calculating
+#'   the PH matrix. Default is `"weight"`.
+#' @param std A logical value indicating whether the data should be
+#'   standardized before calculating the Mahalanobis distance. Default is `FALSE`.
+#'
+#' @return A matrix that includes the original PH matrix with two additional
+#'   columns: one for the Mahalanobis distance of each construct and another
+#'   indicating whether the construct is considered "central" based on the
+#'   chi-square cutoff.
+#'
+#' @export
+#'
+#' @examples
+#' result <- mahalanobis_index(wimp, method = "weight", std = FALSE)
+#' head(result)
+#'
+
+mahalanobis_index <- function(wimp, method = "weight", std = FALSE){
+
+  # Obtain PH matrix associated to the wimp object
+  ph.mat <- ph_index(wimp = wimp, method = method, std = std)
+
+  # Mahalanobis distance--------
+
+  # Covariance matrix
+  cov.matrix <- cov(ph.mat)
+  # Means vector
+  means.vect <- colMeans(ph.mat)
+  # Calculate the Mahalanobis distance for each observation in the dataframe
+  ph.mat.df <- as.data.frame(ph.mat)
+  m.dist <- mahalanobis(ph.mat.df, center = means.vect, cov = cov.matrix)
+
+  # Add column to the results matrix
+  phm.mat <- cbind(ph.mat, m.dist)
+
+  # Determine the chi-square cutoff for the given significance level--------------
+  sign.level <- 0.2
+  # Degrees of freedom
+  df <- ncol(ph.mat)
+  # Chi-Square Cutoff
+  chi.square.cutoff <- qchisq(1 - sign.level, df)
+
+  # Annotate observations as "central" contructs based on the chi-square cutoff
+  central <- ifelse(phm.mat[,"m.dist"] > chi.square.cutoff, TRUE, FALSE)
+
+  # Add column to the results matrix
+  phmc.mat <- cbind(phm.mat, central)
+  return(phmc.mat)
 }
