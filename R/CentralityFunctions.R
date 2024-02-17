@@ -34,26 +34,24 @@ ph_index <- function(wimp, method = "weight", std = FALSE){
   c.io <- degree_index(wimp, method = method)
 
   # Rearrange In - Out columns
-  c.io <- c[, c(2,1,3)]
-  # Extract In and Out columns
+  c.io <- c.io[, c(2,1,3)]
+
+    # Extract In and Out columns
   in.out <- c.io[, 1:2]
 
-  # Calculate p and h for each row
+  # Linear Transformation matrix
   coef <- 0.5 * sqrt(2)
-  p <- rowSums(c(coef, coef) * in.out)
-  h <- rowSums(c(-coef, coef) * in.out)
+  coef.matrix <- matrix(c(coef, -coef, coef, coef), nrow = 2)
+
+  # Calculate P - H matrix
+  ph.mat <- in.out %*% t(coef_matrix)
+  colnames(ph.mat) <- c("p", "h")
 
   # Standardization
   if (std){
     max.total.deg <- max(c.io[, 3])
-    p <- p / max.total.deg
-    h <- h / max.total.deg
+    ph.mat <- ph.mat / max.total.deg
   }
-
-  # Create the new matrix with p and h dimensions
-  ph.mat <- matrix(c(p, h), ncol = 2, byrow = FALSE,
-                   dimnames = list(rownames(c.io), c("p", "h")))
 
   return(ph.mat)
 }
-
