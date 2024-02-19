@@ -47,10 +47,11 @@ ph_index <- function(wimp, method = "weight", std = FALSE){
   ph.mat <- in.out %*% t(coef.matrix)
   colnames(ph.mat) <- c("p", "h")
 
-  # Standardization
+  # Standardization based on number of graph edges
   if (std){
-    max.total.deg <- max(c.io[, 3])
-    ph.mat <- ph.mat / max.total.deg
+    #max.total.deg <- max(c.io[, 3])
+    edges <- sum(c.io[, 2])
+    ph.mat <- ph.mat / edges
   }
 
   return(ph.mat)
@@ -88,6 +89,9 @@ mahalanobis_index <- function(wimp, method = "weight", std = FALSE){
 
   # Obtain PH matrix associated to the wimp object
   ph.mat <- ph_index(wimp = wimp, method = method, std = std)
+
+  # Greater weight is given to a positive hierarchy value
+  #ph.mat[,"h"] <- ifelse(ph.mat[,"h"] >0, ph.mat[,"h"]^2, ph.mat[,"h"])
 
   # Mahalanobis distance--------
 
