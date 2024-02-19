@@ -1,0 +1,347 @@
+---
+title: "SCP - Centrality"
+author: ""
+date: "2024-02-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Carga de librerías
+
+```{r libraries, message=FALSE, warning=FALSE}
+if (!(require(DT)))
+  install.packages("DT")
+library(DT)
+
+if (!require(readxl))
+  install.packages("readxl")
+library(readxl)
+
+# Rfast para matriz de varianza combinada
+if (!requireNamespace("Rfast"))
+  install.packages("Rfast")
+library(Rfast)
+
+if (!requireNamespace("ggplot2"))
+  install.packages("ggplot2")
+library(ggplot2)
+
+if (!requireNamespace("plotly"))
+  install.packages("plotly")
+library(plotly)
+
+if (!requireNamespace("ggrepel"))
+  install.packages("ggrepel")
+library(ggrepel)
+
+# GridFCM
+library(devtools)
+if (!requireNamespace("GridFCM.practicum"))
+  install_github("asanfe/GridFCM.practicum", quietly = TRUE)
+library(GridFCM.practicum)
+
+# Viridislilte
+if (!requireNamespace("viridisLite"))
+  install.packages("viridisLite")
+library(viridisLite)
+
+# Test para normalidad multivariante
+if (!requireNamespace("MVN"))
+  install.packages("MVN")
+library(MVN)
+
+```
+
+### Importación de WIMP
+
+```{r wimp_import, fig.width = 10, fig.height = 10}
+
+path <- 'Wimp_Ejemplo.xlsx'
+opr <- TRUE
+
+wimp <- GridFCM.practicum::importwimp(path = path, opr = opr, sheet = 1)
+bertin(wimp$openrepgrid, colors = c("palegreen", "darkgreen"))
+```
+
+### Digrafo con GridFCM.practicum 
+
+```{r digraph, fig.width = 10, fig.height = 10}
+
+# Digraph
+GridFCM.practicum::digraph(wimp, layout = "rtcircle")
+```
+
+### E/S de los constructos. Método Simple
+
+```{r index_ph_test, fig.width = 10, fig.height = 10}
+
+c.io.test <- GridFCM.practicum::degree_index(wimp, method = "simple")
+c.io.test <- c.io.test[, c(2,1,3)]
+c.io.test <- cbind(c.io.test, Diff = (c.io.test[, 2] - c.io.test[, 1]))
+c.io.test.r <- round(c.io.test, 3)
+DT::datatable(c.io.test.r)
+```
+
+### E/S de los constructos. Método wnorm
+
+```{r in.out_wimp, fig.width = 10, fig.height = 10}
+
+c.io.test <- GridFCM.practicum::degree_index(wimp, method = "wnorm")
+c.io.test <- c.io.test[, c(2,1,3)]
+c.io.test <- cbind(c.io.test, Diff = (c.io.test[, 2] - c.io.test[, 1]))
+c.io.test.r <- round(c.io.test, 3)
+DT::datatable(c.io.test.r)
+```
+
+### Ejemplo de salida de P-H index
+
+```{r ph_index_test, fig.width = 10, fig.height = 10}
+
+test.wphm <- GridFCM.practicum::ph_index(wimp = wimp, method = "weight", std = FALSE)
+DT::datatable(test.wphm)
+```
+
+## Distancia de Mahalanobis y distribución de datos
+
+### Test de Mardia para análisis multivariante
+
+Llevamos a cabo previamente un test de Mardia para constrastar la normalidad multivariante de los datos, a fin de determinar la pertinencia del punto de corte basado en adecuación a distribución Chi-cuadrado de distancia de Mahalanobis
+
+```{r normalidad_multivariante}
+# Test de Mardia
+
+test.result <- mvn(data = test.wphm, mvnTest = "mardia")
+
+print(test.result)
+  
+```
+### Test de resultado de la función
+
+```{r mahalanobis_index_test, fig.width = 10, fig.height = 10}
+
+test.wmahalanobis <- GridFCM.practicum::mahalanobis_index(wimp = wimp, method = "weight", std = FALSE)
+DT::datatable(test.wmahalanobis)
+```
+
+### Gráfica de barras de distancias de Mahalanobis y punto de corte
+
+```{r barplot_mahalanobis_test, fig.width = 10, fig.height = 10}
+
+# Distancia de Mahalanobis
+test.bp.wmahalanobis <- GridFCM.practicum::mahalanobis_index(wimp = wimp, method = "weight", std = FALSE)
+test.wmahalanobis.df <- as.data.frame(test.bp.wmahalanobis)
+
+
+#test.wmahalanobis.df$constructo <- rownames(test.wmahalanobis)
+test.wmahalanobis.df$constructo <- wimp$constructs$right.poles
+
+# Valoración del ideal
+test.wmahalanobis.df$idealdirect <- wimp$ideal$direct
+
+# Columna para identificar constructos dilemáticos
+test.wmahalanobis.df$fill.color <- ifelse(test.wmahalanobis.df$idealdirect == 4, "yellow2", "palegreen")
+
+# Ordenamos las barras en orden decreciente
+test.wmahalanobis.df <- test.wmahalanobis.df %>%
+  arrange(desc(m.dist))
+
+# Convertimos 'constructo' en un factor con los niveles en el orden deseado
+test.wmahalanobis.df$constructo <- factor(test.wmahalanobis.df$constructo, levels = test.wmahalanobis.df$constructo)
+
+# Punto de corte distribución Chi-Cuadrado
+sign.level <- 0.2
+df <- ncol(test.wphm)
+chi.square.cutoff <- qchisq(1 - sign.level, df)
+#media_m_dist <- mean(test.wmahalanobis.df$m.dist)
+
+# Crear el histograma
+
+bar_plot <- ggplot(test.wmahalanobis.df, aes(x = constructo, y = m.dist, fill = fill.color)) +
+  geom_bar(stat = "identity", color = "black", linewidth = 0.25) +
+  geom_hline(yintercept = chi.square.cutoff, linetype = "dashed", color = "darkgreen", size = 1) +
+  scale_fill_identity() + # Usa los colores asignados directamente
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none" # Ocultar leyenda para fill
+  ) +
+  labs(x = "Constructo", y = "Distancia de Mahalanobis", title = "Distancia de Mahalanobis por Constructo")
+
+# Mostramos el gráfico
+print(bar_plot)
+
+```
+
+# Ejemplo de representación en espacio P-H
+
+## Función de representación 
+
+```{r func_rep_psychlab, fig.width = 10, fig.height = 10}
+
+graph_ph <- function(ph.mat){
+  
+  # Convertimos matriz en dataframe
+  ph.mat.df <- as.data.frame(ph.mat)
+  
+  # Añadimos los nombres de los constructos como una nueva columna en el dataframe
+  ph.mat.df$constructo <- rownames(ph.mat)
+  
+  # Paleta de colores en escala de verdes
+  paleta.verdes <- viridis(n = length(ph.mat.df$constructo), option = "viridis")
+  
+  # Gráfica de dispersión con tema de fondo blanco
+  wimp.plot <- ggplot(ph.mat.df, aes(x = p, y = h)) +
+    geom_point(aes(fill = constructo), shape = 21, size = 3, color = "black") +
+    geom_text_repel(aes(label = constructo), size = 3.5, fontface = "plain", box.padding = 0.5) +
+    scale_fill_manual(values = paleta.verdes) +
+    geom_abline(slope = -1, intercept = 0, linetype = "dashed", color = "darkgreen") +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "darkgreen") +
+    labs(
+      x = "P - Presencialidad (frecuencia del constructo)",
+      y = "H - Jerarquía (influencia del constructo)",
+      title = "Gráfica de Dispersión de Constructos en el Espacio P - H"
+    ) +
+    theme_bw() + 
+    theme(
+      panel.grid.major = element_line(linewidth = 0.5, linetype = 'solid', colour = "lightgrey"),
+      panel.grid.minor = element_blank(), 
+      legend.position = "none"  
+    ) +
+    xlim(c(0, max(ph.mat.df$p))) 
+    #ylim(c(-0.5, 0.5))
+
+  return(wimp.plot)  
+}
+```
+
+## Representación de espacio PH 
+
+### Sin estandarización
+
+```{r rep_psychlab_se, fig.width = 10, fig.height = 10}
+
+test.wphm.se <- GridFCM.practicum::ph_index(wimp = wimp, method = "weight", std = FALSE)
+
+wp1 <- graph_ph(test.wphm.se)
+print(wp1)
+```
+
+### Con estandarización basado en número de aristas
+
+```{r rep_psychlab_ce, fig.width = 10, fig.height = 10}
+
+test.wphm.ce <- GridFCM.practicum::ph_index(wimp = wimp, method = "weight", std = TRUE)
+
+wp2 <- graph_ph(test.wphm.ce)
+print(wp2)
+```
+
+## Espacio PH con coloreado de área no útil y marcado de outliers. Función de representación
+
+```{r func_rep_psychlab_cent, fig.width = 10, fig.height = 10}
+
+graph_ph_mh <- function(phm.mat){
+  
+  # Convertimos matriz en dataframe
+  phm.mat.df <- as.data.frame(phm.mat)
+  
+  # Añadimos los nombres de los constructos como una nueva columna en el dataframe
+  phm.mat.df$constructo <- rownames(phm.mat)
+
+  # Polígonos (dos triángulos) para rellenar área de coordenadas no posibles   
+  poligon.1 <- data.frame(
+    x = c(0,0,max(phm.mat.df$h)),
+    y = c(0,max(phm.mat.df$h), max(phm.mat.df$h))
+  )
+  
+  poligon.2 <- data.frame(
+    x = c(0,0,max(phm.mat.df$h)),
+    y = c(0,-max(phm.mat.df$h),-max(phm.mat.df$h))
+  )
+  
+  # Paleta de colores en escala de verdes
+  paleta.verdes <- viridis(n = length(phm.mat.df$constructo), option = "viridis")
+  
+  # Gráfica de dispersión actualizada con polígono de relleno
+  wimp.plot <- ggplot(phm.mat.df, aes(x = p, y = h)) +
+    geom_polygon(data = poligon.1, aes(x, y), fill = "palegreen", alpha = 0.5) +
+    geom_polygon(data = poligon.2, aes(x, y), fill = "palegreen", alpha = 0.5) +
+    geom_point(aes(fill = constructo, size = central), shape = 23, color = "black") + # !!!!
+    geom_point(aes(fill = constructo), shape = 21, size = 3, color = "black") +
+    geom_text_repel(aes(label = constructo), size = 3.5, fontface = "plain", box.padding = 0.5) +
+    scale_fill_manual(values = paleta.verdes) +
+    #scale_size_manual(values = c('0' = 5, '1' = 3)) + # !!!!
+    geom_abline(slope = -1, intercept = 0, linetype = "dashed", color = "darkgreen") +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "darkgreen") +
+    labs(
+      x = "P - Presencialidad (frecuencia del constructo)",
+      y = "H - Jerarquía (influencia del constructo)",
+      title = "Gráfica de Dispersión de Constructos en el Espacio P - H"
+    ) +
+    theme_bw() +
+    theme(
+      panel.grid.major = element_line(linewidth = 0.5, linetype = 'solid', colour = "lightgrey"),
+      panel.grid.minor = element_blank(),
+      legend.position = "none"
+    ) +
+  xlim(c(0, max(phm.mat.df$p))) 
+  ylim(c(min(phm.mat.df$h), max(phm.mat.df$h)))
+
+  return(wimp.plot)  
+}
+```
+
+### Sin estandarización
+
+```{r rep_mh_psychlab_se, fig.width = 10, fig.height = 10}
+
+# Matriz PH con distancia de Mahalanobis
+test.bp.wmahalanobis.se <- GridFCM.practicum::mahalanobis_index(wimp = wimp, method = "weight", std = FALSE)
+wp3 <- graph_ph_mh(test.bp.wmahalanobis.se)
+print(wp3)
+```
+
+### Con estandarización
+
+```{r rep_mh_psychlab_ce, fig.width = 10, fig.height = 10}
+
+# Matriz PH con distancia de Mahalanobis
+test.bp.wmahalanobis.ce <- GridFCM.practicum::mahalanobis_index(wimp = wimp, method = "weight", std = TRUE)
+wp4 <- graph_ph_mh(test.bp.wmahalanobis.ce)
+print(wp4)
+```
+
+### Desarrollo
+
+```{r eigenvalues, fig.width = 10, fig.height = 10}
+
+eigen_index <- function(wimp){
+
+  # Adjacency matrix
+  adj.matrix <- cov(wimp$scores$implications)
+
+  # Vector and eigenvalues
+  results <- eigen(adj.matrix)
+
+  # Extract the first eigenvector, associated with the maximum variance of the data
+  eigenvector.principal <- results$vectors[,1]
+
+  # PCA
+  pca.result <- prcomp(test.wphm, center = TRUE, scale. = TRUE)
+
+  # Create a dataframe with the construct names and centrality scores
+  df.centrality <- data.frame(
+    constructs = wimp$constructs$constructs,
+    leftpoles = wimp$constructs$left.poles,
+    rightpoles = wimp$constructs$right.poles,
+    fisrteigenvector = eigenvector.principal,
+    eigenvalue = results$values,
+    pca = first_dim_values <- pca.result$x[, 1]
+  )
+
+  return(df.centrality)
+}
+```
