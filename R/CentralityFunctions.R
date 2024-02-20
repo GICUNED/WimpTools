@@ -40,7 +40,7 @@ ph_index <- function(wimp, method = "weight", std = FALSE){
   in.out <- c.io[, 1:2]
 
   # Linear Transformation matrix
-  coef <- 0.5 * sqrt(2)
+  coef <- 1 / sqrt(2)
   coef.matrix <- matrix(c(coef, -coef, coef, coef), nrow = 2)
 
   # Calculate P - H matrix
