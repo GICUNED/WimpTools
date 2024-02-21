@@ -9,7 +9,7 @@
 #'
 #'
 #' @param path Path to the excel file on your computer. The file suffix has to be .xlsx.
-#' @param sheet Number of the Excel sheet that contains the WimpGrid data
+#' @param sheet Number of the Excel sheet that contains the WimpGrid data.
 #'
 #' @return A wimp S3 object.
 #'
@@ -34,7 +34,6 @@ importwimp <- function(path, sheet = 1, opr = TRUE){
   n.constructs <- dim(xlsx)[1]
 
   # Scale -------------------------------------------------------------------
-
   scale.min <- as.numeric(names(xlsx)[1])
   scale.max <- as.numeric(names(xlsx)[n.constructs + 3])
   scale.center <- (scale.min + scale.max)/2
@@ -43,7 +42,6 @@ importwimp <- function(path, sheet = 1, opr = TRUE){
   wimp$scale <- scale
 
   # Constructs --------------------------------------------------------------
-
   left.poles <- as.vector(xlsx[,1])[[1]]
   right.poles <- as.vector(xlsx[,n.constructs + 3])[[1]]
   constructs <- paste(left.poles,"—",right.poles,sep = "")
@@ -63,7 +61,6 @@ importwimp <- function(path, sheet = 1, opr = TRUE){
 
 
   # Ideal vector ------------------------------------------------------------
-
   direct.ideal <- as.numeric(as.vector(xlsx[,n.constructs + 2])[[1]])
   standarized.ideal <- (direct.ideal - (scale.center * rep(1,n.constructs))) / (0.5 * (scale.max - scale.min))
 
@@ -72,7 +69,6 @@ importwimp <- function(path, sheet = 1, opr = TRUE){
   names(wimp$ideal) <- c("direct","standarized")
 
   # Hypothetical vector -----------------------------------------------------
-
   standarized.hypothetical <- mapply(.calc.hypo, standarized.self,standarized.ideal)
   direct.hypothetical <- (scale.center * rep(1,n.constructs)) + (standarized.hypothetical * (0.5 * (scale.max - scale.min)))
 
@@ -81,7 +77,6 @@ importwimp <- function(path, sheet = 1, opr = TRUE){
   names(wimp$hypothetical) <- c("direct","standarized")
 
   # Scores ------------------------------------------------------------------
-
   imp.matrix <- t((direct.scores - (scale.center * matrix(rep(1,n.constructs * n.constructs),ncol = n.constructs))) / (0.5 * (scale.max - scale.min)))
 
   num.weight.matrix <- imp.matrix - matrix(standarized.self,nrow = n.constructs,ncol = n.constructs,byrow = TRUE)
@@ -98,22 +93,41 @@ importwimp <- function(path, sheet = 1, opr = TRUE){
   openrepgrid.object <- OpenRepGrid::importExcel(path, sheetIndex = sheet)
   wimp$openrepgrid <- openrepgrid.object
   }
-  # Function return ---------------------------------------------------------
 
+  # Function return ---------------------------------------------------------
   return(wimp)
 }
 
-#' Print method for wimp class
+#' Print method for class 'wimp'
 #'
-#' @param x
+#' @description Print method for S3 objects of the "wimp" class belonging to the
+#' GridFCM package. Prints the WimpGrid matrix along with other related data and
+#' executes a Bertin plot. You must have made the object compatible with
+#' OpenRepGrid by setting the opr argument to TRUE in the
+#' \code{\link{importwimp}} function.
 #'
-#' @return
+#' @param wimp A wimp S3 object.
+#' @param bertin If TRUE run a bertin plot from the WimpGrid data. Default is TRUE.
+#'
+#' @return Displays the WimpGrid information on the screen.
+#'
 #' @export
 #'
 #' @examples
 #'
+#' # Print without bertin plot.
+#' print(example.wimp, bertin = FALSE)
+#'
+#' # Print with bertin plot.
+#' print(example.wimp)
 
-print.wimp <- function(x){
-  OpenRepGrid::bertin(x$openrepgrid)
-  print(x$openrepgrid)
+print.wimp <- function(wimp, bertin = TRUE){
+
+  if(!is.null(wimp$openrepgrid)){
+  if(bertin){OpenRepGrid::bertin(wimp$openrepgrid)}
+  print(wimp$openrepgrid)
+  }else{
+    cat("OpenRepGrid support is required to print the wimp object. Try importing
+        it by setting the opr argument to true in the importwimp() function.")
+  }
 }

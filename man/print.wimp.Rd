@@ -2,13 +2,30 @@
 % Please edit documentation in R/ImportFunctions.R
 \name{print.wimp}
 \alias{print.wimp}
-\title{Print method for wimp class}
+\title{Print method for class 'wimp'}
 \usage{
-\method{print}{wimp}(x)
+\method{print}{wimp}(wimp, bertin = TRUE)
 }
 \arguments{
-\item{x}{}
+\item{wimp}{A wimp S3 object.}
+
+\item{bertin}{If TRUE run a bertin plot from the WimpGrid data. Default is TRUE.}
+}
+\value{
+Displays the WimpGrid information on the screen.
 }
 \description{
-Print method for wimp class
+Print method for S3 objects of the "wimp" class belonging to the
+GridFCM package. Prints the WimpGrid matrix along with other related data and
+executes a Bertin plot. You must have made the object compatible with
+OpenRepGrid by setting the opr argument to TRUE in the
+\code{\link{importwimp}} function.
+}
+\examples{
+
+# Print without bertin plot.
+print(example.wimp, bertin = FALSE)
+
+# Print with bertin plot.
+print(example.wimp)
 }
