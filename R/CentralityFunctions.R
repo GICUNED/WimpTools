@@ -85,7 +85,7 @@ ph_index <- function(wimp, method = "weight", std = FALSE){
 #' head(result)
 #'
 
-mahalanobis_index <- function(wimp, method = "weight", std = FALSE){
+mahalanobis_index <- function(wimp, method = "weight", std = FALSE, sign.level = 0.2){
 
   # Obtain PH matrix associated to the wimp object
   ph.mat <- ph_index(wimp = wimp, method = method, std = std)
@@ -107,7 +107,6 @@ mahalanobis_index <- function(wimp, method = "weight", std = FALSE){
   phm.mat <- cbind(ph.mat, m.dist)
 
   # Determine the chi-square cutoff for the given significance level--------------
-  sign.level <- 0.2
   # Degrees of freedom
   df <- ncol(ph.mat)
   # Chi-Square Cutoff
@@ -119,4 +118,95 @@ mahalanobis_index <- function(wimp, method = "weight", std = FALSE){
   # Add column to the results matrix
   phmc.mat <- cbind(phm.mat, central)
   return(phmc.mat)
+}
+
+# Graphically represent constructs ------------------------------------------------
+
+#' Scatter Plot of Constructs in P-H Space
+#'
+#' This function generates a scatter plot of constructs in the P-H space,
+#' where P represents Presence (frequency of the construct) and H represents Hierarchy
+#' (influence of the construct). Central constructs are highlighted in red color, and
+#' peripheral constructs in another, facilitating their visual identification.
+#'
+#' @param phm.mat A matrix where each row represents a construct and contains
+#'        the P and H coordinates of the construct, as well as an indication of whether the
+#'        construct is central (1) or not (0). The matrix must have row names,
+#'        which are used to label the constructs in the graph.
+#'
+#' @param mark.nva Boolean value that specifies if non-viable areas are to be marked in the
+#'        graphic. Non-viable areas are parts of the P-H space where constructs cannot logically exist.
+#'
+#' @param mark.cnt Boolean value that specifies if central constructs have to be highlighted.
+#'        Central constructs are depicted with a distinct color and symbol to differentiate them from
+#'        peripheral constructs.
+#'
+#' @return A Plotly object representing the generated scatter plot.
+#'
+#' @export
+#'
+#' @examples
+#' graph_ph(phm.mat, mark.nva = TRUE, mark.cnt = TRUE)
+
+graph_ph <- function(phm.mat, mark.nva = TRUE, mark.cnt = TRUE) {
+
+  # Convert the matrix to dataframe
+  phm.mat.df <- as.data.frame(phm.mat)
+
+  # We assign the names of constructs from the names of the rows of the matrix
+  phm.mat.df$constructo <- rownames(phm.mat)
+
+  # Colors of peripheral constructs (non-nuclear)
+  colors <- viridis::viridis(n = nrow(phm.mat.df), option = "viridis")
+
+  # Limits of the graph by the largest value of P or H dimensions. We add a small margin
+  limit <- max(abs(phm.mat.df$p), abs(phm.mat.df$h)) * 1.1
+
+  # We determine whether drawing or not non-viable coordinates area according to mark.nva param
+  # If param is FALSE, shapes is created as an empty list
+  shapes <- if (mark.nva) {
+    list(
+      list(type = "path", path = paste("M 0,0 L", limit, ",", limit, " L0,", limit, " Z"),
+           fillcolor = "palegreen", opacity = 0.2, line = list(color = "palegreen")),
+      list(type = "path", path = paste("M 0,0 L", limit, ",", -limit, " L0,", -limit, " Z"),
+           fillcolor = "palegreen", opacity = 0.2, line = list(color = "palegreen")),
+      list(type = "line", x0 = 0, y0 = 0, x1 = limit, y1 = limit,
+           xref = "x", yref = "y", line = list(color = "darkgreen", width = 1, dash = "dash")),
+      list(type = "line", x0 = 0, y0 = 0, x1 = limit, y1 = -limit,
+           xref = "x", yref = "y", line = list(color = "darkgreen", width = 1, dash = "dash"))
+    )
+  } else {
+    list()
+  }
+
+  # Plotly Graphic
+  p <- plot_ly() %>%
+
+    # Graphic layout
+    layout(title = 'Gráfica de Dispersión de Constructos en el Espacio P - H',
+           xaxis = list(title = 'P - Presencialidad (frecuencia del constructo)'),
+           yaxis = list(title = 'H - Jerarquía (influencia del constructo)'),
+           plot_bgcolor = "white",
+           font = list(family = "Arial"),
+           showlegend = FALSE,
+           shapes = shapes)
+
+  # Add markers based on mark.cnt condition
+  if (mark.cnt) {
+    p <- p %>%
+      add_markers(data = phm.mat.df[phm.mat.df$central == 0, ], x = ~p, y = ~h,
+                  marker = list(color = colors, size = 10, line = list(color = 'black', width = 1))) %>%
+      add_markers(data = phm.mat.df[phm.mat.df$central == 1, ], x = ~p, y = ~h,
+                  marker = list(color = 'orangered', size = 12, symbol = "circle-dot", line = list(color = 'black', width = 1)))
+  } else {
+    p <- p %>%
+      add_markers(data = phm.mat.df, x = ~p, y = ~h,
+                  marker = list(color = colors, size = 10, line = list(color = 'black', width = 1)))
+  }
+
+  # Add annotations for each point
+  p <- p %>% add_annotations(data = phm.mat.df, x = ~p, y = ~h, text = ~constructo,
+                             showarrow = FALSE, xanchor = 'center', yanchor = 'bottom', font = list(size = 12))
+
+  return(p)
 }
