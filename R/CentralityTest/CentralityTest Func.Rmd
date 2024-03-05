@@ -53,6 +53,22 @@ if (!requireNamespace("MVN"))
   install.packages("MVN")
 library(MVN)
 
+if (!requireNamespace("ggpattern", quietly = TRUE))
+  install.packages("ggpattern")
+library(ggpattern)
+
+if (!requireNamespace("factoextra", quietly = TRUE))
+  install.packages("factoextra")
+library(factoextra)
+
+if (!requireNamespace("cluster", quietly = TRUE))
+  install.packages("cluster")
+library(cluster)
+
+if (!requireNamespace("RColorBrewer", quietly = TRUE))
+  install.packages("RColorBrewer")
+library(RColorBrewer)
+
 ```
 
 ### Importación de WIMP
@@ -122,7 +138,7 @@ print(test.result)
 
 ```{r mahalanobis_index_test, fig.width = 10, fig.height = 10}
 
-test.wmahalanobis <- GridFCM.practicum::mahalanobis_index(wimp = wimp, method = "weight", std = FALSE)
+test.wmahalanobis <- GridFCM.practicum::mahalanobis_index(wimp = wimp, method = "weight", std = FALSE, sign.level = 0.2)
 DT::datatable(test.wmahalanobis)
 ```
 
@@ -142,7 +158,7 @@ test.wmahalanobis.df$constructo <- wimp$constructs$right.poles
 test.wmahalanobis.df$idealdirect <- wimp$ideal$direct
 
 # Columna para identificar constructos dilemáticos
-test.wmahalanobis.df$fill.color <- ifelse(test.wmahalanobis.df$idealdirect == 4, "yellow2", "palegreen")
+test.wmahalanobis.df$fill.color <- ifelse(test.wmahalanobis.df$idealdirect == 4, "yellow2", "honeydew")
 
 # Ordenamos las barras en orden decreciente
 test.wmahalanobis.df <- test.wmahalanobis.df %>%
@@ -156,19 +172,55 @@ sign.level <- 0.2
 df <- ncol(test.wphm)
 chi.square.cutoff <- qchisq(1 - sign.level, df)
 #media_m_dist <- mean(test.wmahalanobis.df$m.dist)
+```
 
-# Crear el histograma
+#### Constructos supraordenados, resaltando dilemáticos
 
-bar_plot <- ggplot(test.wmahalanobis.df, aes(x = constructo, y = m.dist, fill = fill.color)) +
+```{r barplot_mahalanobis_test_sup, fig.width = 10, fig.height = 10}
+
+# Crear el histograma de constructos supraordenados
+
+# Filtramos por los constructos donde el valor de 'h' es mayor que cero
+test.wmahalanobis.df.sup <- test.wmahalanobis.df %>%
+  filter(h > 0)
+
+bar_plot <- ggplot(test.wmahalanobis.df.sup, aes(x = constructo, y = m.dist, fill = fill.color)) +
   geom_bar(stat = "identity", color = "black", linewidth = 0.25) +
-  geom_hline(yintercept = chi.square.cutoff, linetype = "dashed", color = "darkgreen", size = 1) +
+  geom_hline(yintercept = chi.square.cutoff, linetype = "dashed", color = "darkgreen", linewidth = 1) +
   scale_fill_identity() + # Usa los colores asignados directamente
   theme_minimal() +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
     legend.position = "none" # Ocultar leyenda para fill
   ) +
-  labs(x = "Constructo", y = "Distancia de Mahalanobis", title = "Distancia de Mahalanobis por Constructo")
+  labs(x = "Constructos con h > 0", y = "Distancia de Mahalanobis", title = "Constructos con h>0 por distancia de Mahalanobis")
+
+# Mostramos el gráfico
+print(bar_plot)
+
+```
+
+
+#### Constructos subordinados, resaltando dilemáticos
+
+```{r barplot_mahalanobis_test_sub, fig.width = 10, fig.height = 10}
+
+# Crear el histograma de constructos subordinados
+
+# Filtramos por los constructos donde el valor de 'h' es menor que cero
+test.wmahalanobis.df.sub <- test.wmahalanobis.df %>%
+  filter(h < 0)
+
+bar_plot <- ggplot(test.wmahalanobis.df.sub, aes(x = constructo, y = m.dist, fill = fill.color)) +
+  geom_bar(stat = "identity", color = "black", linewidth = 0.25) +
+  geom_hline(yintercept = chi.square.cutoff, linetype = "dashed", color = "darkgreen", linewidth = 1) +
+  scale_fill_identity() + # Usa los colores asignados directamente
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none" # Ocultar leyenda para fill
+  ) +
+  labs(x = "Constructos con h < 0", y = "Distancia de Mahalanobis", title = "Constructos con h<0 por distancia de Mahalanobis")
 
 # Mostramos el gráfico
 print(bar_plot)
@@ -177,11 +229,11 @@ print(bar_plot)
 
 # Ejemplo de representación en espacio P-H
 
-## Función de representación 
+## Función de representación ggplot
 
 ```{r func_rep_psychlab, fig.width = 10, fig.height = 10}
 
-graph_ph <- function(ph.mat){
+graph_ph_gg <- function(ph.mat){
   
   # Convertimos matriz en dataframe
   ph.mat.df <- as.data.frame(ph.mat)
@@ -217,131 +269,165 @@ graph_ph <- function(ph.mat){
 }
 ```
 
+
 ## Representación de espacio PH 
 
-### Sin estandarización
+### Sin estandarización - ggplot
 
 ```{r rep_psychlab_se, fig.width = 10, fig.height = 10}
 
 test.wphm.se <- GridFCM.practicum::ph_index(wimp = wimp, method = "weight", std = FALSE)
 
-wp1 <- graph_ph(test.wphm.se)
+wp1 <- graph_ph_gg(test.wphm.se)
 print(wp1)
 ```
 
-### Con estandarización basado en número de aristas
+### Sin estandarización - plotly sin marcar área no viable ni constructos centrales
 
-```{r rep_psychlab_ce, fig.width = 10, fig.height = 10}
+```{r rep_psychlab_se_plotly, fig.width = 10, fig.height = 10}
 
-test.wphm.ce <- GridFCM.practicum::ph_index(wimp = wimp, method = "weight", std = TRUE)
+wp1p <- graph_ph(test.wphm.se, mark.nva = FALSE, mark.cnt = FALSE)
 
-wp2 <- graph_ph(test.wphm.ce)
-print(wp2)
+wp1p
 ```
+
 
 ## Espacio PH con coloreado de área no útil y marcado de outliers. Función de representación
 
-```{r func_rep_psychlab_cent, fig.width = 10, fig.height = 10}
-
-graph_ph_mh <- function(phm.mat){
-  
-  # Convertimos matriz en dataframe
-  phm.mat.df <- as.data.frame(phm.mat)
-  
-  # Añadimos los nombres de los constructos como una nueva columna en el dataframe
-  phm.mat.df$constructo <- rownames(phm.mat)
-
-  # Polígonos (dos triángulos) para rellenar área de coordenadas no posibles   
-  poligon.1 <- data.frame(
-    x = c(0,0,max(phm.mat.df$h)),
-    y = c(0,max(phm.mat.df$h), max(phm.mat.df$h))
-  )
-  
-  poligon.2 <- data.frame(
-    x = c(0,0,max(phm.mat.df$h)),
-    y = c(0,-max(phm.mat.df$h),-max(phm.mat.df$h))
-  )
-  
-  # Paleta de colores en escala de verdes
-  paleta.verdes <- viridis(n = length(phm.mat.df$constructo), option = "viridis")
-  
-  # Gráfica de dispersión actualizada con polígono de relleno
-  wimp.plot <- ggplot(phm.mat.df, aes(x = p, y = h)) +
-    geom_polygon(data = poligon.1, aes(x, y), fill = "palegreen", alpha = 0.5) +
-    geom_polygon(data = poligon.2, aes(x, y), fill = "palegreen", alpha = 0.5) +
-    geom_point(aes(fill = constructo, size = central), shape = 23, color = "black") + # !!!!
-    geom_point(aes(fill = constructo), shape = 21, size = 3, color = "black") +
-    geom_text_repel(aes(label = constructo), size = 3.5, fontface = "plain", box.padding = 0.5) +
-    scale_fill_manual(values = paleta.verdes) +
-    #scale_size_manual(values = c('0' = 5, '1' = 3)) + # !!!!
-    geom_abline(slope = -1, intercept = 0, linetype = "dashed", color = "darkgreen") +
-    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "darkgreen") +
-    labs(
-      x = "P - Presencialidad (frecuencia del constructo)",
-      y = "H - Jerarquía (influencia del constructo)",
-      title = "Gráfica de Dispersión de Constructos en el Espacio P - H"
-    ) +
-    theme_bw() +
-    theme(
-      panel.grid.major = element_line(linewidth = 0.5, linetype = 'solid', colour = "lightgrey"),
-      panel.grid.minor = element_blank(),
-      legend.position = "none"
-    ) +
-  xlim(c(0, max(phm.mat.df$p))) 
-  ylim(c(min(phm.mat.df$h), max(phm.mat.df$h)))
-
-  return(wimp.plot)  
-}
-```
-
-### Sin estandarización
+#### Sin estandarización
 
 ```{r rep_mh_psychlab_se, fig.width = 10, fig.height = 10}
 
 # Matriz PH con distancia de Mahalanobis
-test.bp.wmahalanobis.se <- GridFCM.practicum::mahalanobis_index(wimp = wimp, method = "weight", std = FALSE)
-wp3 <- graph_ph_mh(test.bp.wmahalanobis.se)
-print(wp3)
+test.bp.wmahalanobis.se <- GridFCM.practicum::mahalanobis_index(wimp = wimp, method = "weight", std = FALSE, sign.level = 0.2)
+
+wp3 <- graph_ph(test.bp.wmahalanobis.se, mark.nva = TRUE, mark.cnt = TRUE)
+
+wp3
 ```
 
-### Con estandarización
+#### Sin estandarización - plotly sin marcar area de coordenadas no viables
 
-```{r rep_mh_psychlab_ce, fig.width = 10, fig.height = 10}
+```{r rep_psychlab_se_mh_plotly, fig.width = 10, fig.height = 10}
 
-# Matriz PH con distancia de Mahalanobis
-test.bp.wmahalanobis.ce <- GridFCM.practicum::mahalanobis_index(wimp = wimp, method = "weight", std = TRUE)
-wp4 <- graph_ph_mh(test.bp.wmahalanobis.ce)
-print(wp4)
+wp1mhp <- GridFCM.practicum::graph_ph(test.bp.wmahalanobis.se, mark.nva = FALSE, mark.cnt = TRUE)
+
+wp1mhp
 ```
 
-### Desarrollo
+### Primer eigenvectorsobre matriz de implicaciones
 
 ```{r eigenvalues, fig.width = 10, fig.height = 10}
 
 eigen_index <- function(wimp){
 
-  # Adjacency matrix
-  adj.matrix <- cov(wimp$scores$implications)
+  # Matriz de adyacencia
+  adj.matrix <- wimp$scores$implications
 
-  # Vector and eigenvalues
+  # Vectores y valores propios
   results <- eigen(adj.matrix)
 
-  # Extract the first eigenvector, associated with the maximum variance of the data
+  # Extrae el primer vector propio, asociado a la varianza máxima de los datos
   eigenvector.principal <- results$vectors[,1]
 
-  # PCA
-  pca.result <- prcomp(test.wphm, center = TRUE, scale. = TRUE)
-
-  # Create a dataframe with the construct names and centrality scores
+  # Creamos un marco de datos con los nombres de los constructos y las componentes del primer eigenvector
   df.centrality <- data.frame(
     constructs = wimp$constructs$constructs,
     leftpoles = wimp$constructs$left.poles,
     rightpoles = wimp$constructs$right.poles,
-    fisrteigenvector = eigenvector.principal,
-    eigenvalue = results$values,
-    pca = first_dim_values <- pca.result$x[, 1]
+    firsteigenvector = eigenvector.principal
   )
 
   return(df.centrality)
 }
+```
+
+```{r test_eigenvalues, fig.width = 10, fig.height = 10}
+
+cent.evalues.df <- eigen_index(wimp)
+DT::datatable(cent.evalues.df)
+```
+
+## Análisis de componentes principales
+
+```{r pca, fig.width = 10, fig.height = 10}
+
+# Foco del PCA
+adj.matrix <- wimp$scores$implications
+
+# Análisis de componentes principales
+pca.result <- prcomp(adj.matrix, center = TRUE, scale = TRUE)
+
+# Extraer los dos primeros componentes principales
+pca.comp <- as.data.frame(pca.result$x[, 1:2])
+pca.comp$constructs <- wimp$constructs$constructs
+
+# Crea la gráfica de dispersión
+pca.plot <- plot_ly(data = pca.comp, x = ~PC1, y = ~PC2, type = 'scatter', mode = 'markers',
+                    hoverinfo = 'text+x+y',
+                    marker = list(size = 10, opacity = 0.8)) %>%
+            layout(title = 'PCA de matriz de adyacencia',
+                   xaxis = list(title = 'PCA 1'),
+                   yaxis = list(title = 'PCA 2'),
+                   hovermode = 'closest',
+                   plot_bgcolor = "white",
+                   font = list(family = "Arial"),
+                   showlegend = FALSE) %>%
+            # Add annotations for each point
+            add_annotations(data = pca.comp, x = ~PC1, y = ~PC2, text = ~constructs,
+                            showarrow = FALSE, xanchor = 'center', yanchor = 'bottom', font = list(size = 12))
+
+# Muestra la gráfica
+pca.plot
+
+```
+## Análisis por conglomerados
+
+### Determinación de número óptimo de conglomerados
+
+```{r num_clusters, fig.width = 10, fig.height = 10}
+
+# Coordenadas de los constructos en espacio P-H
+test.dist <- GridFCM.practicum::ph_index(wimp = wimp, method = "weight", std = FALSE)
+rownames(test.dist) <- as.character(wimp$constructs$right.poles)
+
+# Matriz de distancias entre los constructos
+distancias <- dist(test.dist, method = "euclidean")
+
+# Cáclulo de número de conglomerados por coeficiente de la silueta-----
+# Vector para guardar los promerios de los coeficientes de silueta
+sil.widths <- numeric()
+
+# Número máximo de clusters a evaluar. Acotamos, como máximo, al número de constructos disponible menos 1 
+max.clusters <- length(wimp$constructs$constructs) - 1
+
+# Calculamos PAM y el coeficiente de silueta para diferentes números de clusters
+for(j in 2:max.clusters) {
+  pam.stp <- pam(distancias, j)
+  sil.stp <- silhouette(pam.stp)
+  sil.widths[j] <- mean(sil.stp[, "sil_width"])
+}
+
+# Identificar el número de clusters que maximiza el coeficiente de silueta
+k <- which.max(sil.widths)
+k
+```
+Tenemos un número máximo de **`r k` conglomerados** en nuestros datos.
+
+### Dendrograma
+
+```{r dendron, fig.width = 10, fig.height = 10}
+
+# Paleta de colores en escala de verdes
+#paleta.verdes <- viridis(n = k, option = "viridis")
+#paleta.verdes <- rev(brewer.pal(n = k, name = "Greens"))
+#paleta.verdes <- sapply(paleta.verdes, function(color) RColorBrewer::adjustcolor(color, brightness = 0.5))
+paleta.verdes <- c("#003300","#008000", "#3CB371")
+
+#Dendrograma
+modelo.hclust <- hcut(distancias, k = k, stand = TRUE)
+fviz_dend(modelo.hclust, rect = TRUE, cex = 0.7,
+          k_colors = paleta.verdes,horiz = TRUE,
+          main = 'Dendrograma de constructos por distancia en P-H')
+          
 ```
