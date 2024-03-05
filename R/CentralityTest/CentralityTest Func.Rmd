@@ -306,6 +306,15 @@ wp3 <- graph_ph(test.bp.wmahalanobis.se, mark.nva = TRUE, mark.cnt = TRUE)
 wp3
 ```
 
+#### Sin estandarización  - plotly sin marcar area de coordenadas no viables. Sin puntos
+
+```{r rep_mh_psychlab_se_sp, fig.width = 10, fig.height = 10}
+
+wp3.sp <- graph_ph(test.bp.wmahalanobis.se, mark.nva = TRUE, mark.cnt = TRUE, show.points = FALSE)
+
+wp3.sp
+```
+
 #### Sin estandarización - plotly sin marcar area de coordenadas no viables
 
 ```{r rep_psychlab_se_mh_plotly, fig.width = 10, fig.height = 10}

@@ -141,6 +141,8 @@ mahalanobis_index <- function(wimp, method = "weight", std = FALSE, sign.level =
 #'        Central constructs are depicted with a distinct color and symbol to differentiate them from
 #'        peripheral constructs.
 #'
+#' @param show.points Boolean value that specifies whether points should be displayed or not
+#'
 #' @return A Plotly object representing the generated scatter plot.
 #'
 #' @export
@@ -148,22 +150,18 @@ mahalanobis_index <- function(wimp, method = "weight", std = FALSE, sign.level =
 #' @examples
 #' graph_ph(phm.mat, mark.nva = TRUE, mark.cnt = TRUE)
 
-graph_ph <- function(phm.mat, mark.nva = TRUE, mark.cnt = TRUE) {
+graph_ph <- function(phm.mat, mark.nva = TRUE, mark.cnt = TRUE, show.points = TRUE) {
 
-  # Convert the matrix to dataframe
+  # Convert the matrix to a dataframe
   phm.mat.df <- as.data.frame(phm.mat)
-
-  # We assign the names of constructs from the names of the rows of the matrix
+  # Assign the names of constructs from the row names of the matrix
   phm.mat.df$constructo <- rownames(phm.mat)
-
-  # Colors of peripheral constructs (non-nuclear)
+  # Colors for the constructs (default: peripheral constructs are non-central)
   colors <- viridis::viridis(n = nrow(phm.mat.df), option = "viridis")
-
-  # Limits of the graph by the largest value of P or H dimensions. We add a small margin
+  # Limits for the graph by the largest value of P or H dimensions. We add a small margin
   limit <- max(abs(phm.mat.df$p), abs(phm.mat.df$h)) * 1.1
 
-  # We determine whether drawing or not non-viable coordinates area according to mark.nva param
-  # If param is FALSE, shapes is created as an empty list
+  # Shapes for non-viable area if requested
   shapes <- if (mark.nva) {
     list(
       list(type = "path", path = paste("M 0,0 L", limit, ",", limit, " L0,", limit, " Z"),
@@ -176,13 +174,14 @@ graph_ph <- function(phm.mat, mark.nva = TRUE, mark.cnt = TRUE) {
            xref = "x", yref = "y", line = list(color = "darkgreen", width = 1, dash = "dash"))
     )
   } else {
-    list()
+    list()  # No shapes if mark.nva is FALSE
   }
 
-  # Plotly Graphic
-  p <- plot_ly() %>%
+  # Initialize Plotly graph
+  p <- plot_ly()
 
-    # Graphic layout
+  # Set the layout of the graph
+  p <- p %>%
     layout(title = 'Gráfica de Dispersión de Constructos en el Espacio P - H',
            xaxis = list(title = 'P - Presencialidad (frecuencia del constructo)'),
            yaxis = list(title = 'H - Jerarquía (influencia del constructo)'),
@@ -191,22 +190,26 @@ graph_ph <- function(phm.mat, mark.nva = TRUE, mark.cnt = TRUE) {
            showlegend = FALSE,
            shapes = shapes)
 
-  # Add markers based on mark.cnt condition
-  if (mark.cnt) {
-    p <- p %>%
-      add_markers(data = phm.mat.df[phm.mat.df$central == 0, ], x = ~p, y = ~h,
-                  marker = list(color = colors, size = 10, line = list(color = 'black', width = 1))) %>%
-      add_markers(data = phm.mat.df[phm.mat.df$central == 1, ], x = ~p, y = ~h,
-                  marker = list(color = 'orangered', size = 12, symbol = "circle-dot", line = list(color = 'black', width = 1)))
-  } else {
-    p <- p %>%
-      add_markers(data = phm.mat.df, x = ~p, y = ~h,
-                  marker = list(color = colors, size = 10, line = list(color = 'black', width = 1)))
+  # Add points or not based on show.points parameter
+  if (show.points) {
+    if (mark.cnt) {
+      p <- p %>%
+        add_markers(data = phm.mat.df[phm.mat.df$central == 0, ], x = ~p, y = ~h,
+                    marker = list(color = colors, size = 10, line = list(color = 'black', width = 1))) %>%
+        add_markers(data = phm.mat.df[phm.mat.df$central == 1, ], x = ~p, y = ~h,
+                    marker = list(color = 'orangered', size = 12, symbol = "circle-dot", line = list(color = 'black', width = 1)))
+    } else {
+      p <- p %>%
+        add_markers(data = phm.mat.df, x = ~p, y = ~h,
+                    marker = list(color = colors, size = 10, line = list(color = 'black', width = 1)))
+    }
   }
 
-  # Add annotations for each point
-  p <- p %>% add_annotations(data = phm.mat.df, x = ~p, y = ~h, text = ~constructo,
-                             showarrow = FALSE, xanchor = 'center', yanchor = 'bottom', font = list(size = 12))
+  # Add annotations (labels) for each point with color condition
+  p <- p %>%
+    add_annotations(data = phm.mat.df, x = ~p, y = ~h, text = ~constructo,
+                    font = list(size = 12, color = ifelse(phm.mat.df$central == 1 & mark.cnt, 'red', 'black')),
+                    showarrow = FALSE, xanchor = 'center', yanchor = 'bottom')
 
   return(p)
 }
