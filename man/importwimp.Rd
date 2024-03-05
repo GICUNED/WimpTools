@@ -9,7 +9,7 @@ importwimp(path, sheet = 1, opr = TRUE)
 \arguments{
 \item{path}{Path to the excel file on your computer. The file suffix has to be .xlsx.}
 
-\item{sheet}{Number of the Excel sheet that contains the WimpGrid data}
+\item{sheet}{Number of the Excel sheet that contains the WimpGrid data.}
 }
 \value{
 A wimp S3 object.
