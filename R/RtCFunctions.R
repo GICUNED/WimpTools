@@ -2,13 +2,18 @@
 
 # consyretr ---------------------------------------------------------------
 
-#' Calculation consequence and feedback
+#' Calculation of consequence and feedback for each construct
 #'
-#' @description
+#' @description This function calculates the number of consequences and feebacks
+#' for each construct to analyze resistance to change
+#'
 #' @param wimp
 #' @param std
 #'
-#' @return
+#' @return Returns a dataframe with number of consequences and feedbacks
+#'
+#' @import
+#'
 #' @export
 #'
 #' @examples
