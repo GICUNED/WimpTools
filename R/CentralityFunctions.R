@@ -161,6 +161,12 @@ graph_ph <- function(phm.mat, mark.nva = TRUE, mark.cnt = TRUE, show.points = TR
   # Limits for the graph by the largest value of P or H dimensions. We add a small margin
   limit <- max(abs(phm.mat.df$p), abs(phm.mat.df$h)) * 1.1
 
+  # Add a new column for label color
+  if (mark.cnt)
+    phm.mat.df$label.color <- ifelse(phm.mat.df$central == 1, 'red', 'black')
+  else
+    phm.mat.df$label.color <- 'black'
+
   # Shapes for non-viable area if requested
   shapes <- if (mark.nva) {
     list(
@@ -205,11 +211,10 @@ graph_ph <- function(phm.mat, mark.nva = TRUE, mark.cnt = TRUE, show.points = TR
     }
   }
 
-  # Add annotations (labels) for each point with color condition
-  p <- p %>%
-    add_annotations(data = phm.mat.df, x = ~p, y = ~h, text = ~constructo,
-                    font = list(size = 12, color = ifelse(phm.mat.df$central == 1 & mark.cnt, 'red', 'black')),
-                    showarrow = FALSE, xanchor = 'center', yanchor = 'bottom')
+  # Add annotations (labels) for each point with central color
+  p <- p %>% add_annotations(data = phm.mat.df, x = ~p, y = ~h, text = ~constructo,
+                             font = list(size = 12, color = ~label.color),
+                             showarrow = FALSE, xanchor = 'center', yanchor = 'bottom')
 
   return(p)
 }
