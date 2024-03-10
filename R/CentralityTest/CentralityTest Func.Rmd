@@ -423,6 +423,24 @@ k
 ```
 Tenemos un número máximo de **`r k` conglomerados** en nuestros datos.
 
+### Representación de números de conglomerados óptimo
+
+```{r graph_num_clusters, fig.width = 12, fig.height = 8}
+
+# Lista que albergará las distintas gráficas de silueta
+lista.graf.sil <- list()
+
+# Preparamos una lista con diversas representaciones gráficas de siluetas (de 2 a 10 clústeres)
+for(j in 2:10){
+  it.pam <- cluster::pam(distancias, j, diss = TRUE)
+  p <- factoextra::fviz_silhouette(it.pam, label = FALSE, print.summary = FALSE)
+  lista.graf.sil[[j-1]] <- p
+}
+
+# Organizar los gráficos en una matriz de 4x3, y los presentamos
+gridExtra::grid.arrange(grobs = lista.graf.sil, ncol = 3, nrow = 4)
+```
+
 ### Dendrograma
 
 ```{r dendron, fig.width = 10, fig.height = 10}
