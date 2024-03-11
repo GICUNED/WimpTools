@@ -421,17 +421,19 @@ for(j in 2:max.clusters) {
 k <- which.max(sil.widths)
 k
 ```
-Tenemos un número máximo de **`r k` conglomerados** en nuestros datos.
+Tenemos un número máximo de **`r k` conglomerados** en nuestros datos, obteniendo en ese caso un **valor medio de anchura de silueta** de **`r sil.widths[k]`**
 
 ### Representación de números de conglomerados óptimo
 
-```{r graph_num_clusters, fig.width = 12, fig.height = 8}
+Adecuación de **cohesión** y **separación** de cada punto según pertenezca a distintos conglomerados:
+
+```{r graph_num_clusters, fig.width = 12, fig.height = 16}
 
 # Lista que albergará las distintas gráficas de silueta
 lista.graf.sil <- list()
 
 # Preparamos una lista con diversas representaciones gráficas de siluetas (de 2 a 10 clústeres)
-for(j in 2:10){
+for(j in 2:13){
   it.pam <- cluster::pam(distancias, j, diss = TRUE)
   p <- factoextra::fviz_silhouette(it.pam, label = FALSE, print.summary = FALSE)
   lista.graf.sil[[j-1]] <- p

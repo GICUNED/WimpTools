@@ -161,6 +161,10 @@ graph_ph <- function(phm.mat, mark.nva = TRUE, mark.cnt = TRUE, show.points = TR
   # Limits for the graph by the largest value of P or H dimensions. We add a small margin
   limit <- max(abs(phm.mat.df$p), abs(phm.mat.df$h)) * 1.1
 
+  # Round P and H values
+  phm.mat.df$p <- round(phm.mat.df$p, 3)
+  phm.mat.df$h <- round(phm.mat.df$h, 3)
+
   # Add a new column for label color
   if (mark.cnt)
     phm.mat.df$label.color <- ifelse(phm.mat.df$central == 1, 'red', 'black')
@@ -201,20 +205,32 @@ graph_ph <- function(phm.mat, mark.nva = TRUE, mark.cnt = TRUE, show.points = TR
     if (mark.cnt) {
       p <- p %>%
         add_markers(data = phm.mat.df[phm.mat.df$central == 0, ], x = ~p, y = ~h,
-                    marker = list(color = colors, size = 10, line = list(color = 'black', width = 1))) %>%
+                    marker = list(color = colors, size = 10, line = list(color = 'black', width = 1)),
+                    text = ~paste('P:', p, '; H:', h), hoverinfo = 'text') %>%
         add_markers(data = phm.mat.df[phm.mat.df$central == 1, ], x = ~p, y = ~h,
-                    marker = list(color = 'orangered', size = 12, symbol = "circle-dot", line = list(color = 'black', width = 1)))
+                    marker = list(color = 'orangered', size = 12, symbol = "circle-dot", line = list(color = 'black', width = 1)),
+                    text = ~paste('P:', p, '; H:', h), hoverinfo = 'text')
     } else {
       p <- p %>%
         add_markers(data = phm.mat.df, x = ~p, y = ~h,
-                    marker = list(color = colors, size = 10, line = list(color = 'black', width = 1)))
+                    marker = list(color = colors, size = 10, line = list(color = 'black', width = 1)),
+                    text = ~paste('P:', p, '; H:', h), hoverinfo = 'text')
     }
   }
 
-  # Add annotations (labels) for each point with central color
-  p <- p %>% add_annotations(data = phm.mat.df, x = ~p, y = ~h, text = ~constructo,
-                             font = list(size = 12, color = ~label.color),
-                             showarrow = FALSE, xanchor = 'center', yanchor = 'bottom')
+  # Add annotations (labels) for each point
+  #p <- p %>% add_annotations(data = phm.mat.df, x = ~p, y = ~h, text = ~constructo,
+  #                           font = list(size = 12, color = ~label.color),
+  #                           showarrow = FALSE, xanchor = 'center', yanchor = 'bottom')
+
+  p <- p %>%
+    add_annotations(
+      data = phm.mat.df, x = ~p, y = ~h, text = ~constructo,
+      hovertext = ~paste('Constructo:', constructo, '\nP:', p, 'H:', h), hoverinfo = 'text',
+      #font = list(size = 12, color = ifelse(phm.mat.df$central == 1 & mark.cnt, 'red', 'black')),
+      font = list(size = 12, color = 'black'),
+      showarrow = FALSE, xanchor = 'center', yanchor = 'bottom'
+    )
 
   return(p)
 }
