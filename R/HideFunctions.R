@@ -2,12 +2,21 @@
 
 # Lineal Threshold Function -----------------------------------------------
 
+.thr <- function(x, method){
 
-.lineal.thr <- function(x){
+  if(method == "none"){
+    result <- x
+  }
 
-  if(x <= -1){ result <- -1}
-  if(-1 < x && x < 1){ result <- x}
-  if(x >= 1){ result <- 1}
+  if(method == "saturation"){
+    if(x <= -1){ result <- -1}
+    if(-1 < x && x < 1){ result <- x}
+    if(x >= 1){ result <- 1}
+  }
+
+  if(method == "tanh"){
+    result <- tanh(x)
+  }
 
   return(result)
 }
@@ -54,7 +63,7 @@
   right.poles <- old.right.poles
   right.poles[swap.indeces] <- old.left.poles[swap.indeces]
 
-  if(exclude.dilemmatics){
+  if(exclude.dilemmatics && length(dil.indeces) > 0){
     left.poles <- left.poles[-dil.indeces]
     right.poles <- right.poles[-dil.indeces]
   }
@@ -70,7 +79,7 @@
   self <- wimp$self$standarized
   self[swap.indeces] <- self[swap.indeces] * -1
 
-  if(exclude.dilemmatics){
+  if(exclude.dilemmatics && length(dil.indeces) > 0){
     self <- self[-dil.indeces]
   }
 
@@ -82,7 +91,7 @@
   ideal <- wimp$ideal$standarized
   ideal[swap.indeces] <- ideal[swap.indeces] * -1
 
-  if(exclude.dilemmatics){
+  if(exclude.dilemmatics && length(dil.indeces) > 0){
     ideal <- ideal[-dil.indeces]
   }
 
@@ -94,7 +103,7 @@
   hypothetical <- wimp$hypothetical$standarized
   hypothetical[swap.indeces] <- hypothetical[swap.indeces] * -1
 
-  if(exclude.dilemmatics){
+  if(exclude.dilemmatics && length(dil.indeces) > 0){
     hypothetical <- hypothetical[-dil.indeces]
   }
 
@@ -112,7 +121,7 @@
   weights[swap.indeces,] <- weights[swap.indeces,] * -1
   weights[,swap.indeces] <- weights[,swap.indeces] * -1
 
-  if(exclude.dilemmatics){
+  if(exclude.dilemmatics && length(dil.indeces) > 0){
     implications <- implications[-dil.indeces,]
     implications <- implications[,-dil.indeces]
 
@@ -130,9 +139,6 @@
   return(wimp)
 }
 
-
-
-
 # Hypothetical calculation ------------------------------------------------
 
 .calc.hypo <- function(self, ideal) {
@@ -145,4 +151,20 @@
   } else if (self == 0 && (0 %in% ideal)) {
     return(1)
   }
+}
+
+# Dilemmatics detection ---------------------------------------------------
+
+.which.dilemmatics <- function(wimp){
+  ideal <- wimp$ideal[[2]]
+  dil.indeces <- which(ideal == 0)
+  return(dil.indeces)
+}
+
+
+# PCSD Y-Axis label -------------------------------------------------------
+
+.label.y <- function(infer){
+  if(infer == "self dynamics"){return("SELF DIFFERENTIAL")}
+  if(infer == "adjustment dynamics"){return("ADJUSTMENT IMPACT")}
 }
