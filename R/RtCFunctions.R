@@ -13,7 +13,7 @@
 #'
 #' @return Returns a dataframe with numbers of consequences and feedbacks
 #'
-#' @import
+#'
 #'
 #' @export
 #'
@@ -26,6 +26,7 @@ cq.fb_index <- function(wimp, std=FALSE) {
   consequence <- apply (wmatrix, MARGIN = 1, FUN = sum)
   feedback <- wmatrix * t (wmatrix)
   feedback <- apply (feedback, MARGIN = 1, FUN = sum)
+
   result <- data.frame (feedback , consequence)
   return(result)
   }
