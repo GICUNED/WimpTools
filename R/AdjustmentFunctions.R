@@ -1,5 +1,13 @@
 ## EMOTIONAL ADJUSTMENT ##
 
+#' Title
+#'
+#' @param wimp
+#'
+#' @return
+#' @export
+#'
+#' @examples
 Adjustment_self_ideal <- function(wimp) {
   # Get ideal and self vectors from wimp variable
   vector_ideal <- wimp$ideal[[2]]
@@ -14,8 +22,23 @@ Adjustment_self_ideal <- function(wimp) {
   # Calculate the correlation between the vectors (cosine)
   correlation <- sum(vector_ideal * vector_self) / (sqrt(sum(vector_ideal^2)) * sqrt(sum(vector_self^2)))
 
+  #Return data
+  return(list(normalized_distance = normalized_distance, correlation = correlation))
+}
+
+
+#' Title
+#'
+#' @return
+#' @export
+#'
+#' @examples
+graph_adjustment <- function(wimp) {
+
+  graphic_vector_data <- Adjustment_self_ideal(wimp)
+
   # Set up the graphic vector with origin (1,0)
-  graphic_vector <- c(1, 0, correlation, normalized_distance)
+  graphic_vector <- c(1, 0, graphic_vector_data$correlation, graphic_vector_data$normalized_distance)
 
   # Set graphic for ideal and self vectors
   plot(c(0, vector_ideal[1], vector_self[1]), c(0, vector_ideal[2], vector_self[2]), type = "n", xlab = "Coordenada X", ylab = "Coordenada Y", asp = 1, xlim = c(0, max(vector_ideal[1], vector_self[1]) + 1), ylim = c(0, max(vector_ideal[2], vector_self[2]) + 1))
@@ -28,7 +51,4 @@ Adjustment_self_ideal <- function(wimp) {
   plot(c(0, 1.5), c(0, 1.5), type = "n", xlab = "Correlation", ylab = "Normalized Distance", asp = 1, xlim = c(0, 1.5), ylim = c(0, 1.5))
   arrows(1, 0, correlation, normalized_distance, col = "blue", length = 0.1)
   text(1.2, 0.1, "Vector (1,0) to (correlation, normalized_distance)", col = "blue")
-
-  #Return data
-  return(list(normalized_distance = normalized_distance, correlation = correlation, graphic = graphic_vector))
 }
