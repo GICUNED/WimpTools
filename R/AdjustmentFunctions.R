@@ -1,13 +1,15 @@
+
 ## EMOTIONAL ADJUSTMENT ##
+
+# calculate_adjustment_self_ideal ------------------------------------------------------------
+#'
+#' This function calculates the Ecuclidean distance and the correlation between the ideal vector and self vector.
 #'
 #' @param wimp Object containing ideal and self vectors.
 #' @param normalize Logical. If TRUE, normalize the distance; otherwise, use the raw Euclidean distance.
-#'
 #' @return A list with the calculated values: distance and correlation.
-#'
 #' @export
 #'
-
 calculate_adjustment_self_ideal <- function(wimp, normalize = TRUE) {
 
   # Get ideal and self vectors from the wimp variable
@@ -18,28 +20,28 @@ calculate_adjustment_self_ideal <- function(wimp, normalize = TRUE) {
   eu_distance <- sqrt(sum((vector_ideal - vector_self)^2))
 
   # Normalize the Euclidean distance if specified
-  normalized_distance <- if (normalize) eu_distance / (2 * sqrt(length(vector_ideal)))  else eu_distance
+  distance <- if (normalize) eu_distance / (2 * sqrt(length(vector_ideal)))  else eu_distance
 
   # Calculate the correlation between the vectors (cosine)
   correlation <- sum(vector_ideal * vector_self) / (sqrt(sum(vector_ideal^2)) * sqrt(sum(vector_self^2)))
 
   # General adjustment value (magnitude of the calculated vector)
-  magnitude <- if (normalize) 1 - (sqrt(correlation^2 + normalized_distance^2)) / sqrt(5) else NULL
+  magnitude <- if (normalize) 1 - (sqrt(correlation^2 + distance^2)) / sqrt(5) else NULL
 
   # Return the results
-  return(list(distance = normalized_distance, correlation = correlation, magnitude=magnitude))
+  return(list(distance = distance, correlation = correlation, magnitude=magnitude))
 }
 
+#' plot_adjustment_self_ideal -----------------------------------------------------------------
+#'
 #' Plot graphs for ideal, self, and adjustment vectors.
 #'
 #' @param wimp Object containing ideal and self vectors.
 #' @param calculated_values Results from the calculate_adjustment_self_ideal function. If empty get the wimp ones.
-#' @param normalize Logical. If TRUE, normalize the distance; otherwise, use the raw Euclidean distance.
-#'
 #' @return The graphic vector for further use.
 #'
 
-plot_adjustment_self_ideal <- function(wimp, calculated_values = list(), normalize = TRUE) {
+plot_adjustment_self_ideal <- function(wimp, calculated_values = list()) {
 
   # Get ideal and self vectors from the wimp variable
   vector_ideal <- wimp$ideal[[2]]
@@ -58,7 +60,7 @@ plot_adjustment_self_ideal <- function(wimp, calculated_values = list(), normali
   text(vector_ideal[1] + 0.1, vector_ideal[2], "Vector Ideal", col = "green")
   text(vector_self[1] + 0.1, vector_self[2], "Vector Self", col = "orange")
 
-  # Set graphic for adjustment vector: origin (1, 0) and end point (correlation, normalized_distance)
+  # Set graphic for adjustment vector: origin (1, 0) and end point (correlation, distance)
   plot(c(0, 1.5), c(0, 1.5), type = "n", xlab = "correlación", ylab = "distancia normalizada", asp = 1, xlim = c(-1, 1), ylim = c(0, 1.5))
   rect(-1, 0, 1, 1, density=20, col='red')
   rect(-0.5, 0, 1, 1, density=20, col='orange')
@@ -74,22 +76,23 @@ plot_adjustment_self_ideal <- function(wimp, calculated_values = list(), normali
 
 }
 
-#' Perform adjustment and self-ideal calculations, and plot corresponding graphs.
+#' Adjustment_self_ideal ---------------------------------------------------------------------------------------
+#'
+#' This function calculates the Ecuclidean distance and the correlation between the ideal vector and self vector and plot corresponding graphs.
 #'
 #' @param wimp Object containing ideal and self vectors.
 #' @param normalize Logical. If TRUE, normalize the distance; otherwise, use the raw Euclidean distance.
-#'
 #' @return A list with the calculated values and the graphic vector.
 #'
-#'
-Adjustment_self_ideal <- function(wimp, normalize = TRUE) {
 
+Adjustment_self_ideal <- function(wimp, normalize = TRUE) {
   # Calculate adjustment and self-ideal values
   calculated_values <- calculate_adjustment_self_ideal(wimp, normalize = normalize)
 
   # Plot the graphs
-  graphic_vector <- plot_adjustment_self_ideal(wimp, calculated_values, normalize = normalize)
+  graphic_vector <- plot_adjustment_self_ideal(wimp, calculated_values)
 
   # Return data
-  return(list(distance = calculated_values$distance, correlation = calculated_values$correlation, graphic = graphic_vector))
+  return(list(distance = calculated_values$distance, correlation = calculated_values$correlation, magnitude = calculated_values$magnitude, graphic = graphic_vector))
 }
+
