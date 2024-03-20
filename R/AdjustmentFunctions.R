@@ -51,23 +51,46 @@ plot_adjustment_self_ideal <- function(wimp, calculated_values = list()) {
   calculated_values <- if (length(calculated_values) == 0) calculate_adjustment_self_ideal(wimp) else calculated_values
   graphic_vector <- c(1, 0, calculated_values$correlation, calculated_values$distance)
 
+  #
   # Set graphic for ideal and self vector
-  plot(c(0, vector_ideal[1], vector_self[1]), c(0, vector_ideal[2], vector_self[2]), type = "n", xlab = "Coordenada X", ylab = "Coordenada Y", asp = 1, xlim = c(0, max(vector_ideal[1], vector_self[1]) + 1), ylim = c(0, max(vector_ideal[2], vector_self[2]) + 1))
+  #
+  plot(c(0, vector_ideal[1], vector_self[1]), c(0, vector_ideal[2], vector_self[2]), type = "n", xlab = "Coordenada X", ylab = "Coordenada Y", asp = 1, xlim = c(-(max(vector_ideal[1], vector_self[1]) + 1), max(vector_ideal[1], vector_self[1]) + 1), ylim = c(-(max(vector_ideal[2], vector_self[2]) + 1), max(vector_ideal[2], vector_self[2]) + 1))
 
-  arrows(0, 0, vector_ideal[1], vector_ideal[2], col = "green", length = 0.1)
-  arrows(0, 0, vector_self[1], vector_self[2], col = "orange", length = 0.1)
+  # Abscissa and ordinate axis
+  abline(v=c(0), lwd = 2, lty=c(1), col=c("black"))
+  abline(h=c(0), lwd = 2, lty=c(1), col=c("black"))
 
-  text(vector_ideal[1] + 0.1, vector_ideal[2], "Vector Ideal", col = "green")
-  text(vector_self[1] + 0.1, vector_self[2], "Vector Self", col = "orange")
+  rad     <- max(vector_ideal[2], vector_self[2]) + 1   # Valor del radio
+  xcenter <- 0  # Coordenada en x del centro
+  ycenter <- 0   # Coordenada en y del centro
+  theta <- seq(0, 2 * pi, length = 200)
+  polygon(x=rad * cos(theta) + xcenter,
+          y=rad * sin(theta) + ycenter,
+          lwd=3, border='steelblue4')
 
+  # Draw ideal and self vectors
+  arrows(0, 0, vector_ideal[1], vector_ideal[2], col = "blue", length = 0.1)
+  arrows(0, 0, vector_self[1], vector_self[2], col = "purple", length = 0.1)
+  text(vector_ideal[1] + 0.1, vector_ideal[2], "Vector Ideal", col = "blue")
+  text(vector_self[1] + 0.1, vector_self[2], "Vector Self", col = "purple")
+
+  #
+  #
   # Set graphic for adjustment vector: origin (1, 0) and end point (correlation, distance)
+  #
   plot(c(0, 1.5), c(0, 1.5), type = "n", xlab = "correlación", ylab = "distancia normalizada", asp = 1, xlim = c(-1, 1), ylim = c(0, 1.5))
+
+  # Draw the different adjustement areas
   rect(-1, 0, 1, 1, density=20, col='red')
   rect(-0.5, 0, 1, 1, density=20, col='orange')
   rect(0.25, 0, 1, 0.75, density=20, col='yellow')
   rect(0.75, 0, 1, 0.5, density=20, col='green')
+
+  # Define the margins of the graphic and the Abscissa and ordinate axis
   abline(v=c(-1,0,1), lwd = 2, lty=c(2,1,2), col=c("red","black","red"))
   abline(h=c(0,1), lwd = 2, lty=c(1,2), col=c("black","red"))
+
+  # Draw the final vector [(1,0), (correlation, stand. distance)]
   arrows(1, 0, calculated_values$correlation, calculated_values$distance, col = "blue", length = 0.1)
   text(1.2, 0.1, "Vector (1,0) a (correlación, distancia_normalizada)", col = "blue")
 
