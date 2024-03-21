@@ -66,25 +66,25 @@ plot_adjustment_self_ideal <- function(wimp, calculated_values = list(), filtere
   #
   # Set graphic for ideal and self vector
   #
-  plot(c(0, vector_ideal[1], vector_self[1]), c(0, vector_ideal[2], vector_self[2]), type = "n", xlab = "Coordenada X", ylab = "Coordenada Y", asp = 1, xlim = c(-(max(vector_ideal[1], vector_self[1]) + 1), max(vector_ideal[1], vector_self[1]) + 1), ylim = c(-(max(vector_ideal[2], vector_self[2]) + 1), max(vector_ideal[2], vector_self[2]) + 1))
 
-  # Abscissa and ordinate axis
-  abline(v=c(0), lwd = 2, lty=c(1), col=c("black"))
-  abline(h=c(0), lwd = 2, lty=c(1), col=c("black"))
+  result <- c(45, 45, 45, 45, 45, 45, 45, 45)
+  colors <- c("green", "yellow","orange", "red", "red", "orange","yellow", "green" )
 
-  rad     <- 1   # Valor del radio
-  xcenter <- 0  # Coordenada en x del centro
-  ycenter <- 0   # Coordenada en y del centro
-  theta <- seq(0, 2 * pi, length = 200)
-  polygon(x=rad * cos(theta) + xcenter,
-          y=rad * sin(theta) + ycenter,
-          lwd=3, border='steelblue4')
+  # if labels and no legend
+  alabels <- c("muy buen ajuste","buen ajuste","mal ajuste","muy mal ajuste",
+              "muy mal ajuste","mal ajuste","buen ajuste","muy buen ajuste")
+  pie(result, main="Nivel de ajuste I", init.angle = 90, radius = 1, col=colors, labels=alabels)
+
+  # if legend and no labels:
+  #pie(result, main="Nivel de ajuste I", init.angle = 90, radius = 1, col=colors, labels=c(""))
+  # draw the legend
+  #legend(-2, 1, c("muy buen ajuste", "buen ajuste", "mal ajuste","muy mal ajuste"), fill=c("green", "yellow","orange", "red"))
 
   # Draw ideal and self vectors
-  arrows(0, 0, vector_ideal_x, vector_ideal_y, col = "blue", length = 0.1)
-  arrows(0, 0, vector_self_x, vector_self_y, col = "purple", length = 0.1)
-  text(vector_ideal_x + 0.2, vector_ideal_y + 0.2, "Vector Ideal", col = "blue")
-  text(vector_self_x + 0.2, vector_self_y + 0.2, "Vector Self", col = "purple")
+  arrows(0, 0, vector_ideal_x, vector_ideal_y, col = "blue", length = 0.1, lwd = 4)
+  arrows(0, 0, vector_self_x, vector_self_y, col = "purple", length = 0.1,lwd = 4)
+  text(-0, 0.5, expression(bold("Vector Ideal")), col = "blue")
+  text(vector_self_x + 0.2, vector_self_y + 0.2, expression(bold("Vector Self")), col = "purple")
 
   #
   #
