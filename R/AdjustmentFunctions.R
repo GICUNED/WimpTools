@@ -38,18 +38,30 @@ calculate_adjustment_self_ideal <- function(wimp, normalize = TRUE) {
 #'
 #' @param wimp Object containing ideal and self vectors.
 #' @param calculated_values Results from the calculate_adjustment_self_ideal function. If empty get the wimp ones.
+#' @param filtered_constructs In case we want to use only specific values (e.g use nuclear constructs only). The function is
+#'        set to get a list with two vectors with the standardized ideal and self values "vector_ideal" and "vector_self".
 #' @return The graphic vector for further use.
 #'
 
-plot_adjustment_self_ideal <- function(wimp, calculated_values = list()) {
+plot_adjustment_self_ideal <- function(wimp, calculated_values = list(), filtered_constructs = list()) {
 
-  # Get ideal and self vectors from the wimp variable
-  vector_ideal <- wimp$ideal[[2]]
-  vector_self <- wimp$self[[2]]
+  # Get ideal and self vectors
+  vector_ideal <- if (length(filtered_constructs) == 0) wimp$ideal[[2]] else filtered_constructs$vector_ideal
+  vector_self <- if (length(filtered_constructs) == 0) wimp$self[[2]] else filtered_constructs$vector_self
 
   # Get the calculated graphic vector
   calculated_values <- if (length(calculated_values) == 0) calculate_adjustment_self_ideal(wimp) else calculated_values
   graphic_vector <- c(1, 0, calculated_values$correlation, calculated_values$distance)
+
+  # Set ideal and self vectors values for the plot
+  vector_ideal_norm <- norm(vector_ideal, type="2")
+  vector_self_norm <- norm(vector_self, type="2")
+  n <- length (vector_ideal)
+  vector_ideal_x <- 0
+  vector_ideal_y <- vector_ideal_norm / sqrt(n)
+  theta <- acos(calculated_values$correlation) #radians
+  vector_self_x <- vector_self_norm * sin(theta) / sqrt(n)
+  vector_self_y <- vector_self_norm * calculated_values$correlation / sqrt(n)
 
   #
   # Set graphic for ideal and self vector
@@ -60,7 +72,7 @@ plot_adjustment_self_ideal <- function(wimp, calculated_values = list()) {
   abline(v=c(0), lwd = 2, lty=c(1), col=c("black"))
   abline(h=c(0), lwd = 2, lty=c(1), col=c("black"))
 
-  rad     <- max(vector_ideal[2], vector_self[2]) + 1   # Valor del radio
+  rad     <- 1   # Valor del radio
   xcenter <- 0  # Coordenada en x del centro
   ycenter <- 0   # Coordenada en y del centro
   theta <- seq(0, 2 * pi, length = 200)
@@ -69,10 +81,10 @@ plot_adjustment_self_ideal <- function(wimp, calculated_values = list()) {
           lwd=3, border='steelblue4')
 
   # Draw ideal and self vectors
-  arrows(0, 0, vector_ideal[1], vector_ideal[2], col = "blue", length = 0.1)
-  arrows(0, 0, vector_self[1], vector_self[2], col = "purple", length = 0.1)
-  text(vector_ideal[1] + 0.1, vector_ideal[2], "Vector Ideal", col = "blue")
-  text(vector_self[1] + 0.1, vector_self[2], "Vector Self", col = "purple")
+  arrows(0, 0, vector_ideal_x, vector_ideal_y, col = "blue", length = 0.1)
+  arrows(0, 0, vector_self_x, vector_self_y, col = "purple", length = 0.1)
+  text(vector_ideal_x + 0.2, vector_ideal_y + 0.2, "Vector Ideal", col = "blue")
+  text(vector_self_x + 0.2, vector_self_y + 0.2, "Vector Self", col = "purple")
 
   #
   #
