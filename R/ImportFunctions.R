@@ -75,6 +75,9 @@ importwimp <- function(path, sheet = 1, opr = TRUE){
   ind.congruent <- which((standarized.ideal/standarized.self > 0) & !is.infinite(standarized.ideal/standarized.self))
   ind.discrepant <- which((standarized.ideal/standarized.self < 0) & !is.infinite(standarized.ideal/standarized.self))
 
+  self.poles <- mapply(.self.poles, standarized.self,left.poles,right.poles)
+
+  wimp$constructs$self.poles <- self.poles
   wimp$constructs$congruents <- ind.congruent
   wimp$constructs$discrepants <- ind.discrepant
   wimp$constructs$dilemmatics <- ind.dilemmatics
