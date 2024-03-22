@@ -80,34 +80,27 @@ plot_adjustment_self_ideal <- function(wimp, calculated_values = list(), filtere
   # draw the legend
   #legend(-2, 1, c("muy buen ajuste", "buen ajuste", "mal ajuste","muy mal ajuste"), fill=c("green", "yellow","orange", "red"))
 
-  rad     <- 2 * vector_ideal_y  # Valor del radio
-  xcenter <- 0  # Coordenada en x del centro
-  ycenter <- vector_ideal_y   # Coordenada en y del centro
+  #circumferences aroud ideal vector
+  xcenter <- 0
+  ycenter <- vector_ideal_y
   theta <- seq(0, 2 * pi, length = 200)
+
+  rad     <- 2 * vector_ideal_y
   polygon(x=rad * cos(theta) + xcenter,
           y=rad * sin(theta) + ycenter,
           lwd=3, lty="solid", border='firebrick')
 
-  rad     <- 1.5 * vector_ideal_y   # Valor del radio
-  xcenter <- 0  # Coordenada en x del centro
-  ycenter <- vector_ideal_y   # Coordenada en y del centro
-  theta <- seq(0, 2 * pi, length = 200)
+  rad     <- 1.5 * vector_ideal_y
   polygon(x=rad * cos(theta) + xcenter,
           y=rad * sin(theta) + ycenter,
           lwd=3, lty="dashed", border='darkorange1')
 
-  rad     <- vector_ideal_y   # Valor del radio
-  xcenter <- 0  # Coordenada en x del centro
-  ycenter <- vector_ideal_y   # Coordenada en y del centro
-  theta <- seq(0, 2 * pi, length = 200)
+  rad     <- vector_ideal_y
   polygon(x=rad * cos(theta) + xcenter,
           y=rad * sin(theta) + ycenter,
           lwd=3, lty="dotted", border='khaki4')
 
-  rad     <- 0.5 * vector_ideal_y   # Valor del radio
-  xcenter <- 0  # Coordenada en x del centro
-  ycenter <- vector_ideal_y   # Coordenada en y del centro
-  theta <- seq(0, 2 * pi, length = 200)
+  rad     <- 0.5 * vector_ideal_y
   polygon(x=rad * cos(theta) + xcenter,
           y=rad * sin(theta) + ycenter,
           lwd=3, lty="twodash", border='darkgreen')
