@@ -7,14 +7,32 @@
 #'
 #' @param wimp Object containing ideal and self vectors.
 #' @param normalize Logical. If TRUE, normalize the distance; otherwise, use the raw Euclidean distance.
+#' @param filtered_constructs In case we want to use only specific values (e.g use nuclear constructs only). Vector with 0s and 1s.
+#'Only the values from the 'vector_ideal' and 'vector_self' vectors at positions where there is a 1 will be included.
+#'By default, the 'vector_ideal' and 'vector_self' vectors are kept.#'
 #' @return A list with the calculated values: distance and correlation.
+#' @examples calculate_adjustment_self_ideal (wimp,TRUE,c(1,1,0,0,1,0,1,0))
 #' @export
-#'
-calculate_adjustment_self_ideal <- function(wimp, normalize = TRUE) {
+
+calculate_adjustment_self_ideal <- function(wimp, normalize = TRUE, filtered_constructs) {
 
   # Get ideal and self vectors from the wimp variable
   vector_ideal <- wimp$ideal[[2]]
   vector_self <- wimp$self[[2]]
+
+
+  # Use only filtered_constructs:
+  if (length(filtered_constructs) != 0) {
+    n <- length(filtered_constructs)
+    elems <- 1:n
+
+    for (i in elems) {
+      if (filtered_constructs[n+1-i] == 0) {
+        vector_ideal <- vector_ideal[-n-1+i]
+        vector_self <- vector_self[-n-1+i]
+      }
+    }
+  }
 
   # Calculate the euclidean distance between both vectors
   eu_distance <- sqrt(sum((vector_ideal - vector_self)^2))
@@ -23,7 +41,7 @@ calculate_adjustment_self_ideal <- function(wimp, normalize = TRUE) {
   distance <- if (normalize) eu_distance / (2 * sqrt(length(vector_ideal)))  else eu_distance
 
   # Calculate the correlation between the vectors (cosine)
-  correlation <- sum(vector_ideal * vector_self) / (sqrt(sum(vector_ideal^2)) * sqrt(sum(vector_self^2)))
+  correlation <- sum(vector_ideal * vector_self) / (norm(vector_ideal, type = "2") * norm(vector_self, type = "2"))
 
   # General adjustment value (magnitude of the calculated vector)
   magnitude <- if (normalize) 1 - (sqrt(correlation^2 + distance^2)) / sqrt(5) else NULL
@@ -46,8 +64,23 @@ calculate_adjustment_self_ideal <- function(wimp, normalize = TRUE) {
 plot_adjustment_self_ideal <- function(wimp, calculated_values = list(), filtered_constructs = list()) {
 
   # Get ideal and self vectors
-  vector_ideal <- if (length(filtered_constructs) == 0) wimp$ideal[[2]] else filtered_constructs$vector_ideal
-  vector_self <- if (length(filtered_constructs) == 0) wimp$self[[2]] else filtered_constructs$vector_self
+
+  vector_ideal <- wimp$ideal[[2]]
+  vector_self <- wimp$self[[2]]
+
+
+  # Use only filtered_constructs:
+  if (length(filtered_constructs) != 0) {
+    n <- length(filtered_constructs)
+    elems <- 1:n
+
+    for (i in elems) {
+      if (filtered_constructs[n + 1 - i] == 0) {
+        vector_ideal <- vector_ideal[-n - 1 + i]
+        vector_self <- vector_self[-n - 1 + i]
+      }
+    }
+  }
 
   # Get the calculated graphic vector
   calculated_values <- if (length(calculated_values) == 0) calculate_adjustment_self_ideal(wimp) else calculated_values
