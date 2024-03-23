@@ -85,22 +85,22 @@ plot_adjustment_self_ideal <- function(wimp, calculated_values = list(), filtere
   ycenter <- vector_ideal_y
   theta <- seq(0, 2 * pi, length = 200)
 
-  rad     <- 2 * vector_ideal_y
+  rad     <- vector_ideal_y + 1
   polygon(x=rad * cos(theta) + xcenter,
           y=rad * sin(theta) + ycenter,
           lwd=3, lty="solid", border='firebrick')
 
-  rad     <- 1.5 * vector_ideal_y
+  rad     <- 0.75 * (vector_ideal_y + 1)
   polygon(x=rad * cos(theta) + xcenter,
           y=rad * sin(theta) + ycenter,
           lwd=3, lty="dashed", border='darkorange1')
 
-  rad     <- vector_ideal_y
+  rad     <- 0.5 * (vector_ideal_y + 1)
   polygon(x=rad * cos(theta) + xcenter,
           y=rad * sin(theta) + ycenter,
           lwd=3, lty="dotted", border='khaki4')
 
-  rad     <- 0.5 * vector_ideal_y
+  rad     <- 0.25 * (vector_ideal_y + 1)
   polygon(x=rad * cos(theta) + xcenter,
           y=rad * sin(theta) + ycenter,
           lwd=3, lty="twodash", border='darkgreen')
