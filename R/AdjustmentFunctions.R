@@ -128,7 +128,13 @@ plot_adjustment_self_ideal <- function(wimp, calculated_values = list(), filtere
   abline(h=c(0,1), lwd = 2, lty=c(1,2), col=c("black","red"))
 
   # Draw the final vector [(1,0), (correlation, stand. distance)]
-  arrows(1, 0, calculated_values$correlation, calculated_values$distance, col = "blue", length = 0.1)
+    tolerance <- 1e-10  # Define a small tolerance
+    if (abs(calculated_values$correlation - 1) < tolerance && calculated_values$distance==0){
+    points(1, 0, col = "blue", pch = 16, cex = 1.2)}
+  else{
+    arrows(1, 0, calculated_values$correlation, calculated_values$distance, col = "blue", length = 0.1)
+  }
+
   text(1.2, 0.1, "Vector (1,0) a (correlación, distancia_normalizada)", col = "blue")
 
   # Return the graphic vector for further use if needed
