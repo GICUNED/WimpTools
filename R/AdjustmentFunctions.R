@@ -14,7 +14,7 @@
 #' @examples calculate_adjustment_self_ideal (wimp,TRUE,c(1,1,0,0,1,0,1,0))
 #' @export
 
-calculate_adjustment_self_ideal <- function(wimp, normalize = TRUE, filtered_constructs) {
+calculate_adjustment_self_ideal <- function(wimp, normalize = TRUE, filtered_constructs = c(1)) {
 
   # Get ideal and self vectors from the wimp variable
   vector_ideal <- wimp$ideal[[2]]
@@ -61,7 +61,7 @@ calculate_adjustment_self_ideal <- function(wimp, normalize = TRUE, filtered_con
 #' @return The graphic vector for further use.
 #'
 
-plot_adjustment_self_ideal <- function(wimp, calculated_values = list(), filtered_constructs = list()) {
+plot_adjustment_self_ideal <- function(wimp, calculated_values = list(), filtered_constructs = c(1)) {
 
   # Get ideal and self vectors
 
@@ -184,12 +184,12 @@ plot_adjustment_self_ideal <- function(wimp, calculated_values = list(), filtere
 #' @return A list with the calculated values and the graphic vector.
 #'
 
-Adjustment_self_ideal <- function(wimp, normalize = TRUE) {
+Adjustment_self_ideal <- function(wimp, normalize = TRUE, filtered_constructs = c(1)) {
   # Calculate adjustment and self-ideal values
-  calculated_values <- calculate_adjustment_self_ideal(wimp, normalize = normalize)
+  calculated_values <- calculate_adjustment_self_ideal(wimp, normalize = normalize, filtered_constructs = filtered_constructs )
 
   # Plot the graphs
-  graphic_vector <- plot_adjustment_self_ideal(wimp, calculated_values)
+  graphic_vector <- plot_adjustment_self_ideal(wimp, calculated_values, filtered_constructs = filtered_constructs)
 
   # Return data
   return(list(distance = calculated_values$distance, correlation = calculated_values$correlation, magnitude = calculated_values$magnitude, graphic = graphic_vector))
