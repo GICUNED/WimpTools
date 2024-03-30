@@ -4,7 +4,7 @@
 \alias{ph_index}
 \title{Calculate Presence and Hierarchy Indices}
 \usage{
-ph_index(wimp, method = "weight", std = FALSE)
+ph_index(wimp, method = "weight", std = "none")
 }
 \arguments{
 \item{wimp}{An object of class 'wimp', which contains an implication grid

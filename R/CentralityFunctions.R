@@ -28,7 +28,7 @@
 #' ph_indices_wnorm_non_std <- ph_index(wimp, method = "wnorm", std = FALSE)
 #'
 
-ph_index <- function(wimp, method = "weight", std = FALSE){
+ph_index <- function(wimp, method = "weight", std = 'none'){
 
   # Connectivity of constructs
   c.io <- degree_index(wimp, method = method)
@@ -47,11 +47,51 @@ ph_index <- function(wimp, method = "weight", std = FALSE){
   ph.mat <- in.out %*% t(coef.matrix)
   colnames(ph.mat) <- c("p", "h")
 
-  # Standardization based on number of graph edges
-  if (std){
-    #max.total.deg <- max(c.io[, 3])
-    edges <- sum(c.io[, 2])
-    ph.mat <- ph.mat / edges
+  if (std == 'vertices'){
+    vertices <- length(wimp$constructs$constructs)
+
+    coef.max.p <- 2*coef*(vertices-1)
+    coef.max.h <- coef*(vertices-1)
+
+    ph.mat[,"p"] <- ph.mat[,"p"]/coef.max.p
+    ph.mat[,"h"] <- ph.mat[,"h"]/coef.max.h
+
+  }else if (std == 'edges'){
+    c.direct.io <- degree_index(wimp, method = "simple")
+    c.direct.io <- c.direct.io[, c(2,1,3)]
+
+    edges <- sum(c.direct.io[, 2]) # The number of edges is the sum of all outgoing connections
+
+    coef.max.p <- edges * coef
+    coef.max.h <- edges * coef
+
+    ph.mat[,"p"] <- ph.mat[,"p"]/coef.max.p
+    ph.mat[,"h"] <- ph.mat[,"h"]/coef.max.h
+
+  }else if (std == 'max_edges'){
+    edges <- max((c.io[, 2])) # Max outgoing connections
+
+    coef.max.p <- edges
+    coef.max.h <- edges
+
+    ph.mat[,"p"] <- ph.mat[,"p"]/coef.max.p
+    ph.mat[,"h"] <- ph.mat[,"h"]/coef.max.h
+
+
+  }else if (std == "density"){
+    vertices <- length(wimp$constructs$constructs)
+
+    max.edges <- vertices * (vertices -1) # Maximum theoretical number of edges
+
+    c.direct.io <- degree_index(wimp, method = "simple")
+    c.direct.io <- c.direct.io[, c(2,1,3)]
+    total.edges <- sum(c.direct.io[, 2]) # The number of edges is the sum of all outgoing connections
+
+    dens <- total.edges/ max.edges
+
+    ph.mat[,"p"] <- ph.mat[,"p"]*dens
+    ph.mat[,"h"] <- ph.mat[,"h"]*dens
+
   }
 
   return(ph.mat)
@@ -85,7 +125,7 @@ ph_index <- function(wimp, method = "weight", std = FALSE){
 #' head(result)
 #'
 
-mahalanobis_index <- function(wimp, method = "weight", std = FALSE, sign.level = 0.2){
+mahalanobis_index <- function(wimp, method = "weight", std = 'none', sign.level = 0.2){
 
   # Obtain PH matrix associated to the wimp object
   ph.mat <- ph_index(wimp = wimp, method = method, std = std)
@@ -112,8 +152,9 @@ mahalanobis_index <- function(wimp, method = "weight", std = FALSE, sign.level =
   # Chi-Square Cutoff
   chi.square.cutoff <- qchisq(1 - sign.level, df)
 
-  # Annotate observations as "central" contructs based on the chi-square cutoff
-  central <- ifelse(phm.mat[,"m.dist"] > chi.square.cutoff, TRUE, FALSE)
+  # Annotate observations as "central" constructs based on the chi-square cutoff
+  # and being "to the right" on the P axis
+  central <- ifelse(phm.mat[,"m.dist"] > chi.square.cutoff & phm.mat[,"p"] > mean(phm.mat[,"p"]), TRUE, FALSE)
 
   # Add column to the results matrix
   phmc.mat <- cbind(phm.mat, central)
@@ -161,8 +202,6 @@ graph_ph <- function(..., mark.nva = TRUE, mark.cnt = TRUE, show.points = TRUE) 
   phm.mat.df <- as.data.frame(phm.mat)
   # Assign the names of constructs from the row names of the matrix
   phm.mat.df$constructo <- rownames(phm.mat)
-  # Colors for the constructs (default: peripheral constructs are non-central)
-  colors <- viridis::viridis(n = nrow(phm.mat.df), option = "viridis")
   # Limits for the graph by the largest value of P or H dimensions. We add a small margin
   limit <- max(abs(phm.mat.df$p), abs(phm.mat.df$h)) * 1.1
 
@@ -207,18 +246,27 @@ graph_ph <- function(..., mark.nva = TRUE, mark.cnt = TRUE, show.points = TRUE) 
 
   # Add points or not based on show.points parameter
   if (show.points) {
+    # Construct category colors
+    col.sel <- .color.selection("red/green")
+    phm.mat.df$color <- NA
+
+    phm.mat.df[wimp$constructs$discrepants,]$color <- col.sel[1]
+    phm.mat.df[wimp$constructs$congruents,]$color <- col.sel[2]
+    phm.mat.df[wimp$constructs$undefined,]$color <- col.sel[3]
+    phm.mat.df[wimp$constructs$dilemmatic,]$color <- col.sel[4]
+
     if (mark.cnt) {
       p <- p %>%
-        add_markers(data = phm.mat.df[phm.mat.df$central == 0, ], x = ~p, y = ~h,
-                    marker = list(color = colors, size = 10, line = list(color = 'black', width = 1)),
-                    text = ~paste('P:', p, '; H:', h), hoverinfo = 'text') %>%
-        add_markers(data = phm.mat.df[phm.mat.df$central == 1, ], x = ~p, y = ~h,
-                    marker = list(color = 'orangered', size = 12, symbol = "circle-dot", line = list(color = 'black', width = 1)),
+        add_markers(data = phm.mat.df, x = ~p, y = ~h,
+                    marker = list(color = ~color, size = ifelse(phm.mat.df$central == 1, 12, 10),
+                                  symbol = ifelse(phm.mat.df$central == 1, "diamond", "circle"),
+                                  line = list(color = 'black', width = 2)),
                     text = ~paste('P:', p, '; H:', h), hoverinfo = 'text')
     } else {
       p <- p %>%
         add_markers(data = phm.mat.df, x = ~p, y = ~h,
-                    marker = list(color = colors, size = 10, line = list(color = 'black', width = 1)),
+                    #marker = list(color = colors, size = 10, line = list(color = 'black', width = 1)),
+                    marker = list(color = phm.mat.df$color, size = 10, line = list(color = 'black', width = 1)),
                     text = ~paste('P:', p, '; H:', h), hoverinfo = 'text')
     }
   }
@@ -233,8 +281,8 @@ graph_ph <- function(..., mark.nva = TRUE, mark.cnt = TRUE, show.points = TRUE) 
       data = phm.mat.df, x = ~p, y = ~h, text = ~constructo,
       hovertext = ~paste('Constructo:', constructo, '\nP:', p, 'H:', h), hoverinfo = 'text',
       #font = list(size = 12, color = ifelse(phm.mat.df$central == 1 & mark.cnt, 'red', 'black')),
-      #font = list(size = 12, color = 'black'),
-      font = list(size = 12, color = .label.color(phm.mat.df$central == 1 & mark.cnt == TRUE)),
+      font = list(size = 12, color = 'black'),
+      #font = list(size = 12, color = .label.color(phm.mat.df$central == 1 & mark.cnt == TRUE)),
       showarrow = FALSE, xanchor = 'center', yanchor = 'bottom'
     )
 

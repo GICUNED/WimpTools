@@ -93,6 +93,7 @@ bertin(wimp$openrepgrid, colors = c("palegreen", "darkgreen"))
 # Digraph
 GridFCM.practicum::digraph(wimp, layout = "rtcircle")
 ```
+
 ```{r idealdigraph, fig.width = 10, fig.height = 10}
 
 # Digraph
@@ -125,9 +126,10 @@ DT::datatable(c.io.test.r)
 
 ```{r ph_index_test, fig.width = 10, fig.height = 10}
 
-test.wphm <- GridFCM.practicum::ph_index(wimp = wimp, method = "weight", std = FALSE)
+test.wphm <- GridFCM.practicum::ph_index(wimp = wimp, method = "wnorm", std = FALSE)
 DT::datatable(test.wphm)
 ```
+
 
 ## Distancia de Mahalanobis y distribución de datos
 
@@ -143,11 +145,12 @@ test.result <- mvn(data = test.wphm, mvnTest = "mardia")
 print(test.result)
   
 ```
+
 ### Test de resultado de la función
 
 ```{r mahalanobis_index_test, fig.width = 10, fig.height = 10}
 
-test.wmahalanobis <- GridFCM.practicum::mahalanobis_index(wimp = wimp, method = "weight", std = FALSE, sign.level = 0.2)
+test.wmahalanobis <- GridFCM.practicum::mahalanobis_index(wimp = wimp, method = "wnorm", std = FALSE, sign.level = 0.2)
 DT::datatable(test.wmahalanobis)
 ```
 
@@ -156,7 +159,7 @@ DT::datatable(test.wmahalanobis)
 ```{r barplot_mahalanobis_test, fig.width = 10, fig.height = 10}
 
 # Distancia de Mahalanobis
-test.bp.wmahalanobis <- GridFCM.practicum::mahalanobis_index(wimp = wimp, method = "weight", std = FALSE)
+test.bp.wmahalanobis <- GridFCM.practicum::mahalanobis_index(wimp = wimp, method = "wnorm", std = FALSE)
 test.wmahalanobis.df <- as.data.frame(test.bp.wmahalanobis)
 
 
@@ -285,7 +288,7 @@ graph_ph_gg <- function(ph.mat){
 
 ```{r rep_psychlab_se, fig.width = 10, fig.height = 10}
 
-test.wphm.se <- GridFCM.practicum::ph_index(wimp = wimp, method = "weight", std = FALSE)
+test.wphm.se <- GridFCM.practicum::ph_index(wimp = wimp, method = "wnorm", std = "none")
 
 wp1 <- graph_ph_gg(test.wphm.se)
 print(wp1)
@@ -295,7 +298,7 @@ print(wp1)
 
 ```{r rep_psychlab_se_plotly, fig.width = 10, fig.height = 10}
 
-wp1.grph <- GridFCM.practicum::graph_ph(wimp = wimp, method = "weight", std = FALSE, sign.level = 0.2,
+wp1.grph <- GridFCM.practicum::graph_ph(wimp = wimp, method = "wnorm", std = 'none', sign.level = 0.2,
                                         mark.nva = FALSE, mark.cnt = FALSE)
 wp1.grph
 ```
@@ -307,7 +310,16 @@ wp1.grph
 
 ```{r rep_mh_psychlab_se, fig.width = 10, fig.height = 10}
 
-wp1.grph <- GridFCM.practicum::graph_ph(wimp = wimp, method = "weight", std = FALSE, sign.level = 0.2,
+wp1.grph <- GridFCM.practicum::graph_ph(wimp = wimp, method = "wnorm", std = 'none', sign.level = 0.2,
+                                        mark.nva = TRUE, mark.cnt = TRUE, show.points = TRUE)
+wp1.grph
+```
+
+#### Con estandarización
+
+```{r rep_mh_psychlab_ce, fig.width = 10, fig.height = 10}
+
+wp1.grph <- GridFCM.practicum::graph_ph(wimp = wimp, method = "wnorm", std = 'edges', sign.level = 0.2,
                                         mark.nva = TRUE, mark.cnt = TRUE, show.points = TRUE)
 wp1.grph
 ```
@@ -316,7 +328,7 @@ wp1.grph
 
 ```{r rep_psychlab_se_wimp_sp, fig.width = 10, fig.height = 10}
 
-wp1.grph <- GridFCM.practicum::graph_ph(wimp = wimp, method = "weight", std = FALSE, sign.level = 0.2,
+wp1.grph <- GridFCM.practicum::graph_ph(wimp = wimp, method = "wnorm", std = "none", sign.level = 0.2,
                                         mark.nva = TRUE, mark.cnt = TRUE, show.points = FALSE)
 wp1.grph
 ```
@@ -325,7 +337,7 @@ wp1.grph
 
 ```{r rep_psychlab_se_wimp_plotly, fig.width = 10, fig.height = 10}
 
-wp1.grph <- GridFCM.practicum::graph_ph(wimp = wimp, method = "weight", std = FALSE, sign.level = 0.2,
+wp1.grph <- GridFCM.practicum::graph_ph(wimp = wimp, method = "wnorm", std = "none", sign.level = 0.2,
                                         mark.nva = FALSE, mark.cnt = TRUE)
 
 wp1.grph
@@ -405,7 +417,7 @@ pca.plot
 ```{r num_clusters, fig.width = 10, fig.height = 10}
 
 # Coordenadas de los constructos en espacio P-H
-test.dist <- GridFCM.practicum::ph_index(wimp = wimp, method = "weight", std = FALSE)
+test.dist <- GridFCM.practicum::ph_index(wimp = wimp, method = "wnorm", std = FALSE)
 rownames(test.dist) <- as.character(wimp$constructs$right.poles)
 
 # Matriz de distancias entre los constructos
@@ -468,6 +480,7 @@ fviz_dend(modelo.hclust, rect = TRUE, cex = 0.7,
           main = 'Dendrograma de constructos por distancia en P-H')
           
 ```
+
 ```{r clusters, fig.width = 10, fig.height = 9}
 
 act.cex <- par("cex")

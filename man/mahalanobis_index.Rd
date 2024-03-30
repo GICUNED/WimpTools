@@ -4,7 +4,7 @@
 \alias{mahalanobis_index}
 \title{Calculate Mahalanobis Indices for Constructs}
 \usage{
-mahalanobis_index(wimp, method = "weight", std = FALSE, sign.level = 0.2)
+mahalanobis_index(wimp, method = "weight", std = "none", sign.level = 0.2)
 }
 \arguments{
 \item{wimp}{A `wimp` object containing the data from which the PH matrix
