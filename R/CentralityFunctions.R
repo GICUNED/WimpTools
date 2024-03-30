@@ -270,20 +270,27 @@ graph_ph <- function(..., mark.nva = TRUE, mark.cnt = TRUE, show.points = TRUE) 
     }
   }
 
-  # Add annotations (labels) for each point
-  #p <- p %>% add_annotations(data = phm.mat.df, x = ~p, y = ~h, text = ~constructo,
-  #                           font = list(size = 12, color = ~label.color),
-  #                           showarrow = FALSE, xanchor = 'center', yanchor = 'bottom')
+  # Add construct labels (annotations)
+  if (mark.cnt & !show.points) { # Labels are highlighted if centers are checked and no points are displayed
+    p <- p %>%
+      add_annotations(data = phm.mat.df[phm.mat.df$central == 0, ], x = ~p, y = ~h, text = ~constructo,
+                      hovertext = ~paste('Constructo:', constructo, '\nP:', p, 'H:', h), hoverinfo = 'text',
+                      font = list(size = 12, color = 'black'),
+                      showarrow = FALSE, xanchor = 'center', yanchor = 'bottom')
 
-  p <- p %>%
-    add_annotations(
-      data = phm.mat.df, x = ~p, y = ~h, text = ~constructo,
-      hovertext = ~paste('Constructo:', constructo, '\nP:', p, 'H:', h), hoverinfo = 'text',
-      #font = list(size = 12, color = ifelse(phm.mat.df$central == 1 & mark.cnt, 'red', 'black')),
-      font = list(size = 12, color = phm.mat.df$label.color),
-      #font = list(size = 12, color = .label.color(phm.mat.df$central == 1 & mark.cnt == TRUE)),
-      showarrow = FALSE, xanchor = 'center', yanchor = 'bottom'
-    )
+    p <- p %>%
+      add_annotations(data = phm.mat.df[phm.mat.df$central == 1, ], x = ~p, y = ~h, text = ~constructo,
+                      hovertext = ~paste('Constructo:', constructo, '\nP:', p, 'H:', h), hoverinfo = 'text',
+                      font = list(size = 13, color = 'red', style = "bold"),
+                      showarrow = FALSE, xanchor = 'center', yanchor = 'bottom')
+
+  } else { # Labels are normal whether no centers are marked or points are displayed.
+    p <- p %>%
+      add_annotations(data = phm.mat.df, x = ~p, y = ~h, text = ~constructo,
+                      hovertext = ~paste('Constructo:', constructo, '\nP:', p, 'H:', h), hoverinfo = 'text',
+                      font = list(size = 12, color = 'black'),
+                      showarrow = FALSE, xanchor = 'center', yanchor = 'bottom')
+  }
 
   return(p)
 }
