@@ -30,6 +30,7 @@
 
 ph_index <- function(wimp, method = "weight", std = 'none'){
 
+  # P-H calculation--------------
   # Connectivity of constructs
   c.io <- degree_index(wimp, method = method)
 
@@ -47,6 +48,7 @@ ph_index <- function(wimp, method = "weight", std = 'none'){
   ph.mat <- in.out %*% t(coef.matrix)
   colnames(ph.mat) <- c("p", "h")
 
+  # Standardization--------------
   if (std == 'vertices'){
     vertices <- length(wimp$constructs$constructs)
 
@@ -247,20 +249,17 @@ graph_ph <- function(..., mark.nva = TRUE, mark.cnt = TRUE, show.points = TRUE) 
   # Add points or not based on show.points parameter
   if (show.points) {
     # Construct category colors
-    col.sel <- .color.selection("red/green")
     phm.mat.df$color <- NA
 
-    phm.mat.df[wimp$constructs$discrepants,]$color <- col.sel[1]
-    phm.mat.df[wimp$constructs$congruents,]$color <- col.sel[2]
-    phm.mat.df[wimp$constructs$undefined,]$color <- col.sel[3]
-    phm.mat.df[wimp$constructs$dilemmatic,]$color <- col.sel[4]
+    colors.mat <- construct_colors(wimp = wimp, mode = "red/green")
+    phm.mat.df$color <- colors.mat[,"color"]
 
     if (mark.cnt) {
       p <- p %>%
         add_markers(data = phm.mat.df, x = ~p, y = ~h,
-                    marker = list(color = ~color, size = ifelse(phm.mat.df$central == 1, 12, 10),
-                                  symbol = ifelse(phm.mat.df$central == 1, "diamond", "circle"),
-                                  line = list(color = 'black', width = 2)),
+                    marker = list(color = ~color, size = 10,
+                                  symbol = ifelse(phm.mat.df$central == 1, "star", "circle"),
+                                  line = list(color = 'black', width = ifelse(phm.mat.df$central == 1, 2, 1))),
                     text = ~paste('P:', p, '; H:', h), hoverinfo = 'text')
     } else {
       p <- p %>%
@@ -281,10 +280,44 @@ graph_ph <- function(..., mark.nva = TRUE, mark.cnt = TRUE, show.points = TRUE) 
       data = phm.mat.df, x = ~p, y = ~h, text = ~constructo,
       hovertext = ~paste('Constructo:', constructo, '\nP:', p, 'H:', h), hoverinfo = 'text',
       #font = list(size = 12, color = ifelse(phm.mat.df$central == 1 & mark.cnt, 'red', 'black')),
-      font = list(size = 12, color = 'black'),
+      font = list(size = 12, color = phm.mat.df$label.color),
       #font = list(size = 12, color = .label.color(phm.mat.df$central == 1 & mark.cnt == TRUE)),
       showarrow = FALSE, xanchor = 'center', yanchor = 'bottom'
     )
 
   return(p)
+}
+
+# Construct colors ------------------------------------------------------------
+
+#' Construc color matrix based on its category
+#'
+#' This function computes the presence (P, frequency of occurrence) and
+#' hierarchy (H, influence on others) indices for constructs within an implication grid.
+#' It can standardize these indices based on the maximum degree if required.
+#'
+#' @param wimp An object of class 'wimp', which contains an implication grid
+#'   and associated constructs.
+#' @param mode Color mode for .color.selection (i.e, "red/green")
+#'
+#' @return A matrix containing construct colors based on its category and .color.selection.
+#'
+#' @export
+#'
+#' @examples
+#'
+
+construct_colors <- function(wimp, mode){
+  # Construct category colors
+  col.sel <- .color.selection(mode)
+  color.mat <- matrix(data = 0, nrow = length(wimp$constructs$constructs), ncol = 1)
+  rownames(color.mat) <- wimp$constructs$constructs
+  colnames(color.mat) <- c("color")
+
+  color.mat[wimp$constructs$discrepants,"color"] <- col.sel[1]
+  color.mat[wimp$constructs$congruents,"color"] <- col.sel[2]
+  color.mat[wimp$constructs$undefined,"color"] <- col.sel[3]
+  color.mat[wimp$constructs$dilemmatic,"color"] <- col.sel[4]
+
+  return(color.mat)
 }

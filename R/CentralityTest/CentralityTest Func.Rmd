@@ -162,6 +162,8 @@ DT::datatable(test.wmahalanobis)
 test.bp.wmahalanobis <- GridFCM.practicum::mahalanobis_index(wimp = wimp, method = "wnorm", std = FALSE)
 test.wmahalanobis.df <- as.data.frame(test.bp.wmahalanobis)
 
+# Colores de los constructos
+
 
 #test.wmahalanobis.df$constructo <- rownames(test.wmahalanobis)
 test.wmahalanobis.df$constructo <- wimp$constructs$right.poles
@@ -170,7 +172,8 @@ test.wmahalanobis.df$constructo <- wimp$constructs$right.poles
 test.wmahalanobis.df$idealdirect <- wimp$ideal$direct
 
 # Columna para identificar constructos dilemáticos
-test.wmahalanobis.df$fill.color <- ifelse(test.wmahalanobis.df$idealdirect == 4, "yellow2", "honeydew")
+#test.wmahalanobis.df$fill.color <- ifelse(test.wmahalanobis.df$idealdirect == 4, "yellow2", "honeydew")
+test.wmahalanobis.df$fill.color <- construct_colors(wimp= wimp, mode = "red/green")
 
 # Ordenamos las barras en orden decreciente
 test.wmahalanobis.df <- test.wmahalanobis.df %>%
@@ -453,7 +456,7 @@ Adecuación de **cohesión** y **separación** de cada punto según pertenezca a
 lista.graf.sil <- list()
 
 # Preparamos una lista con diversas representaciones gráficas de siluetas (de 2 a 10 clústeres)
-for(j in 2:13){
+for(j in 2:min(13, max.clusters)){
   it.pam <- cluster::pam(distancias, j, diss = TRUE)
   p <- factoextra::fviz_silhouette(it.pam, label = FALSE, print.summary = FALSE)
   lista.graf.sil[[j-1]] <- p
