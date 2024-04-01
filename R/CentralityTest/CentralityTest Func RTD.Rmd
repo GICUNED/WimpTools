@@ -228,7 +228,7 @@ chi.square.cutoff <- qchisq(1 - sign.level, df)
 #media_m_dist <- mean(test.wmahalanobis.df$m.dist)
 ```
 
-## Constructos supraordenados, resaltando dilemáticos
+## Constructos supraordenados
 
 ```{r barplot_mahalanobis_test_sup, fig.width = 10, fig.height = 10}
 
@@ -254,7 +254,7 @@ print(bar_plot)
 
 ```
 
-## Constructos subordinados, resaltando dilemáticos
+## Constructos subordinados
 
 ```{r barplot_mahalanobis_test_sub, fig.width = 10, fig.height = 10}
 
@@ -536,20 +536,10 @@ gridExtra::grid.arrange(grobs = lista.graf.sil, ncol = 3, nrow = 4)
 
 ### Dendrograma
 
-```{r dendron, fig.width = 10, fig.height = 10}
-
-# Paleta de colores en escala de verdes
-#paleta.verdes <- viridis(n = k, option = "viridis")
-#paleta.verdes <- rev(brewer.pal(n = k, name = "Greens"))
-#paleta.verdes <- sapply(paleta.verdes, function(color) RColorBrewer::adjustcolor(color, brightness = 0.5))
-paleta.verdes <- c("#003300","#008000", "#3CB371")
-
+```{r dendron_func, fig.height=10, fig.width=10, warning=FALSE}
 #Dendrograma
-modelo.hclust <- hcut(distancias, k = k, stand = TRUE)
-fviz_dend(modelo.hclust, rect = TRUE, cex = 0.7,
-          k_colors = paleta.verdes,horiz = TRUE,
-          main = 'Dendrograma de constructos por distancia en P-H')
-          
+dendron.plot <- constructs_dendrogram(wimp = wimp)
+print(dendron.plot)
 ```
 
 ### ClusPlot

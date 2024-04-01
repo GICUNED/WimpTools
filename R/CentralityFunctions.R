@@ -366,3 +366,48 @@ test_optimal_num_clusters <- function(...){
   # Invoke the hidden function
   return(.optimal.num.clusters(...))
 }
+
+
+# Dendrogram of constructs of a Wimp ------------------------------------------------------------
+#' Constructs Dendrogram
+#'
+#' This function generates a dendrogram of constructs based on the Euclidean
+#' distances in the P-H vector space. It automatically calculates the optimal
+#' number of clusters for grouping the constructs.
+#'
+#' @param wimp A `wimp` object containing the constructs and the corresponding
+#' scores in the P-H vector space. This object should have been generated using
+#' the GridFCM.practicum package.
+#'
+#' @return A dendrogram visualizing the hierarchical clustering of constructs
+#' based on their distances in the P-H space. The dendrogram highlights the
+#' optimal clustering of constructs.
+#'
+#' @importFrom GridFCM.practicum ph_index
+#'
+#' @importFrom factoextra fviz_dend hcut
+#'
+#' @export
+#'
+
+constructs_dendrogram <- function(wimp){
+
+  # Matrix of Euclidean distances between constructs in the vector space P-H
+  ph.mat <- GridFCM.practicum::ph_index(wimp = wimp, method = "wnorm", std = FALSE)
+  rownames(ph.mat) <- wimp$constructs$right.poles
+  dist.mat <- dist(ph.mat, method = "euclidean")
+
+  # Optimal number of clusters
+  k<- .optimal.num.clusters(wimp)
+
+  # Colors palette
+  greens.palette <- c("#003300","#008000", "#3CB371")
+
+  #Dendrogram
+  hclust.model <- hcut(dist.mat, k = k, stand = TRUE)
+  plot<- fviz_dend(hclust.model, rect = TRUE, cex = 0.7,
+            k_colors = greens.palette,horiz = TRUE,
+            main = 'Dendrograma de constructos por distancia en P-H')
+
+  return(plot)
+}
