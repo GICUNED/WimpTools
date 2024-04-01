@@ -155,8 +155,18 @@ mahalanobis_index <- function(wimp, method = "weight", std = 'none', sign.level 
   chi.square.cutoff <- qchisq(1 - sign.level, df)
 
   # Annotate observations as "central" constructs based on the chi-square cutoff
-  # and being "to the right" on the P axis
-  central <- ifelse(phm.mat[,"m.dist"] > chi.square.cutoff & phm.mat[,"p"] > mean(phm.mat[,"p"]), TRUE, FALSE)
+  # and being "non-superficial" constructs on the P axis
+  #----------------------
+  # Mean and standard deviation of the distribution
+  mean.p <- mean(ph.mat.df$p)
+  sd.p <- sd(ph.mat.df$p)
+
+  # Cutoff point - Defined with respect to distribution
+  p.cut <- qnorm(0.15, mean = mean.p, sd = sd.p)
+
+  # Filter out P values that are less than the cutoff point
+  central <- ifelse(phm.mat[,"m.dist"] > chi.square.cutoff & phm.mat[,"p"] > p.cut, TRUE, FALSE)
+  #----------------------
 
   # Add column to the results matrix
   phmc.mat <- cbind(phm.mat, central)
@@ -204,6 +214,8 @@ graph_ph <- function(..., mark.nva = TRUE, mark.cnt = TRUE, show.points = TRUE) 
   phm.mat.df <- as.data.frame(phm.mat)
   # Assign the names of constructs from the row names of the matrix
   phm.mat.df$constructo <- rownames(phm.mat)
+  # Assign the names of constructs in "Self"
+  phm.mat.df$self.constr <- wimp$constructs$self.poles
   # Limits for the graph by the largest value of P or H dimensions. We add a small margin
   limit <- max(abs(phm.mat.df$p), abs(phm.mat.df$h)) * 1.1
 
@@ -273,23 +285,27 @@ graph_ph <- function(..., mark.nva = TRUE, mark.cnt = TRUE, show.points = TRUE) 
   # Add construct labels (annotations)
   if (mark.cnt & !show.points) { # Labels are highlighted if centers are checked and no points are displayed
     p <- p %>%
-      add_annotations(data = phm.mat.df[phm.mat.df$central == 0, ], x = ~p, y = ~h, text = ~constructo,
+      add_annotations(data = phm.mat.df[phm.mat.df$central == 0, ], x = ~p, y = ~h, text = ~self.constr,
                       hovertext = ~paste('Constructo:', constructo, '\nP:', p, 'H:', h), hoverinfo = 'text',
                       font = list(size = 12, color = 'black'),
-                      showarrow = FALSE, xanchor = 'center', yanchor = 'bottom')
+                      showarrow = FALSE, xanchor = 'center', yanchor = 'bottom',
+                      yshift = 5)
 
     p <- p %>%
-      add_annotations(data = phm.mat.df[phm.mat.df$central == 1, ], x = ~p, y = ~h, text = ~constructo,
+      add_annotations(data = phm.mat.df[phm.mat.df$central == 1, ], x = ~p, y = ~h, text = ~self.constr,
                       hovertext = ~paste('Constructo:', constructo, '\nP:', p, 'H:', h), hoverinfo = 'text',
-                      font = list(size = 13, color = 'red', style = "bold"),
-                      showarrow = FALSE, xanchor = 'center', yanchor = 'bottom')
+                      font = list(size = 12, color = 'darkgreen', family = "Arial Black, sans-serif",
+                                  style = "normal"),
+                      showarrow = FALSE, xanchor = 'center', yanchor = 'bottom',
+                      yshift = 5)
 
   } else { # Labels are normal whether no centers are marked or points are displayed.
     p <- p %>%
-      add_annotations(data = phm.mat.df, x = ~p, y = ~h, text = ~constructo,
+      add_annotations(data = phm.mat.df, x = ~p, y = ~h, text = ~self.constr,
                       hovertext = ~paste('Constructo:', constructo, '\nP:', p, 'H:', h), hoverinfo = 'text',
                       font = list(size = 12, color = 'black'),
-                      showarrow = FALSE, xanchor = 'center', yanchor = 'bottom')
+                      showarrow = FALSE, xanchor = 'center', yanchor = 'bottom',
+                      yshift = 5)
   }
 
   return(p)
@@ -327,4 +343,26 @@ construct_colors <- function(wimp, mode){
   color.mat[wimp$constructs$dilemmatic,"color"] <- col.sel[4]
 
   return(color.mat)
+}
+
+# Test optimal numbers of clusters ------------------------------------------------------------
+
+#' Public test function for .optimal.num.clusters hide function
+#'
+#' This function computes the presence (P, frequency of occurrence) and
+#'
+#' @param
+#'
+#' @param
+#'
+#' @return
+#'
+#' @export
+#'
+#' @examples
+#'
+
+test_optimal_num_clusters <- function(...){
+  # Invoke the hidden function
+  return(.optimal.num.clusters(...))
 }

@@ -177,3 +177,32 @@
   if(self < 0){return(l.pole)}
   if(self == 0){return(construct)}
 }
+
+# Optimal number of clusters---------------------
+
+.optimal.num.clusters <- function(...){
+  # P-H matrix
+  ph.mat <- GridFCM.practicum::ph_index(...)
+  rownames(ph.mat) <- wimp$constructs$self.poles
+
+  # Matrix of distances between constructs
+  dist.mat <- dist(ph.mat, method = "euclidean")
+
+  # Calculation of number of clusters per silhouette coefficient-----
+  # Vector to store the averages of silhouette coefficients
+  sil.widths <- numeric()
+
+  # Maximum number of clusters to evaluate. We limit the maximum number of constructs available minus 1.
+  max.clusters <- length(wimp$constructs$constructs) - 1
+
+  # We calculate PAM and the silhouette coefficient for different numbers of clusters
+  for(j in 2:max.clusters) {
+    pam.stp <- pam(dist.mat, j)
+    sil.stp <- silhouette(pam.stp)
+    sil.widths[j] <- mean(sil.stp[, "sil_width"])
+  }
+
+  # Identify the number of clusters that maximizes the silhouette coefficient.
+  k <- which.max(sil.widths)
+  return(k)
+}
