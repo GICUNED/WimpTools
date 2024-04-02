@@ -6,12 +6,15 @@
 #' system
 #'
 #' @description This function calculates the numbers of consequences and feedbacks
+#' @description This function calculates the intensity of the effects of consequences and feedbacks
 #' for each construct to analyze its resistance to change
 #'
 #' @param wimp
 #' @param std
+#' @param std A logical value indicating wether to standarize the scores (TRUE) or (FALSE)
 #'
 #' @return Returns a dataframe with numbers of consequences and feedbacks
+#' @return Returns a dataframe with the intensity of the effects of consequences and feedbacks
 #'
 #'
 #'
@@ -21,12 +24,69 @@
 #' cq.fb_index (example.wimp)
 #'
 cq.fb_index <- function(wimp, std=FALSE) {
+cq.fb_index <- function(wimp, std) {
+
+  # Aligning the wimp object so that ideal situations get close to the right pole
   wimp <- .align.wimp(wimp)
   wmatrix<- wimp $scores $weights
+  # Creating a weight matrix from the wimp to be analysed
+  wmatrix <- wimp $scores $weights
+
+  if (std == FALSE) {
+  # Extract scores of consequences as measured when comparing to the hypothetical self
   consequence <- apply (wmatrix, MARGIN = 1, FUN = sum)
+  # Calculate scores of feedback effects by multiplying the weight matrix by its own transposed version
   feedback <- wmatrix * t (wmatrix)
+  # Extract feedback punctuations to get a feedback index for each construct polarity
   feedback <- apply (feedback, MARGIN = 1, FUN = sum)
 
+  } else {
+    # Extract normalized scores (divided by the column's mean) of consequences as measured when comparing to the hypothetical self
+    consequence <- apply (wmatrix, MARGIN = 1, FUN = mean)
+    # Calculate  of feedback effects by multiplying the weight matrix by its own transposed version
+    feedback <- wmatrix * t (wmatrix)
+    # Extract normalized scores (divided by the column's mean) to get a feedback index for each construct polarity
+    feedback <- apply (feedback, MARGIN = 1, FUN = mean)
+  }
+
+  # Define the data frame needed for numeric visualization of effects and further plotting
   result <- data.frame (feedback , consequence)
+  # Setting names to the poles of each construct
+  poles <- wimp[["constructs"]][["constructs"]]
+  # Show row names (titles)
+  rownames(result) <- poles
+
   return(result)
   }
+}
+
+# rtc_plot ----------------------------------------------------------------
+
+
+#' Visualization of the effects of Consequences and Feedback
+#'
+#' @description This function creates a scatter plot to show the effects of the consequences and feedbacks of each construct to analyze their resistance to change
+#'
+#' @param wimp
+#' @param std
+#'
+#' @return returns a scatter plot showing the effects of consequences and feedback on each construct of the system
+#' @export
+#' @import plotly
+#' @examples
+#' rtc_plot (example.wimp)
+rtc_plot <- function(wimp, std=FALSE) {
+  # Calling function cq.fb_index
+  result <- cq.fb_index (wimp, std = std)
+  # Setting names to the poles of each construct
+  poles <- wimp[["constructs"]][["constructs"]]
+  # Show row names (titles)
+  rownames(result) <- poles
+  # Create a scatter plot to visualize the effects of cq and fb
+  fig <- plot_ly(data = result, x = ~consequence, y = ~feedback, color = ~poles)
+  return(fig)
+}
+
+
+
+
