@@ -14,10 +14,12 @@ cq.fb_index(wimp, std)
 }
 \value{
 Returns a dataframe with numbers of consequences and feedbacks
+
 Returns a dataframe with the intensity of the effects of consequences and feedbacks
 }
 \description{
 This function calculates the numbers of consequences and feedbacks
+
 This function calculates the intensity of the effects of consequences and feedbacks
 for each construct to analyze its resistance to change
 }
