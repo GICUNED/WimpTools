@@ -1,6 +1,138 @@
 
 ## EMOTIONAL ADJUSTMENT ##
 
+# calculate_adjustment_init_end ------------------------------------------------------------
+#'
+#' This function calculates the Euclidean distance and the correlation between the end vector and init vector.
+#'
+#' @param init Object containing the initial vector.
+#' @param end Object containing the end vector.
+#' @param normalize Logical. If TRUE, normalize the distance; otherwise, use the raw Euclidean distance.
+#' @param filtered_constructs In case we want to use only specific values (e.g use nuclear constructs only). Vector with 0s and 1s.
+#'Only the values from the 'vector_end' and 'vector_init' vectors at positions where there is a 1 will be included.
+#'By default, the 'vector_end' and 'vector_init' vectors are kept.#'
+#' @return A list with the calculated values: distance, correlation and magnitude.
+#' @examples calculate_adjustment_self_ideal (wimp,TRUE,c(1,1,0,0,1,0,1,0))
+#' @export
+
+calculate_adjustment_init_end <- function(vector_init, vector_end, normalize = TRUE, filtered_constructs = c(1)) {
+
+  # Get end and initial vectors from the wimp variable
+  # vector_ideal <- wimp$ideal[[2]]
+  # vector_self <- wimp$self[[2]]
+
+
+  # Use only filtered_constructs:
+  if (length(filtered_constructs) != 0) {
+    n <- length(filtered_constructs)
+    elems <- 1:n
+
+    for (i in elems) {
+      if (filtered_constructs[n+1-i] == 0) {
+        vector_end <- vector_end[-n-1+i]
+        vector_init <- vector_init[-n-1+i]
+      }
+    }
+  }
+
+  # Calculate the euclidean distance between both vectors
+  eu_distance <- sqrt(sum((vector_end - vector_init)^2))
+
+  # Normalize the Euclidean distance if specified
+  distance <- if (normalize) eu_distance / (2 * sqrt(length(vector_end)))  else eu_distance
+
+  # Calculate the correlation between the vectors (cosine)
+  correlation <- sum(vector_end * vector_init) / (norm(vector_end, type = "2") * norm(vector_init, type = "2"))
+
+  # General adjustment value (magnitude of the calculated vector)
+  magnitude <- if (normalize) 1 - (sqrt((1-correlation)^2 + distance^2)) / sqrt(5) else NULL
+
+  # Return the results
+  return(list(distance = distance, correlation = correlation, magnitude=magnitude))
+}
+
+
+## EMOTIONAL ADJUSTMENT ##
+
+# calculate_adjustment_wimp ------------------------------------------------------------
+#'
+#' This function calculates the Euclidean distance and the correlation between the ideal vector and self vector, and between the hypothetical self when each construct move from self to ideal.
+#'
+#' @param wimp Object containing ideal, self vectors and weights matrix.
+#' @param normalize Logical. If TRUE, normalize the distance; otherwise, use the raw Euclidean distance.
+#' @param filtered_constructs In case we want to use only specific values (e.g use nuclear constructs only). Vector with 0s and 1s.
+#'Only the values from the vectors at positions where there is a 1 will be included.
+#'By default, the 'vector_ideal' and 'vector_self' vectors are kept.#'
+#' @return A list with the calculated values: distance, correlation and magnitude, for self and every hypothetical self.
+#' @examples calculate_adjustment_wimp (wimp,TRUE,c(1,1,0,0,1,0,1,0))
+#' @export
+calculate_adjustment_wimp <- function(wimp, normalize = TRUE, filtered_constructs = c(1)) {
+  adjustment <- list()
+
+  # Get the ideal and self vectors
+  vector_ideal <- wimp$ideal[[2]]
+  vector_self <- wimp$self[[2]]
+
+  # Calculate adjustment for self and ideal vectors
+  adjustment$self <- calculate_adjustment_init_end(vector_self, vector_ideal, normalize = normalize, filtered_constructs = filtered_constructs)
+
+  # Add labels to adjustment$self
+  names(adjustment$self) <- c("distance", "correlation", "adjustment")
+  #rownames(adjustment$self) <- "SELF"
+
+  # Initialize list for future adjustments
+  adjustment$future <- list()
+
+  # Calculate vector_future
+  # Calculate the difference between the ideal and self vectors
+  difference <- vector_ideal - vector_self
+
+  # Get the length of the difference vector
+  length <- length(difference)
+
+  # Build the matrix with the difference on the diagonal and zeros elsewhere
+  change_vectors <- diag(difference, nrow = length, ncol = length)
+
+  # Get the weight matrix
+  weight_matrix <- wimp$scores$weights
+
+  # Multiply change_vectors by the weight matrix
+  result_matrix <- change_vectors %*% weight_matrix
+
+  # Compose vector_self to sum by rows
+  vector_self_row_sum <- matrix(vector_self, nrow = length, ncol = length, byrow = TRUE)
+
+  # Sum the result with the vector_self and change_vectors
+  vector_future <- vector_self_row_sum + change_vectors + result_matrix
+
+  # Limit values in vector_future to be within -1 and +1
+  vector_future <- pmax(pmin(vector_future, 1), -1)
+
+  # Iterate over vectors in vector_future
+  for (i in 1:nrow( vector_future)) {
+    # Calculate adjustment for vector_future and ideal vectors
+    adjustment$future[[i]] <- calculate_adjustment_init_end(vector_future[i,], vector_ideal, normalize = normalize, filtered_constructs = filtered_constructs)
+    # Add labels to adjustment$future
+    names(adjustment$future[[i]]) <- c("distance", "correlation", "adjustment")
+    # rownames(adjustment$future[[i]]) <- paste("Hypothetical Ideal", wimp$constructs[i])
+    }
+
+  # Print the table
+  print ("SELF\n")
+  print(adjustment$self)
+  for (i in 1:length(adjustment$future)) {
+    print(wimp$constructs$constructs[[i]])
+    print(adjustment$future[[i]])
+  }
+
+  # Return adjustment
+  return(adjustment)
+}
+
+
+
+## EMOTIONAL ADJUSTMENT ##
+
 # calculate_adjustment_self_ideal ------------------------------------------------------------
 #'
 #' This function calculates the Ecuclidean distance and the correlation between the ideal vector and self vector.
@@ -161,8 +293,8 @@ plot_adjustment_self_ideal <- function(wimp, calculated_values = list(), filtere
   abline(h=c(0,1), lwd = 2, lty=c(1,2), col=c("black","red"))
 
   # Draw the final vector [(1,0), (correlation, stand. distance)]
-    tolerance <- 1e-10  # Define a small tolerance
-    if (abs(calculated_values$correlation - 1) < tolerance && calculated_values$distance==0){
+  tolerance <- 1e-10  # Define a small tolerance
+  if (abs(calculated_values$correlation - 1) < tolerance && calculated_values$distance==0){
     points(1, 0, col = "blue", pch = 16, cex = 1.2)}
   else{
     arrows(1, 0, calculated_values$correlation, calculated_values$distance, col = "blue", length = 0.1)
@@ -194,4 +326,3 @@ Adjustment_self_ideal <- function(wimp, normalize = TRUE, filtered_constructs = 
   # Return data
   return(list(distance = calculated_values$distance, correlation = calculated_values$correlation, magnitude = calculated_values$magnitude, graphic = graphic_vector))
 }
-
