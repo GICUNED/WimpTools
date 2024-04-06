@@ -68,21 +68,6 @@ importwimp <- function(path, sheet = 1, opr = TRUE){
   wimp$ideal[[2]] <- standarized.ideal
   names(wimp$ideal) <- c("direct","standarized")
 
-  # Construct Categories
-
-  ind.dilemmatics <- which(standarized.ideal == 0)
-  ind.undefined <- which(standarized.self == 0)
-  ind.congruent <- which((standarized.ideal/standarized.self > 0) & !is.infinite(standarized.ideal/standarized.self))
-  ind.discrepant <- which((standarized.ideal/standarized.self < 0) & !is.infinite(standarized.ideal/standarized.self))
-
-  self.poles <- mapply(.self.poles, standarized.self,left.poles,right.poles)
-
-  wimp$constructs$self.poles <- self.poles
-  wimp$constructs$congruents <- ind.congruent
-  wimp$constructs$discrepants <- ind.discrepant
-  wimp$constructs$dilemmatics <- ind.dilemmatics
-  wimp$constructs$undefined <- ind.undefined
-
   # Hypothetical vector -----------------------------------------------------
   standarized.hypothetical <- mapply(.calc.hypo, standarized.self,standarized.ideal)
   direct.hypothetical <- (scale.center * rep(1,n.constructs)) + (standarized.hypothetical * (0.5 * (scale.max - scale.min)))

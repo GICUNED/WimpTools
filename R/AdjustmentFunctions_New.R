@@ -327,3 +327,76 @@ Adjustment_self_ideal <- function(wimp, normalize = TRUE, filtered_constructs = 
   # Return data
   return(list(distance = calculated_values$distance, correlation = calculated_values$correlation, magnitude = calculated_values$magnitude, graphic = graphic_vector))
 }
+
+
+#' load_data_adjustment ------------------------------------------------------------
+#'
+#' This function extracts from 'data' the necessary values to study emotional adjustment.
+#'
+#' @return A data frame containing the extracted data for analysis. The data frame includes the following columns:
+#'   ID - Identification code for each participant.
+#'   dist.w1 - Distance measure for emotional adjustment in the WIMP test.
+#'   corr.w1 - Correlation measure for emotional adjustment in the WIMP test.
+#'   magn.w1 - Magnitude measure for emotional adjustment in the WIMP test.
+#'   dist.w2 - Distance measure for emotional adjustment in the WIMP retest.
+#'   corr.w2 - Correlation measure for emotional adjustment in the WIMP retest.
+#'   magn.w2 - Magnitude measure for emotional adjustment in the WIMP retest.
+#'   swls.testS - WLS test scores (Life Satisfaction).
+#'   swls.retest - SWLS retest scores (Life Satisfaction).
+#'   rse.testRSE -  test scores (Self-Esteem).
+#'   rse.retestRSE - retest scores (Self-Esteem).
+#'   tas.testTAS - test scores (Alexithymia).
+#'   tas.retestTAS - retest scores (Alexithymia).
+#'   mcq.testMCQ - test scores (Metacognition).
+#'   mcq.retestMCQ - retest scores (Metacognition).
+
+load_data_adjustment <- function () {
+  data(data)
+  df_data <- data.frame(
+    ID = character(),
+    dist.w1 = numeric(),
+    corr.w1 = numeric(),
+    magn.w1 = numeric(),
+    dist.w2 = numeric(),
+    corr.w2 = numeric(),
+    magn.w2 = numeric(),
+    swls.test = numeric(),
+    swls.retest = numeric(),
+    rse.test = numeric(),
+    rse.retest = numeric(),
+    tas.test = numeric(),
+    tas.retest = numeric(),
+    mcq.test = numeric(),
+    mcq.retest = numeric()
+  )
+
+  for (i in 1:nrow(data$dataset)) {
+    id_index <- match(data$dataset$ID[i], names(data$grids))
+    if (!is.na(id_index)) {
+      adjustw1 <- calculate_adjustment_self_ideal(data$grids[[id_index]][[3]])
+      adjustw2 <- calculate_adjustment_self_ideal(data$grids[[id_index]][[4]])
+
+      row_data <- data.frame(
+        ID = data$dataset$ID[i],
+        dist.w1 = adjustw1[1],
+        corr.w1 = adjustw1[2],
+        magn.w1 = adjustw1[3],
+        dist.w2 = adjustw2[1],
+        corr.w2 = adjustw2[2],
+        magn.w2 = adjustw2[3],
+        swls.test = data$dataset$swls.test[i],
+        swls.retest = data$dataset$swls.retest[i],
+        rse.test = data$dataset$rse.test[i],
+        rse.retest = data$dataset$rse.retest[i],
+        tas.test = data$dataset$tas.test[i],
+        tas.retest = data$dataset$tas.retest[i],
+        mcq.test = data$dataset$mcq.test[i],
+        mcq.retest = data$dataset$mcq.retest[i]
+      )
+
+      df_data <- rbind(df_data, row_data)
+    }
+  }
+
+  return(df_data)
+}

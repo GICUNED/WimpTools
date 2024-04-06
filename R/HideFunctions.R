@@ -168,12 +168,3 @@
   if(infer == "self dynamics"){return("SELF DIFFERENTIAL")}
   if(infer == "adjustment dynamics"){return("ADJUSTMENT IMPACT")}
 }
-
-# Self Construct detection
-
-.self.poles <- function(self,l.pole,r.pole){
-  construct <- paste(l.pole,"—",r.pole)
-  if(self > 0){return(r.pole)}
-  if(self < 0){return(l.pole)}
-  if(self == 0){return(construct)}
-}

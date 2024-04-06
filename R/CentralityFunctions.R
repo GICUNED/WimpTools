@@ -122,21 +122,17 @@ mahalanobis_index <- function(wimp, method = "weight", std = FALSE, sign.level =
 
 # Graphically represent constructs ------------------------------------------------
 
-#' Scatter Plot of Wimps Constructs in P-H Space
+#' Scatter Plot of Constructs in P-H Space
 #'
-#' This function generates a scatter plot of constructs of a given wimp in the P-H space,
+#' This function generates a scatter plot of constructs in the P-H space,
 #' where P represents Presence (frequency of the construct) and H represents Hierarchy
 #' (influence of the construct). Central constructs are highlighted in red color, and
 #' peripheral constructs in another, facilitating their visual identification.
 #'
-#' @param wimp A `wimp` object containing the data from which the PH matrix
-#'   is derived.
-#'
-#' @param method A character string specifying the method used for calculating
-#'   the PH matrix. Default is `"weight"`.
-#'
-#' @param std A logical value indicating whether the data should be
-#'   standardized before calculating the Mahalanobis distance. Default is `FALSE`.
+#' @param phm.mat A matrix where each row represents a construct and contains
+#'        the P and H coordinates of the construct, as well as an indication of whether the
+#'        construct is central (1) or not (0). The matrix must have row names,
+#'        which are used to label the constructs in the graph.
 #'
 #' @param mark.nva Boolean value that specifies if non-viable areas are to be marked in the
 #'        graphic. Non-viable areas are parts of the P-H space where constructs cannot logically exist.
@@ -152,11 +148,10 @@ mahalanobis_index <- function(wimp, method = "weight", std = FALSE, sign.level =
 #' @export
 #'
 #' @examples
-#'
-graph_ph <- function(..., mark.nva = TRUE, mark.cnt = TRUE, show.points = TRUE) {
+#' graph_ph(phm.mat, mark.nva = TRUE, mark.cnt = TRUE)
 
-  # Extract the Mahalobis distance matrix for the given wimp
-  phm.mat <- mahalanobis_index(...)
+graph_ph <- function(phm.mat, mark.nva = TRUE, mark.cnt = TRUE, show.points = TRUE) {
+
   # Convert the matrix to a dataframe
   phm.mat.df <- as.data.frame(phm.mat)
   # Assign the names of constructs from the row names of the matrix
@@ -233,8 +228,7 @@ graph_ph <- function(..., mark.nva = TRUE, mark.cnt = TRUE, show.points = TRUE) 
       data = phm.mat.df, x = ~p, y = ~h, text = ~constructo,
       hovertext = ~paste('Constructo:', constructo, '\nP:', p, 'H:', h), hoverinfo = 'text',
       #font = list(size = 12, color = ifelse(phm.mat.df$central == 1 & mark.cnt, 'red', 'black')),
-      #font = list(size = 12, color = 'black'),
-      font = list(size = 12, color = .label.color(phm.mat.df$central == 1 & mark.cnt == TRUE)),
+      font = list(size = 12, color = 'black'),
       showarrow = FALSE, xanchor = 'center', yanchor = 'bottom'
     )
 

@@ -69,10 +69,6 @@ if (!requireNamespace("RColorBrewer", quietly = TRUE))
   install.packages("RColorBrewer")
 library(RColorBrewer)
 
-if (!requireNamespace("rcartocolor", quietly = TRUE))
-  install.packages("rcartocolor")
-library(rcartocolor)
-
 ```
 
 ### Importación de WIMP
@@ -92,11 +88,6 @@ bertin(wimp$openrepgrid, colors = c("palegreen", "darkgreen"))
 
 # Digraph
 GridFCM.practicum::digraph(wimp, layout = "rtcircle")
-```
-```{r idealdigraph, fig.width = 10, fig.height = 10}
-
-# Digraph
-GridFCM.practicum::idealdigraph(wimp, layout = "rtcircle")
 ```
 
 ### E/S de los constructos. Método Simple
@@ -295,9 +286,9 @@ print(wp1)
 
 ```{r rep_psychlab_se_plotly, fig.width = 10, fig.height = 10}
 
-wp1.grph <- GridFCM.practicum::graph_ph(wimp = wimp, method = "weight", std = FALSE, sign.level = 0.2,
-                                        mark.nva = FALSE, mark.cnt = FALSE)
-wp1.grph
+wp1p <- graph_ph(test.wphm.se, mark.nva = FALSE, mark.cnt = FALSE)
+
+wp1p
 ```
 
 
@@ -307,30 +298,31 @@ wp1.grph
 
 ```{r rep_mh_psychlab_se, fig.width = 10, fig.height = 10}
 
-wp1.grph <- GridFCM.practicum::graph_ph(wimp = wimp, method = "weight", std = FALSE, sign.level = 0.2,
-                                        mark.nva = TRUE, mark.cnt = TRUE, show.points = TRUE)
-wp1.grph
+# Matriz PH con distancia de Mahalanobis
+test.bp.wmahalanobis.se <- GridFCM.practicum::mahalanobis_index(wimp = wimp, method = "weight", std = FALSE, sign.level = 0.2)
+
+wp3 <- graph_ph(test.bp.wmahalanobis.se, mark.nva = TRUE, mark.cnt = TRUE)
+
+wp3
 ```
 
 #### Sin estandarización  - plotly sin marcar area de coordenadas no viables. Sin puntos
 
-```{r rep_psychlab_se_wimp_sp, fig.width = 10, fig.height = 10}
+```{r rep_mh_psychlab_se_sp, fig.width = 10, fig.height = 10}
 
-wp1.grph <- GridFCM.practicum::graph_ph(wimp = wimp, method = "weight", std = FALSE, sign.level = 0.2,
-                                        mark.nva = TRUE, mark.cnt = TRUE, show.points = FALSE)
-wp1.grph
+wp3.sp <- graph_ph(test.bp.wmahalanobis.se, mark.nva = TRUE, mark.cnt = TRUE, show.points = FALSE)
+
+wp3.sp
 ```
 
 #### Sin estandarización - plotly sin marcar area de coordenadas no viables
 
-```{r rep_psychlab_se_wimp_plotly, fig.width = 10, fig.height = 10}
+```{r rep_psychlab_se_mh_plotly, fig.width = 10, fig.height = 10}
 
-wp1.grph <- GridFCM.practicum::graph_ph(wimp = wimp, method = "weight", std = FALSE, sign.level = 0.2,
-                                        mark.nva = FALSE, mark.cnt = TRUE)
+wp1mhp <- GridFCM.practicum::graph_ph(test.bp.wmahalanobis.se, mark.nva = FALSE, mark.cnt = TRUE)
 
-wp1.grph
+wp1mhp
 ```
-
 
 ### Primer eigenvectorsobre matriz de implicaciones
 
@@ -467,25 +459,4 @@ fviz_dend(modelo.hclust, rect = TRUE, cex = 0.7,
           k_colors = paleta.verdes,horiz = TRUE,
           main = 'Dendrograma de constructos por distancia en P-H')
           
-```
-```{r clusters, fig.width = 10, fig.height = 9}
-
-act.cex <- par("cex")
-par(cex = 0.8)
-
-# Calculamos el objeto de partición PAM para los k clústeres obtenidos anteriormente
-opt.pam <- cluster::pam(distancias, k, diss = TRUE)
-
-# Colores de los clusters
-clus.colors <- carto_pal(n = k, "Peach")
-
-cluster::clusplot(x = distancias,
-                  clus = opt.pam$clustering,
-                  shade = TRUE,
-                  color = TRUE,
-                  col.clus = clus.colors,
-                  col.p = 'darkblue',
-                  diss = TRUE,
-                  labels = 3)
-
 ```
