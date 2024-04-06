@@ -78,7 +78,7 @@ calculate_adjustment_wimp <- function(wimp, normalize = TRUE, filtered_construct
 
   # Add labels to adjustment$self
   names(adjustment$self) <- c("distance", "correlation", "adjustment")
-  #rownames(adjustment$self) <- "SELF"
+  #rownames(adjustment$self) <- "SELF" (DA ERROR)
 
   # Initialize list for future adjustments
   adjustment$future <- list()
@@ -104,6 +104,7 @@ calculate_adjustment_wimp <- function(wimp, normalize = TRUE, filtered_construct
 
   # Sum the result with the vector_self and change_vectors
   vector_future <- vector_self_row_sum + change_vectors + result_matrix
+  #AÑADIR sin el "change_vectors" y asumiendo un cambio de 1 hacia el ideal?
 
   # Limit values in vector_future to be within -1 and +1
   vector_future <- pmax(pmin(vector_future, 1), -1)
