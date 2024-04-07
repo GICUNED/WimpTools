@@ -251,7 +251,7 @@ calculate_adjustment_self_ideal <- function(wimp, normalize = TRUE, filtered_con
   correlation <- sum(vector_ideal * vector_self) / (norm(vector_ideal, type = "2") * norm(vector_self, type = "2"))
 
   # General adjustment value (magnitude of the calculated vector)
-  magnitude <- if (normalize) 1 - (sqrt(correlation^2 + distance^2)) / sqrt(5) else NULL
+  magnitude <- if (normalize) 1 - (sqrt((1-correlation)^2 + distance^2)) / sqrt(5) else NULL
 
   # Return the results
   return(list(distance = distance, correlation = correlation, magnitude=magnitude))
