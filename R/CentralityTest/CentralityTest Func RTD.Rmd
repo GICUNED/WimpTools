@@ -575,6 +575,16 @@ pca.plot
 
 ## Determinación de número óptimo de conglomerados
 
+El cálculo se basará en la distancia de Mahalanobis entre pares de puntos. La distancia de Mahalanobis se calcula utilizando la fórmula:
+
+$$d(\mathbf{x}, \mathbf{y}) = \sqrt{(\mathbf{x} - \mathbf{y})^T \mathbf{S}^{-1} (\mathbf{x} - \mathbf{y})}$$
+
+Donde:
+
+- $\mathbf{x}$ y $\mathbf{y}$ son los dos vectores que representan los dos puntos en el espacio.
+- $\mathbf{S}^{-1}$ es la matriz inversa de la matriz de covarianza de los datos.
+
+
 ```{r num_clusters, fig.width = 10, fig.height = 10}
 
 k <- test_optimal_num_clusters(wimp = wimp, method = "wnorm", std = "none")
