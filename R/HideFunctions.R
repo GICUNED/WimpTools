@@ -178,9 +178,9 @@
   # Mean vector
   means.vector <- colMeans(ph.mat)
 
-  # Initializes a matrix to store Mahalanobis distances
+  # Initializes a matrix to store Mahalanobis distances. Diagonal will keep 0's
   n <- nrow(ph.mat)
-  dist.mat <- matrix(NA, n, n)
+  dist.mat <- matrix(0, n, n)
 
   # Calculates Mahalanobis distance between each pair of rows in ph.mat
   for (i in 1:n) {
@@ -190,9 +190,6 @@
       dist.mat[j, i] <- dist.mat[i, j]  # The matrix is symmetric
     }
   }
-
-  # Sets the diagonal to 0
-  diag(dist.mat) <- 0
 
   row.names(dist.mat) <- row.names(ph.mat)
   colnames(dist.mat) <- row.names(ph.mat)
