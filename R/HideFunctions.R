@@ -168,3 +168,64 @@
   if(infer == "self dynamics"){return("SELF DIFFERENTIAL")}
   if(infer == "adjustment dynamics"){return("ADJUSTMENT IMPACT")}
 }
+
+# Mahalanobis distance matrix--------------------
+
+.mahalanobis.dist.matrix <- function(ph.mat){
+  # Dissimilarity matrix modeled as a matrix of Mahalanobis distances
+  # Covariance matrix
+  cov.matrix <- cov(ph.mat)  # Calculates the covariance matrix
+  # Mean vector
+  means.vector <- colMeans(ph.mat)
+
+  # Initializes a matrix to store Mahalanobis distances
+  n <- nrow(ph.mat)
+  dist.mat <- matrix(NA, n, n)
+
+  # Calculates Mahalanobis distance between each pair of rows in ph.mat
+  for (i in 1:n) {
+    for (j in i:n) {
+      diff <- ph.mat[i, ] - ph.mat[j, ]
+      dist.mat[i, j] <- sqrt(t(diff) %*% solve(cov.matrix) %*% diff)
+      dist.mat[j, i] <- dist.mat[i, j]  # The matrix is symmetric
+    }
+  }
+
+  # Sets the diagonal to 0
+  diag(dist.mat) <- 0
+
+  row.names(dist.mat) <- row.names(ph.mat)
+  colnames(dist.mat) <- row.names(ph.mat)
+
+  return(dist.mat)
+}
+
+# Optimal number of clusters---------------------
+
+.optimal.num.clusters <- function(...){
+  # P-H matrix
+  ph.mat <- GridFCM.practicum::ph_index(...)
+  rownames(ph.mat) <- wimp$constructs$self.poles
+
+  # Mahalanobis distance matrix
+  dist.mat <- .mahalanobis.dist.matrix(ph.mat)
+
+  # Calculation of number of clusters per silhouette coefficient-----
+  # Vector to store the averages of silhouette coefficients
+  sil.widths <- numeric()
+
+  # Maximum number of clusters to evaluate. We limit the maximum number of constructs available minus 1.
+  max.clusters <- length(wimp$constructs$constructs) - 1
+
+  # We calculate PAM and the silhouette coefficient for different numbers of clusters
+  for(j in 2:max.clusters) {
+    pam.stp <- pam(dist.mat, j)
+    sil.stp <- silhouette(pam.stp)
+    sil.widths[j] <- mean(sil.stp[, "sil_width"])
+  }
+
+  # Identify the number of clusters that maximizes the silhouette coefficient.
+  k <- which.max(sil.widths)
+  return(k)
+}
+
