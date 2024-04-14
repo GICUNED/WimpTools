@@ -166,11 +166,11 @@ mahalanobis_index <- function(wimp, method = "wnorm", std = 'none', sign.level =
   p.cut <- qnorm(0.15, mean = mean.p, sd = sd.p)
 
   # Filter out P values that are less than the cutoff point
-  central <- ifelse(phm.mat[,"m.dist"] > chi.square.cutoff & phm.mat[,"p"] > p.cut, TRUE, FALSE)
+  hub <- ifelse(phm.mat[,"m.dist"] > chi.square.cutoff & phm.mat[,"p"] > p.cut, TRUE, FALSE)
   #----------------------
 
   # Add column to the results matrix
-  phmc.mat <- cbind(phm.mat, central)
+  phmc.mat <- cbind(phm.mat, hub)
   return(phmc.mat)
 }
 
@@ -180,19 +180,19 @@ mahalanobis_index <- function(wimp, method = "wnorm", std = 'none', sign.level =
 #'
 #' This function generates a scatter plot of constructs in the P-H space,
 #' where P represents Presence (frequency of the construct) and H represents Hierarchy
-#' (influence of the construct). Central constructs are highlighted in red color, and
+#' (influence of the construct). Hub constructs are highlighted in red color, and
 #' peripheral constructs in another, facilitating their visual identification.
 #'
 #' @param phm.mat A matrix where each row represents a construct and contains
 #'        the P and H coordinates of the construct, as well as an indication of whether the
-#'        construct is central (1) or not (0). The matrix must have row names,
+#'        construct is hub (1) or not (0). The matrix must have row names,
 #'        which are used to label the constructs in the graph.
 #'
 #' @param mark.nva Boolean value that specifies if non-viable areas are to be marked in the
 #'        graphic. Non-viable areas are parts of the P-H space where constructs cannot logically exist.
 #'
-#' @param mark.cnt Boolean value that specifies if central constructs have to be highlighted.
-#'        Central constructs are depicted with a distinct color and symbol to differentiate them from
+#' @param mark.hub Boolean value that specifies if hub constructs have to be highlighted.
+#'        Hub constructs are depicted with a distinct color and symbol to differentiate them from
 #'        peripheral constructs.
 #'
 #' @param show.points Boolean value that specifies whether points should be displayed or not
@@ -202,9 +202,9 @@ mahalanobis_index <- function(wimp, method = "wnorm", std = 'none', sign.level =
 #' @export
 #'
 #' @examples
-#' graph_ph(phm.mat, mark.nva = TRUE, mark.cnt = TRUE)
+#' graph_ph(phm.mat, mark.nva = TRUE, mark.hub = TRUE)
 
-graph_ph <- function(..., mark.nva = TRUE, mark.cnt = TRUE, show.points = TRUE) {
+graph_ph <- function(..., mark.nva = TRUE, mark.hub = TRUE, show.points = TRUE) {
 
   # Extract the Mahalobis distance matrix for the given wimp
   phm.mat <- mahalanobis_index(...)
@@ -222,8 +222,8 @@ graph_ph <- function(..., mark.nva = TRUE, mark.cnt = TRUE, show.points = TRUE) 
   phm.mat.df$h <- round(phm.mat.df$h, 3)
 
   # Add a new column for label color
-  if (mark.cnt)
-    phm.mat.df$label.color <- ifelse(phm.mat.df$central == 1, 'red', 'black')
+  if (mark.hub)
+    phm.mat.df$label.color <- ifelse(phm.mat.df$hub == 1, 'red', 'black')
   else
     phm.mat.df$label.color <- 'black'
 
@@ -264,12 +264,12 @@ graph_ph <- function(..., mark.nva = TRUE, mark.cnt = TRUE, show.points = TRUE) 
     colors.mat <- construct_colors(wimp = wimp, mode = "red/green")
     phm.mat.df$color <- colors.mat[,"color"]
 
-    if (mark.cnt) {
+    if (mark.hub) {
       p <- p %>%
         add_markers(data = phm.mat.df, x = ~p, y = ~h,
                     marker = list(color = ~color, size = 10,
-                                  symbol = ifelse(phm.mat.df$central == 1, "star", "circle"),
-                                  line = list(color = 'black', width = ifelse(phm.mat.df$central == 1, 2, 1))),
+                                  symbol = ifelse(phm.mat.df$hub == 1, "star", "circle"),
+                                  line = list(color = 'black', width = ifelse(phm.mat.df$hub == 1, 2, 1))),
                     text = ~paste('P:', p, '; H:', h), hoverinfo = 'text')
     } else {
       p <- p %>%
@@ -281,16 +281,16 @@ graph_ph <- function(..., mark.nva = TRUE, mark.cnt = TRUE, show.points = TRUE) 
   }
 
   # Add construct labels (annotations)
-  if (mark.cnt & !show.points) { # Labels are highlighted if centers are checked and no points are displayed
+  if (mark.hub & !show.points) { # Labels are highlighted if centers are checked and no points are displayed
     p <- p %>%
-      add_annotations(data = phm.mat.df[phm.mat.df$central == 0, ], x = ~p, y = ~h, text = ~self.constr,
+      add_annotations(data = phm.mat.df[phm.mat.df$hub == 0, ], x = ~p, y = ~h, text = ~self.constr,
                       hovertext = ~paste('Constructo:', constructo, '\nP:', p, 'H:', h), hoverinfo = 'text',
                       font = list(size = 12, color = 'black'),
                       showarrow = FALSE, xanchor = 'center', yanchor = 'bottom',
                       yshift = 5)
 
     p <- p %>%
-      add_annotations(data = phm.mat.df[phm.mat.df$central == 1, ], x = ~p, y = ~h, text = ~self.constr,
+      add_annotations(data = phm.mat.df[phm.mat.df$hub == 1, ], x = ~p, y = ~h, text = ~self.constr,
                       hovertext = ~paste('Constructo:', constructo, '\nP:', p, 'H:', h), hoverinfo = 'text',
                       font = list(size = 12, color = 'darkgreen', family = "Arial Black, sans-serif",
                                   style = "normal"),
