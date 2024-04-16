@@ -28,7 +28,7 @@
 #' ph_indices_wnorm_non_std <- ph_index(wimp, method = "wnorm", std = FALSE)
 #'
 
-ph_index <- function(wimp, method = "weight", std = 'none'){
+ph_index <- function(wimp, method = "wnorm", std = 'none'){
 
   # P-H calculation--------------
   # Connectivity of constructs
