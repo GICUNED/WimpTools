@@ -76,6 +76,21 @@ importwimp <- function(path, sheet = 1, opr = TRUE){
   wimp$hypothetical[[2]] <- standarized.hypothetical
   names(wimp$hypothetical) <- c("direct","standarized")
 
+  # Construct Categories------------------------------------------------------
+
+  ind.dilemmatics <- which(standarized.ideal == 0)
+  ind.undefined <- which(standarized.self == 0)
+  ind.congruent <- which((standarized.ideal/standarized.self > 0) & !is.infinite(standarized.ideal/standarized.self))
+  ind.discrepant <- which((standarized.ideal/standarized.self < 0) & !is.infinite(standarized.ideal/standarized.self))
+
+  self.poles <- mapply(.self.poles, standarized.self,left.poles,right.poles)
+
+  wimp$constructs$self.poles <- self.poles
+  wimp$constructs$congruents <- ind.congruent
+  wimp$constructs$discrepants <- ind.discrepant
+  wimp$constructs$dilemmatics <- ind.dilemmatics
+  wimp$constructs$undefined <- ind.undefined
+
   # Scores ------------------------------------------------------------------
   imp.matrix <- t((direct.scores - (scale.center * matrix(rep(1,n.constructs * n.constructs),ncol = n.constructs))) / (0.5 * (scale.max - scale.min)))
 

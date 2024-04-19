@@ -28,8 +28,9 @@
 #' ph_indices_wnorm_non_std <- ph_index(wimp, method = "wnorm", std = FALSE)
 #'
 
-ph_index <- function(wimp, method = "weight", std = FALSE){
+ph_index <- function(wimp, method = "wnorm", std = 'none'){
 
+  # P-H calculation--------------
   # Connectivity of constructs
   c.io <- degree_index(wimp, method = method)
 
@@ -47,15 +48,57 @@ ph_index <- function(wimp, method = "weight", std = FALSE){
   ph.mat <- in.out %*% t(coef.matrix)
   colnames(ph.mat) <- c("p", "h")
 
-  # Standardization based on number of graph edges
-  if (std){
-    #max.total.deg <- max(c.io[, 3])
-    edges <- sum(c.io[, 2])
-    ph.mat <- ph.mat / edges
+  # Standardization--------------
+  if (std == 'vertices'){
+    vertices <- length(wimp$constructs$constructs)
+
+    coef.max.p <- 2*coef*(vertices-1)
+    coef.max.h <- coef*(vertices-1)
+
+    ph.mat[,"p"] <- ph.mat[,"p"]/coef.max.p
+    ph.mat[,"h"] <- ph.mat[,"h"]/coef.max.h
+
+  }else if (std == 'edges'){
+    c.direct.io <- degree_index(wimp, method = "simple")
+    c.direct.io <- c.direct.io[, c(2,1,3)]
+
+    edges <- sum(c.direct.io[, 2]) # The number of edges is the sum of all outgoing connections
+
+    coef.max.p <- edges * coef
+    coef.max.h <- edges * coef
+
+    ph.mat[,"p"] <- ph.mat[,"p"]/coef.max.p
+    ph.mat[,"h"] <- ph.mat[,"h"]/coef.max.h
+
+  }else if (std == 'max_edges'){
+    edges <- max((c.io[, 2])) # Max outgoing connections
+
+    coef.max.p <- edges
+    coef.max.h <- edges
+
+    ph.mat[,"p"] <- ph.mat[,"p"]/coef.max.p
+    ph.mat[,"h"] <- ph.mat[,"h"]/coef.max.h
+
+
+  }else if (std == "density"){
+    vertices <- length(wimp$constructs$constructs)
+
+    max.edges <- vertices * (vertices -1) # Maximum theoretical number of edges
+
+    c.direct.io <- degree_index(wimp, method = "simple")
+    c.direct.io <- c.direct.io[, c(2,1,3)]
+    total.edges <- sum(c.direct.io[, 2]) # The number of edges is the sum of all outgoing connections
+
+    dens <- total.edges/ max.edges
+
+    ph.mat[,"p"] <- ph.mat[,"p"]*dens
+    ph.mat[,"h"] <- ph.mat[,"h"]*dens
+
   }
 
   return(ph.mat)
 }
+
 
 # Mahalanobis Indices ------------------------------------------------------------
 
@@ -69,7 +112,7 @@ ph_index <- function(wimp, method = "weight", std = FALSE){
 #' @param wimp A `wimp` object containing the data from which the PH matrix
 #'   is derived.
 #' @param method A character string specifying the method used for calculating
-#'   the PH matrix. Default is `"weight"`.
+#'   the PH matrix. Default is `"wnorm"`.
 #' @param std A logical value indicating whether the data should be
 #'   standardized before calculating the Mahalanobis distance. Default is `FALSE`.
 #'
@@ -85,7 +128,7 @@ ph_index <- function(wimp, method = "weight", std = FALSE){
 #' head(result)
 #'
 
-mahalanobis_index <- function(wimp, method = "weight", std = FALSE, sign.level = 0.2){
+mahalanobis_index <- function(wimp, method = "wnorm", std = 'none', sign.level = 0.2){
 
   # Obtain PH matrix associated to the wimp object
   ph.mat <- ph_index(wimp = wimp, method = method, std = std)
@@ -112,11 +155,22 @@ mahalanobis_index <- function(wimp, method = "weight", std = FALSE, sign.level =
   # Chi-Square Cutoff
   chi.square.cutoff <- qchisq(1 - sign.level, df)
 
-  # Annotate observations as "central" contructs based on the chi-square cutoff
-  central <- ifelse(phm.mat[,"m.dist"] > chi.square.cutoff, TRUE, FALSE)
+  # Annotate observations as "central" constructs based on the chi-square cutoff
+  # and being "non-superficial" constructs on the P axis
+  #----------------------
+  # Mean and standard deviation of the distribution
+  mean.p <- mean(ph.mat.df$p)
+  sd.p <- sd(ph.mat.df$p)
+
+  # Cutoff point - Defined with respect to distribution
+  p.cut <- qnorm(0.15, mean = mean.p, sd = sd.p)
+
+  # Filter out P values that are less than the cutoff point
+  hub <- ifelse(phm.mat[,"m.dist"] > chi.square.cutoff & phm.mat[,"p"] > p.cut, TRUE, FALSE)
+  #----------------------
 
   # Add column to the results matrix
-  phmc.mat <- cbind(phm.mat, central)
+  phmc.mat <- cbind(phm.mat, hub)
   return(phmc.mat)
 }
 
@@ -126,19 +180,19 @@ mahalanobis_index <- function(wimp, method = "weight", std = FALSE, sign.level =
 #'
 #' This function generates a scatter plot of constructs in the P-H space,
 #' where P represents Presence (frequency of the construct) and H represents Hierarchy
-#' (influence of the construct). Central constructs are highlighted in red color, and
+#' (influence of the construct). Hub constructs are highlighted in red color, and
 #' peripheral constructs in another, facilitating their visual identification.
 #'
 #' @param phm.mat A matrix where each row represents a construct and contains
 #'        the P and H coordinates of the construct, as well as an indication of whether the
-#'        construct is central (1) or not (0). The matrix must have row names,
+#'        construct is hub (1) or not (0). The matrix must have row names,
 #'        which are used to label the constructs in the graph.
 #'
 #' @param mark.nva Boolean value that specifies if non-viable areas are to be marked in the
 #'        graphic. Non-viable areas are parts of the P-H space where constructs cannot logically exist.
 #'
-#' @param mark.cnt Boolean value that specifies if central constructs have to be highlighted.
-#'        Central constructs are depicted with a distinct color and symbol to differentiate them from
+#' @param mark.hub Boolean value that specifies if hub constructs have to be highlighted.
+#'        Hub constructs are depicted with a distinct color and symbol to differentiate them from
 #'        peripheral constructs.
 #'
 #' @param show.points Boolean value that specifies whether points should be displayed or not
@@ -148,16 +202,18 @@ mahalanobis_index <- function(wimp, method = "weight", std = FALSE, sign.level =
 #' @export
 #'
 #' @examples
-#' graph_ph(phm.mat, mark.nva = TRUE, mark.cnt = TRUE)
+#' graph_ph(phm.mat, mark.nva = TRUE, mark.hub = TRUE)
 
-graph_ph <- function(phm.mat, mark.nva = TRUE, mark.cnt = TRUE, show.points = TRUE) {
+graph_ph <- function(..., mark.nva = TRUE, mark.hub = TRUE, show.points = TRUE) {
 
+  # Extract the Mahalobis distance matrix for the given wimp
+  phm.mat <- mahalanobis_index(...)
   # Convert the matrix to a dataframe
   phm.mat.df <- as.data.frame(phm.mat)
   # Assign the names of constructs from the row names of the matrix
   phm.mat.df$constructo <- rownames(phm.mat)
-  # Colors for the constructs (default: peripheral constructs are non-central)
-  colors <- viridis::viridis(n = nrow(phm.mat.df), option = "viridis")
+  # Assign the names of constructs in "Self"
+  phm.mat.df$self.constr <- wimp$constructs$self.poles
   # Limits for the graph by the largest value of P or H dimensions. We add a small margin
   limit <- max(abs(phm.mat.df$p), abs(phm.mat.df$h)) * 1.1
 
@@ -166,8 +222,8 @@ graph_ph <- function(phm.mat, mark.nva = TRUE, mark.cnt = TRUE, show.points = TR
   phm.mat.df$h <- round(phm.mat.df$h, 3)
 
   # Add a new column for label color
-  if (mark.cnt)
-    phm.mat.df$label.color <- ifelse(phm.mat.df$central == 1, 'red', 'black')
+  if (mark.hub)
+    phm.mat.df$label.color <- ifelse(phm.mat.df$hub == 1, 'red', 'black')
   else
     phm.mat.df$label.color <- 'black'
 
@@ -202,35 +258,158 @@ graph_ph <- function(phm.mat, mark.nva = TRUE, mark.cnt = TRUE, show.points = TR
 
   # Add points or not based on show.points parameter
   if (show.points) {
-    if (mark.cnt) {
+    # Construct category colors
+    phm.mat.df$color <- NA
+
+    colors.mat <- construct_colors(wimp = wimp, mode = "red/green")
+    phm.mat.df$color <- colors.mat[,"color"]
+
+    if (mark.hub) {
       p <- p %>%
-        add_markers(data = phm.mat.df[phm.mat.df$central == 0, ], x = ~p, y = ~h,
-                    marker = list(color = colors, size = 10, line = list(color = 'black', width = 1)),
-                    text = ~paste('P:', p, '; H:', h), hoverinfo = 'text') %>%
-        add_markers(data = phm.mat.df[phm.mat.df$central == 1, ], x = ~p, y = ~h,
-                    marker = list(color = 'orangered', size = 12, symbol = "circle-dot", line = list(color = 'black', width = 1)),
+        add_markers(data = phm.mat.df, x = ~p, y = ~h,
+                    marker = list(color = ~color, size = 10,
+                                  symbol = ifelse(phm.mat.df$hub == 1, "star", "circle"),
+                                  line = list(color = 'black', width = ifelse(phm.mat.df$hub == 1, 2, 1))),
                     text = ~paste('P:', p, '; H:', h), hoverinfo = 'text')
     } else {
       p <- p %>%
         add_markers(data = phm.mat.df, x = ~p, y = ~h,
-                    marker = list(color = colors, size = 10, line = list(color = 'black', width = 1)),
+                    #marker = list(color = colors, size = 10, line = list(color = 'black', width = 1)),
+                    marker = list(color = phm.mat.df$color, size = 10, line = list(color = 'black', width = 1)),
                     text = ~paste('P:', p, '; H:', h), hoverinfo = 'text')
     }
   }
 
-  # Add annotations (labels) for each point
-  #p <- p %>% add_annotations(data = phm.mat.df, x = ~p, y = ~h, text = ~constructo,
-  #                           font = list(size = 12, color = ~label.color),
-  #                           showarrow = FALSE, xanchor = 'center', yanchor = 'bottom')
+  # Add construct labels (annotations)
+  if (mark.hub & !show.points) { # Labels are highlighted if centers are checked and no points are displayed
+    p <- p %>%
+      add_annotations(data = phm.mat.df[phm.mat.df$hub == 0, ], x = ~p, y = ~h, text = ~self.constr,
+                      hovertext = ~paste('Constructo:', constructo, '\nP:', p, 'H:', h), hoverinfo = 'text',
+                      font = list(size = 12, color = 'black'),
+                      showarrow = FALSE, xanchor = 'center', yanchor = 'bottom',
+                      yshift = 5)
 
-  p <- p %>%
-    add_annotations(
-      data = phm.mat.df, x = ~p, y = ~h, text = ~constructo,
-      hovertext = ~paste('Constructo:', constructo, '\nP:', p, 'H:', h), hoverinfo = 'text',
-      #font = list(size = 12, color = ifelse(phm.mat.df$central == 1 & mark.cnt, 'red', 'black')),
-      font = list(size = 12, color = 'black'),
-      showarrow = FALSE, xanchor = 'center', yanchor = 'bottom'
-    )
+    p <- p %>%
+      add_annotations(data = phm.mat.df[phm.mat.df$hub == 1, ], x = ~p, y = ~h, text = ~self.constr,
+                      hovertext = ~paste('Constructo:', constructo, '\nP:', p, 'H:', h), hoverinfo = 'text',
+                      font = list(size = 12, color = 'darkgreen', family = "Arial Black, sans-serif",
+                                  style = "normal"),
+                      showarrow = FALSE, xanchor = 'center', yanchor = 'bottom',
+                      yshift = 5)
+
+  } else { # Labels are normal whether no centers are marked or points are displayed.
+    p <- p %>%
+      add_annotations(data = phm.mat.df, x = ~p, y = ~h, text = ~self.constr,
+                      hovertext = ~paste('Constructo:', constructo, '\nP:', p, 'H:', h), hoverinfo = 'text',
+                      font = list(size = 12, color = 'black'),
+                      showarrow = FALSE, xanchor = 'center', yanchor = 'bottom',
+                      yshift = 5)
+  }
 
   return(p)
 }
+
+
+# Construct colors ------------------------------------------------------------
+
+#' Construc color matrix based on its category
+#'
+#' This function computes the presence (P, frequency of occurrence) and
+#' hierarchy (H, influence on others) indices for constructs within an implication grid.
+#' It can standardize these indices based on the maximum degree if required.
+#'
+#' @param wimp An object of class 'wimp', which contains an implication grid
+#'   and associated constructs.
+#' @param mode Color mode for .color.selection (i.e, "red/green")
+#'
+#' @return A matrix containing construct colors based on its category and .color.selection.
+#'
+#' @export
+#'
+#' @examples
+#'
+
+construct_colors <- function(wimp, mode){
+  # Construct category colors
+  col.sel <- .color.selection(mode)
+  color.mat <- matrix(data = 0, nrow = length(wimp$constructs$constructs), ncol = 1)
+  rownames(color.mat) <- wimp$constructs$constructs
+  colnames(color.mat) <- c("color")
+
+  color.mat[wimp$constructs$discrepants,"color"] <- col.sel[1]
+  color.mat[wimp$constructs$congruents,"color"] <- col.sel[2]
+  color.mat[wimp$constructs$undefined,"color"] <- col.sel[3]
+  color.mat[wimp$constructs$dilemmatic,"color"] <- col.sel[4]
+
+  return(color.mat)
+}
+
+# Test optimal numbers of clusters ------------------------------------------------------------
+
+#' Public test function for .optimal.num.clusters hide function
+#'
+#' This function computes the presence (P, frequency of occurrence) and
+#'
+#' @param
+#'
+#' @param
+#'
+#' @return
+#'
+#' @export
+#'
+#' @examples
+#'
+
+test_optimal_num_clusters <- function(...){
+  # Invoke the hidden function
+  return(.optimal.num.clusters(...))
+}
+
+
+# Dendrogram of constructs of a Wimp ------------------------------------------------------------
+#' Constructs Dendrogram
+#'
+#' This function generates a dendrogram of constructs based on the Euclidean
+#' distances in the P-H vector space. It automatically calculates the optimal
+#' number of clusters for grouping the constructs.
+#'
+#' @param wimp A `wimp` object containing the constructs and the corresponding
+#' scores in the P-H vector space. This object should have been generated using
+#' the GridFCM.practicum package.
+#'
+#' @return A dendrogram visualizing the hierarchical clustering of constructs
+#' based on their distances in the P-H space. The dendrogram highlights the
+#' optimal clustering of constructs.
+#'
+#' @importFrom GridFCM.practicum ph_index
+#'
+#' @importFrom factoextra fviz_dend hcut
+#'
+#' @export
+#'
+
+constructs_dendrogram <- function(wimp){
+
+  # Matrix of Euclidean distances between constructs in the vector space P-H
+  ph.mat <- GridFCM.practicum::ph_index(wimp = wimp, method = "wnorm", std = FALSE)
+  rownames(ph.mat) <- wimp$constructs$self.poles
+
+  # Optimal number of clusters
+  k<- .optimal.num.clusters(wimp)
+
+  # Colors palette
+  greens.palette <- c("#003300","#008000", "#3CB371")
+
+  #Dendrogram
+  dist.mat <- .mahalanobis.dist.matrix(ph.mat)
+  #dist.mat <- dist(ph.mat, method = "euclidean")
+  hclust.model <- hcut(dist.mat, k = k, method = "ward.D2", stand = TRUE, hc_func = "agnes")
+  plot<- fviz_dend(hclust.model, rect = TRUE, cex = 0.7,
+                   k_colors = greens.palette,horiz = TRUE,
+                   main = 'Dendrograma de constructos por distancia en P-H')
+
+
+  return(plot)
+}
+

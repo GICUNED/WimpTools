@@ -6,20 +6,16 @@
 system}
 \usage{
 cq.fb_index(wimp, std = FALSE)
-cq.fb_index(wimp, std)
 }
 \arguments{
-\item{std}{}
-\item{std}{A logical value indicating wether to standarize the scores (TRUE) or (FALSE)}
+\item{wimp}{An object of class 'wimp', which contains an implication grid and associated constructs.}
+
+\item{std}{A logical value indicating whether to standarize the scores (TRUE) or (FALSE)}
 }
 \value{
-Returns a dataframe with numbers of consequences and feedbacks
-
-Returns a dataframe with the intensity of the effects of consequences and feedbacks
+Returns a dataframe with the intensity of the effects caused by consequences and feedback interactions
 }
 \description{
-This function calculates the numbers of consequences and feedbacks
-
 This function calculates the intensity of the effects of consequences and feedbacks
 for each construct to analyze its resistance to change
 }
