@@ -542,82 +542,23 @@ wp1.grph
 
 ## Eigenvectores sobre matriz de implicaciones
 
-La puntuación de centralidad para cada constructo se obtiene sumando los cuadrados de las componentes del primer y segundo vector propio, ponderados por los respectivos valores propios. Este vector de puntuciones representa cuánto contribuye cada constructo a las dos principales dimensiones de variabilidad en los datos.
+La puntuación de centralidad para cada constructo se obtiene sumando los cuadrados de las componentes de los *n* primeros vectores propios, ponderados por los respectivos valores propios. Este vector de puntuciones representa cuánto contribuye cada constructo a las *n* principales dimensiones de variabilidad en los datos.
 
-```{r eigenvalues}
+```{r test_eigenvalues}
 
-eigen_index <- function(wimp) {
-  # Matriz de adyacencia
-  adj.matrix <- wimp$scores$implications
-
-  # Vectores y valores propios
-  results <- eigen(adj.matrix)
-
-  # Emplearemos información de los dos primeros vectores propios
-  eigenvectorF <- results$vectors[,1]
-  eigenvectorS <- results$vectors[,2]
-
-  # Puntuación combinada
-  centralidad <- eigenvectorF^2 * results$values[1] + eigenvectorS^2 * results$values[2]
-
-  # Dataframe para resultados
-  df.centrality <- data.frame(
-    constructs = wimp$constructs$constructs,
-    leftpoles = wimp$constructs$left.poles,
-    rightpoles = wimp$constructs$right.poles,
-    centrality = abs(round(centralidad, 3))
-  )
-
-  return(df.centrality)
-}
-```
-
-Resultado de la función:
-
-```{r test_eigenvalues, fig.width = 10, fig.height = 10}
-
-cent.evalues.df <- eigen_index(wimp)
+# Invocamos la función utilizando la matriz de implicaciones, y los dos primeros vectores propios
+cent.evalues.df <- GridFCM.practicum::eigen_index(wimp = wimp, method = "implications", num.vectors = 2)
 DT::datatable(cent.evalues.df)
 ```
 
 ## Análisis de componentes principales (PCA)
 
-La siguiente función calcula la centralidad de los constructos utilizando un PCA aplicado a la matriz de implicaciones. Se calcula la varianza explicada por cada componente principal y se usa para ponderar las cargas de los dos primeros componentes. La centralidad de cada constructo se determina sumando las cargas cuadradas de los dos primeros componentes principales, ponderadas por la varianza explicada por estos componentes.
-
-```{r pca_index}
-
-pca_index <- function(wimp) {
-
-  # Foco del PCA
-  adj.matrix <- wimp$scores$implications
-
-  # Análisis de componentes principales, y varianza explicada por cada componente
-  pca.result <- prcomp(adj.matrix, center = TRUE, scale = TRUE)
-  explained.variance <- pca.result$sdev^2 / sum(pca.result$sdev^2)
-  
-  # Cargas de los componentes
-  #loadings.pca <- pca.result$rotation
-
-  # Suma de cargas en los dos primeros componentes principales
-  loadings.add <- rowSums((pca.result$rotation[, 1:2]^2) * explained.variance[1:2])
-
-  # Creamos dataframe con los nombres de los constructos y las puntuaciones de la suma de cargas en PC1 a PC2
-  pca.df <- data.frame(
-    constructs = wimp$constructs$constructs,
-    leftpoles = wimp$constructs$left.poles,
-    rightpoles = wimp$constructs$right.poles,
-    centrality = abs(round(loadings.add, 3))
-  )
-  
-  return(pca.df)
-}
-```
-
-Resultado de la función:
+La siguiente función calcula la centralidad de los constructos utilizando un PCA aplicado a la matriz de implicaciones. Se calcula la varianza explicada por cada componente principal y se usa para ponderar las cargas de los dos primeros componentes. La centralidad de cada constructo se determina sumando las cargas cuadradas de los *n* primeros componentes principales (valor indicado como parámetro), ponderadas por la varianza explicada por estos componentes.
 
 ```{r test_pcavalues}
 
-cent.pcavalues.df <- pca_index(wimp)
+# Invocamos la función utilizando la matriz de implicaciones, y los dos primeros constructos principales
+cent.pcavalues.df <- GridFCM.practicum::pca_index(wimp = wimp, method = "implications", pr.comp = 2)
 DT::datatable(cent.pcavalues.df)
 ```
 
@@ -626,7 +567,7 @@ DT::datatable(cent.pcavalues.df)
 ```{r pca, fig.width = 10, fig.height = 10}
 
 # Foco del PCA
-adj.matrix <- wimp$scores$implications
+adj.matrix <- wimp$scores$weights
 
 # Análisis de componentes principales
 pca.result <- prcomp(adj.matrix, center = TRUE, scale = TRUE)
@@ -663,8 +604,8 @@ En este punto, ofrecemos un "ranking" de centralidad de los constructos según l
 
 # Ejecución de las fuciones sobre la wimp del caso
 mahalanobis.res.lst <- mahalanobis_index(wimp)
-eigen.res <- eigen_index(wimp)
-pca.res <- pca_index(wimp)
+eigen.res <- GridFCM.practicum::eigen_index(wimp = wimp, method = "implications", num.vectors = 2)
+pca.res <- GridFCM.practicum::pca_index(wimp = wimp, method = "implications", pr.comp = 2)
 
 mahalanobis.res <- as.data.frame(mahalanobis.res.lst)
 mahalanobis.res$constructs <- rownames(mahalanobis.res)
@@ -724,8 +665,8 @@ DT::datatable(centrality.comb.pres.df)
 
 ```{r centrality_correlations}
 
-corr.sel <- round(cor(centrality.comb.df[c("importanciaSubjetiva", "totalCentrl", "Rank_Eigen", "Rank_PCA", "Rank_Mahalanobis")],
-                use = "complete.obs", method = "pearson"), 3)
+corr.sel <- round(cor(centrality.comb.df[c("p", "h", "importanciaSubjetiva", "totalCentrl", "Rank_Eigen", "Rank_PCA", "Rank_Mahalanobis")],
+                use = "complete.obs", method = "kendall"), 3)
 
 DT::datatable(corr.sel)
 

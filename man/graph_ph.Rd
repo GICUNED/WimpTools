@@ -4,21 +4,21 @@
 \alias{graph_ph}
 \title{Scatter Plot of Constructs in P-H Space}
 \usage{
-graph_ph(..., mark.nva = TRUE, mark.cnt = TRUE, show.points = TRUE)
+graph_ph(..., mark.nva = TRUE, mark.hub = TRUE, show.points = TRUE)
 }
 \arguments{
 \item{mark.nva}{Boolean value that specifies if non-viable areas are to be marked in the
 graphic. Non-viable areas are parts of the P-H space where constructs cannot logically exist.}
 
-\item{mark.cnt}{Boolean value that specifies if central constructs have to be highlighted.
-Central constructs are depicted with a distinct color and symbol to differentiate them from
+\item{mark.hub}{Boolean value that specifies if hub constructs have to be highlighted.
+Hub constructs are depicted with a distinct color and symbol to differentiate them from
 peripheral constructs.}
 
 \item{show.points}{Boolean value that specifies whether points should be displayed or not}
 
 \item{phm.mat}{A matrix where each row represents a construct and contains
 the P and H coordinates of the construct, as well as an indication of whether the
-construct is central (1) or not (0). The matrix must have row names,
+construct is hub (1) or not (0). The matrix must have row names,
 which are used to label the constructs in the graph.}
 }
 \value{
@@ -27,9 +27,9 @@ A Plotly object representing the generated scatter plot.
 \description{
 This function generates a scatter plot of constructs in the P-H space,
 where P represents Presence (frequency of the construct) and H represents Hierarchy
-(influence of the construct). Central constructs are highlighted in red color, and
+(influence of the construct). Hub constructs are highlighted in red color, and
 peripheral constructs in another, facilitating their visual identification.
 }
 \examples{
-graph_ph(phm.mat, mark.nva = TRUE, mark.cnt = TRUE)
+graph_ph(phm.mat, mark.nva = TRUE, mark.hub = TRUE)
 }
