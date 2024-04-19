@@ -95,6 +95,8 @@ calculate_adjustment_vector <- function(vector, normalize = TRUE, MaxScale = 1, 
 #' the self,
 #' the hypothetical self when each construct move from self to ideal (considering and not considering the original change in the construct),
 #' the hypothetical self when each construct move one step from self to ideal (considering and not considering the original change in the construct),
+#' the hypothetical self in the Weighted Implications Grid
+#' for the hypothetical selves, a Global Index is already calculated as the average of the adjustment for each construct
 #' all above against the ideal.
 #' Also the adjustment index as the indefinition of self and ideal.
 #' @param wimp Object containing ideal, self vectors and weights matrix.
@@ -126,7 +128,8 @@ calculate_adjustment_wimp <- function(wimp, filtered_constructs = c(1)) {
     ToIdeal = list(),
     ToIdeal2 = list(),
     OneStep = list(),
-    OneStep2 = list()
+    OneStep2 = list(),
+    Wimp = list()
   )
 
   # Calculate vector_future
@@ -189,6 +192,28 @@ calculate_adjustment_wimp <- function(wimp, filtered_constructs = c(1)) {
     # Add labels to adjustment$future
     names(adjustment$future$OneStep2[[i]]) <- c("distance", "correlation", "adjustment")
   }
+
+
+
+  # Calculate adjustment index for Wimp vectors
+  for (i in 1:nrow(wimp$scores$implications)) {
+    # Calculate adjustment for vector in wimp$scores$implications and ideal vectors
+    adjustment$future$Wimp[[i]] <- calculate_adjustment_init_end(wimp$scores$implications[i,], vector_ideal, TRUE, 1, filtered_constructs = filtered_constructs)
+    # Add labels to adjustment$future
+    names(adjustment$future$Wimp[[i]]) <- c("distance", "correlation", "adjustment")
+  }
+
+  # Calculate a Global Index for each option in adjustment$future
+  # Iterate each list in adjustment$future
+  for (list_name in names(adjustment$future)) {
+
+    # Calculate average of all adjustment values for each option
+    mean_adjustment <- mean(sapply(adjustment$future[[list_name]], function(x) as.numeric(x$adjustment)))
+
+    # Create "GlobalIndex" element in each list y assign the calculated average
+    adjustment$future[[list_name]]$GlobalIndex <- mean_adjustment
+  }
+
 
   # CALCULATE ADJUSTMENT AS INDEFINITION OF SELF AND IDEAL
 
