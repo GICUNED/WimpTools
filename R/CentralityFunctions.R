@@ -184,7 +184,7 @@ mahalanobis_index <- function(wimp, method = "wnorm", std = 'none', sign.level =
 #'
 #' @param wimp A list object representing the WIMP structure, which must include
 #'   a scores list with matrices: direct, weights, and implications.
-#' @param method A character string specifying which wimp matrix to use for PCA.
+#' @param matrix A character string specifying which wimp matrix to use for PCA.
 #'   Valid options are "direct", "weights", or "implications".
 #' @param pr.comp Integer indicating the number of principal components to use
 #'   for calculating centrality scores. Defaults to 2.
@@ -192,7 +192,7 @@ mahalanobis_index <- function(wimp, method = "wnorm", std = 'none', sign.level =
 #' @return A dataframe with construct names and their centrality scores.
 #'
 #' @examples
-#' pca_index(my_wimp, method = "weights", pr.comp = 2)
+#' pca_index(my_wimp, matrix = "weights", pr.comp = 2)
 #'
 #' @export
 #'
@@ -200,36 +200,50 @@ mahalanobis_index <- function(wimp, method = "wnorm", std = 'none', sign.level =
 #'   exceeds the available number of principal components.
 #'
 
-pca_index <- function(wimp, method = "implications", pr.comp = 2) {
+pca_index <- function(wimp, matrix = "implications", pr.comp = 2){
   # Validate the specified method and its presence in wimp$scores
-  if (!method %in% c("direct", "weights", "implications")) {
+  if (!matrix %in% c("direct", "weights", "implications")) {
     stop("El método especificado debe ser 'direct', 'weights' o 'implications'.")
   }
 
   # Access the matrix based on the specified method
-  adj.matrix <- wimp$scores[[method]]
+  adj.matrix <- wimp$scores[[matrix]]
 
-  # Perform Principal Component Analysis and calculate variance explained by each component
-  pca.result <- prcomp(adj.matrix, center = TRUE, scale = TRUE)
-  explained.variance <- pca.result$sdev^2 / sum(pca.result$sdev^2)
+  pca.result <- NULL
+  # Attempt to perform PCA. Catch potential calc exceptions
+  pca.result <- tryCatch({
+    prcomp(adj.matrix, center = TRUE, scale = TRUE)
+  }, warning = function(w) {
+    message("Advertencia: ", w$message)
+  }, error = function(e) {
+    message("Error en el cálculo del PCA: ", e$message)
+  })
 
-  # Validate if pr.comp is within the allowable range
-  if (pr.comp > length(explained.variance)) {
-    stop("pr.comp excede el número de componentes principales disponibles.")
+  # Check if PCA was successful
+  if (is.null(pca.result)) {
+    # PCA failed, assign NA to all centrality values
+    centrality <- rep(NA, length(wimp$constructs$constructs))
+  } else {
+    # PCA succeeded, calculate variance explained and loadings
+    explained.variance <- pca.result$sdev^2 / sum(pca.result$sdev^2)
+
+    # Validate if pr.comp is within the allowable range
+    if (pr.comp > length(explained.variance)) {
+      stop("pr.comp excede el número de componentes principales disponibles.")
+    }
+
+    # Calculate loadings for the specified number of principal components
+    loadings.pca <- pca.result$rotation
+    loadings.add <- rowSums((loadings.pca[, 1:pr.comp]^2) * explained.variance[1:pr.comp])
+    centrality <- abs(loadings.add)
   }
-
-  # Calculate loadings for the specified number of principal components
-  loadings.pca <- pca.result$rotation
-
-  # Sum of squared loadings weighted by explained variance for specified number of components
-  loadings.add <- rowSums((loadings.pca[, 1:pr.comp]^2) * explained.variance[1:pr.comp])
 
   # Create a dataframe with construct names and centrality scores from the sum of loadings in principal components
   pca.df <- data.frame(
     constructs = wimp$constructs$constructs,
     leftpoles = wimp$constructs$left.poles,
     rightpoles = wimp$constructs$right.poles,
-    centrality = abs(loadings.add)
+    centrality = centrality
   )
 
   return(pca.df)
@@ -245,7 +259,7 @@ pca_index <- function(wimp, method = "implications", pr.comp = 2) {
 #' using the 'direct', 'weights', or 'implications' matrices.
 #'
 #' @param wimp wimp An object of class 'wimp' (weighted implications grid)
-#' @param method A character string specifying which matrix to use for the centrality analysis. Accepted values are
+#' @param matrix A character string specifying which matrix to use for the centrality analysis. Accepted values are
 #'        'direct', 'weights', or 'implications'. Default is 'implications'.
 #' @param num.vectors An integer specifying the number of eigenvectors to use for computing centrality scores.
 #' @return A dataframe containing the constructs' names and their respective centrality scores.
@@ -255,14 +269,14 @@ pca_index <- function(wimp, method = "implications", pr.comp = 2) {
 #' @throws Error if method is not one of the allowed values. Also throws an error if num.vectors
 #'   exceeds the available number of eigenvectors
 
-eigen_index <- function(wimp, method = "implications", num.vectors = 2) {
+eigen_index <- function(wimp, matrix = "implications", num.vectors = 2) {
   # Validate the specified method
-  if (!method %in% c("direct", "weights", "implications")) {
+  if (!matrix %in% c("direct", "weights", "implications")) {
     stop("method debe ser 'direct', 'weights' o 'implications'.")
   }
 
   # Access the matrix based on the specified method
-  adj.matrix <- wimp$scores[[method]]
+  adj.matrix <- wimp$scores[[matrix]]
 
   # Compute eigenvectors and eigenvalues
   results <- eigen(adj.matrix)
@@ -276,7 +290,7 @@ eigen_index <- function(wimp, method = "implications", num.vectors = 2) {
   # of the real part of each eigenvector, squares it, and then multiplies it by the real part of the corresponding
   # eigenvalue to compute centrality scores.
   centralidad <- Reduce(`+`, lapply(1:num.vectors, function(i) {
-    abs(Re(results$vectors[, i]))^2 * Re(results$values[i])
+    Re(results$vectors[, i])^2 * Re(results$values[i])
   }))
 
   # Create a dataframe with the centrality results
@@ -284,7 +298,7 @@ eigen_index <- function(wimp, method = "implications", num.vectors = 2) {
     constructs = wimp$constructs$constructs,
     leftpoles = wimp$constructs$left.poles,
     rightpoles = wimp$constructs$right.poles,
-    centrality = centralidad
+    centrality = abs(centralidad)
   )
 
   return(df.centrality)
