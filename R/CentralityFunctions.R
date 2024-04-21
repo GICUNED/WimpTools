@@ -4,20 +4,24 @@
 
 #' Calculate Presence and Hierarchy Indices
 #'
-#' This function computes the presence (P, frequency of occurrence) and
-#' hierarchy (H, influence on others) indices for constructs within an implication grid.
-#' It can standardize these indices based on the maximum degree if required.
+#' This function computes the presence (P) and hierarchy (H) indices for constructs within an implication grid.
+#' These indices represent the frequency of occurrence and influence on other constructs, respectively.
+#' The function allows for different methods of standardization based on the context of the constructs.
 #'
-#' @param wimp An object of class 'wimp', which contains an implication grid
-#'   and associated constructs.
-#' @param method A character string specifying the method used to calculate
-#'   the degree indices. Default is "weight". Other methods may be available
-#'   depending on the implementation of 'degree_index' function.
-#' @param std A logical value indicating whether to standardize the P and H
-#'   indices based on the maximum total degree of the constructs. Defaults to FALSE
+#' @param wimp A WIMP object containing an implication grid and associated constructs.
+#' @param method A character string specifying the method used to calculate the degree indices.
+#'   Default is "wnorm". Acceptable values include "wnorm", "simple", "weight", or any other method
+#'   implemented in the 'degree_index' function.
+#' @param std A character string indicating how to standardize the P and H indices. Available options are:
+#'   - 'none': No standardization (default).
+#'   - 'vertices': Standardizes by the maximum total degree, which is calculated based on the number of vertices.
+#'   - 'edges': Standardizes by the total number of edges.
+#'   - 'max_edges': Standardizes by the maximum number of outgoing edges from any single vertex.
+#'   - 'density': Adjusts P and H by the density of the grid, which considers the total edges possible versus actual.
 #'
-#' @return A 2-column matrix with the presence index 'p' and the hierarchy index 'h'
-#'   for each construct. If 'std' is TRUE, these values are standardized.
+#' @return A matrix with two columns, 'p' for presence and 'h' for hierarchy, containing the indices for each construct.
+#'   If standardization is applied, these values are modified according to the selected method.
+#'
 #'
 #' @export
 #'
@@ -106,20 +110,24 @@ ph_index <- function(wimp, method = "wnorm", std = 'none'){
 #'
 #' This function calculates the Mahalanobis distance for each construct
 #' in a given PH matrix obtained from a `wimp` object. It also determines
-#' whether each construct is considered "central" based on a chi-square
+#' whether each construct is considered "hub" based on a chi-square
 #' cutoff, which is calculated using a specified significance level.
 #'
-#' @param wimp A `wimp` object containing the data from which the PH matrix
-#'   is derived.
-#' @param method A character string specifying the method used for calculating
-#'   the PH matrix. Default is `"wnorm"`.
-#' @param std A logical value indicating whether the data should be
-#'   standardized before calculating the Mahalanobis distance. Default is `FALSE`.
+#' @param wimp An object of class 'wimp', which contains an implication grid
+#'   and associated constructs.
+#' @param method A character string specifying the method used to calculate
+#'   the degree indices. Accepted values are "wnorm", "direct", and possibly others,
+#'   depending on the implementation of 'degree_index' function. Default is "wnorm".
+#' @param std A character string indicating the type of standardization to apply.
+#'   Options are 'none' (no standardization), 'vertices' (standardize by the maximum total degree
+#'   of the constructs), 'edges' (standardize by the total number of edges), 'max_edges'
+#'   (standardize by the maximum number of edges from any node), and 'density'
+#'   (scale by the density of the network). Default is 'none'.
+#' @param sign.level Signification level associated with the cut-off point of the Chi-square distribution
+#'   to determine the "hub" constructs.
 #'
-#' @return A matrix that includes the original PH matrix with two additional
-#'   columns: one for the Mahalanobis distance of each construct and another
-#'   indicating whether the construct is considered "central" based on the
-#'   chi-square cutoff.
+#' @return A matrix with columns 'p' and 'h' representing the presence and hierarchy indices
+#'   for each construct. Indices are standardized according to the specified method if applicable.
 #'
 #' @export
 #'
@@ -254,9 +262,10 @@ pca_index <- function(wimp, matrix = "implications", pr.comp = 2){
 
 #' Calculate Centrality Using Eigenvalue Decomposition
 #'
-#' This function calculates centrality scores for constructs within a WIMP (Web-based Ideographic Measures Package) structure,
-#' based on the eigenvalue decomposition of a specified adjacency matrix from the WIMP scores. It supports analyzing centrality
-#' using the 'direct', 'weights', or 'implications' matrices.
+#' This function calculates centrality scores for constructs within a `wimp` object,
+#' based on the eigenvalue decomposition of a specified adjacency matrix from the WIMP scores.
+#' It supports analyzing centrality using the 'direct', 'weights', or 'implications' matrices.
+#' The centrality calculation is performed over the specified number of eigenvectors.
 #'
 #' @param wimp wimp An object of class 'wimp' (weighted implications grid)
 #' @param matrix A character string specifying which matrix to use for the centrality analysis. Accepted values are
@@ -310,8 +319,7 @@ eigen_index <- function(wimp, matrix = "implications", num.vectors = 2) {
 #'
 #' This function generates a scatter plot of constructs in the P-H space,
 #' where P represents Presence (frequency of the construct) and H represents Hierarchy
-#' (influence of the construct). Hub constructs are highlighted in red color, and
-#' peripheral constructs in another, facilitating their visual identification.
+#' (influence of the construct).
 #'
 #' @param phm.mat A matrix where each row represents a construct and contains
 #'        the P and H coordinates of the construct, as well as an indication of whether the
@@ -444,9 +452,10 @@ graph_ph <- function(..., mark.nva = TRUE, mark.hub = TRUE, show.points = TRUE) 
 
 #' Construc color matrix based on its category
 #'
-#' This function computes the presence (P, frequency of occurrence) and
-#' hierarchy (H, influence on others) indices for constructs within an implication grid.
-#' It can standardize these indices based on the maximum degree if required.
+#' This function assigns colors to constructs within an implication grid based on their category.
+#' The categories include congruent, discrepant, dilemmatic, and undefined constructs.
+#' The color assignment helps in visually differentiating between these categories.
+#' The colors used are determined by a hidden function based on the specified color mode.
 #'
 #' @param wimp An object of class 'wimp', which contains an implication grid
 #'   and associated constructs.
@@ -498,11 +507,14 @@ test_optimal_num_clusters <- function(...){
 
 
 # Dendrogram of constructs of a Wimp ------------------------------------------------------------
+
 #' Constructs Dendrogram
 #'
-#' This function generates a dendrogram of constructs based on the Euclidean
+#' This function generates a dendrogram of constructs based on the Mahalanobis
 #' distances in the P-H vector space. It automatically calculates the optimal
-#' number of clusters for grouping the constructs.
+#' number of clusters for grouping the constructs using the hidden function .optimal.num.clusters().
+#' The dendrogram visually represents the hierarchical clustering of constructs, highlighting the optimal
+#' clustering of constructs.
 #'
 #' @param wimp A `wimp` object containing the constructs and the corresponding
 #' scores in the P-H vector space. This object should have been generated using
@@ -533,7 +545,6 @@ constructs_dendrogram <- function(wimp){
 
   #Dendrogram
   dist.mat <- .mahalanobis.dist.matrix(ph.mat)
-  #dist.mat <- dist(ph.mat, method = "euclidean")
   hclust.model <- hcut(dist.mat, k = k, method = "ward.D2", stand = TRUE, hc_func = "agnes")
   plot<- fviz_dend(hclust.model, rect = TRUE, cex = 0.7,
                    k_colors = greens.palette,horiz = TRUE,
