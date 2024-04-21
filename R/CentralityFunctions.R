@@ -321,10 +321,21 @@ eigen_index <- function(wimp, matrix = "implications", num.vectors = 2) {
 #' where P represents Presence (frequency of the construct) and H represents Hierarchy
 #' (influence of the construct).
 #'
-#' @param phm.mat A matrix where each row represents a construct and contains
-#'        the P and H coordinates of the construct, as well as an indication of whether the
-#'        construct is hub (1) or not (0). The matrix must have row names,
-#'        which are used to label the constructs in the graph.
+#' @param wimp An object of class 'wimp', which contains an implication grid
+#'   and associated constructs.
+#'
+#' @param method A character string specifying the method used to calculate
+#'   the degree indices. Accepted values are "wnorm", "direct", and possibly others,
+#'   depending on the implementation of 'degree_index' function. Default is "wnorm".
+#'
+#' @param std A character string indicating the type of standardization to apply.
+#'   Options are 'none' (no standardization), 'vertices' (standardize by the maximum total degree
+#'   of the constructs), 'edges' (standardize by the total number of edges), 'max_edges'
+#'   (standardize by the maximum number of edges from any node), and 'density'
+#'   (scale by the density of the network). Default is 'none'.
+#'
+#' @param sign.level Signification level associated with the cut-off point of the Chi-square distribution
+#'   to determine the "hub" constructs.
 #'
 #' @param mark.nva Boolean value that specifies if non-viable areas are to be marked in the
 #'        graphic. Non-viable areas are parts of the P-H space where constructs cannot logically exist.
