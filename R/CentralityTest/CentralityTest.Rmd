@@ -1,12 +1,12 @@
 ---
 title: "SCP - Centrality"
 author: ""
-date: "2024-02-20"
+date: "2024-04-21"
 output:
     rmdformats::readthedown:
       use_bookdown: true
       highlight: kate 
-      toc_depth: 3
+      toc_depth: 5
       number_sections: true
       code_folding: show
       css: custom.css
@@ -16,21 +16,18 @@ csl: apa.csl
 params:
   id.sujeto.entrada:
     label: "Identificador del sujeto"
-    value: "P1892532"
+    value: "P0198940"
     input: "text"
 ---
 
 ```{r setup, include=FALSE}
-#"P1604200"
-#"P0198940"
-#"P0376474"
 
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
 ```
 
 # Carga de librerías
 
-```{r libraries, message=FALSE, warning=FALSE}
+```{r libraries, message = FALSE}
 
 if (!(require(DT)))
   install.packages("DT")
@@ -104,29 +101,29 @@ library(dplyr)
 # Objetos de sesión de ejemplo de la PEC
 path <- '../CentralityTest/data.RData'
 load(path)
-samples.raw.df <- data
+sample.raw.df <- data
 
-samples.df <- data.frame(ID = samples.raw.df$dataset$ID,
-                         gender = samples.raw.df$dataset$gender,
-                         age = samples.raw.df$dataset$age,
-                         edu = samples.raw.df$dataset$edu,
+sample.df <- data.frame(ID = sample.raw.df$dataset$ID,
+                         gender = sample.raw.df$dataset$gender,
+                         age = sample.raw.df$dataset$age,
+                         edu = sample.raw.df$dataset$edu,
                          status = "Error")
 
-for(i in 1:nrow(samples.df)) {
-  id <- samples.df$ID[i]  
+for(i in 1:nrow(sample.df)) {
+  id <- sample.df$ID[i]  
   
   tryCatch({
     wimp <- data$grids[[id]]$WT  # Accede al wimp asociado al ID
     wphm <- GridFCM.practicum::ph_index(wimp = wimp, method = "wnorm", std = "none")
 
-    samples.df$status[i] <- "Ok"
+    sample.df$status[i] <- "Ok"
   }, error = function(e){
     cat("Error procesando ID:", id, "\n")
   })
 }
 
 # Calcula las frecuencias de status de procesamiento
-freqs.status <- table(samples.df$status, useNA = "no")
+freqs.status <- table(sample.df$status, useNA = "no")
 
 # Calcula los porcentajes
 percent.status <- prop.table(freqs.status) * 100
@@ -154,26 +151,63 @@ DT::datatable(results.summary, options = list(pageLength = 5))
 
 ```{r data_summary, fig.width = 10, fig.height = 10}
 
-DT::datatable(samples.df)
+DT::datatable(sample.df)
+```
+
+### Conjunto de constructos global
+
+```{r sample_constructs}
+
+# Crear un data frame para almacenar los resultados
+sample.contructs.df <- data.frame(ID = character(), P = numeric(), H = numeric(), m_dist = numeric(), hub = logical())
+
+for(i in 1:nrow(sample.df)) {
+  id <- sample.df$ID[i] 
+  
+  tryCatch({
+    wimp <- data$grids[[id]]$WT  # Accede al wimp usando el ID
+    wimpRT <- data$grids[[id]]$WR  # Accede al wimp usando el ID
+    wphm <- GridFCM.practicum::ph_index(wimp = wimp, method = "wnorm", std = "none")
+    wphmRT <- GridFCM.practicum::ph_index(wimp = wimpRT, method = "wnorm", std = "none")
+    
+    #-------------------
+    # Test. Convertir los resultados a un data frame y añadir el ID
+    indv.obs.df <- as.data.frame(wphm)
+    indv.obs.df$ID <- id
+
+    #--------------------------------
+    # Convertir los resultados a un data frame y añadir el ID
+    indv.obs.RT.df <- as.data.frame(wphmRT)
+    indv.obs.RT.df$ID <- id
+
+
+    # Incorporaremos columnas p y h del test y del retest
+    obs.columns <- indv.obs.df[, c("ID", "p", "h")]
+    rt.columns <- indv.obs.RT.df[, c("p", "h")]
+
+    # Nombres de las columnas p y h en retest
+    names(rt.columns) <- c("p.RT", "h.RT")
+
+    # Combinamos las columnas en un solo DF
+    combined.row <- cbind(obs.columns, rt.columns)
+    
+    # Añadimos la fila
+    sample.contructs.df <- rbind(sample.contructs.df, combined.row)
+  }, error = function(e){
+  })
+}
+
+DT::datatable(sample.contructs.df)
 ```
 
 ## Wimp del sujeto a presentar
 
 ```{r wimp_import, fig.width = 10, fig.height = 10}
 
-#path <- 'Wimp_Ejemplo.xlsx'
-#opr <- TRUE
-#wimp <- GridFCM.practicum::importwimp(path = path, opr = opr, sheet = 1)
-
-# Objetos de sesión de ejemplo de la PEC
-path <- '../CentralityTest/data.RData'
-load(path)
-samples.raw.df <- data
-
 # Selección de un sujeto
-id.sample <- params$id.sujeto.entrada
-wimp <- data$grids[[id.sample]]$WT
-sujeto.df <- data$dataset[data$dataset$ID == id.sample,]
+id.obs <- params$id.sujeto.entrada
+wimp <- sample.raw.df$grids[[id.obs]]$WT
+sujeto.df <- sample.raw.df$dataset[data$dataset$ID == id.obs,]
 
 bertin(wimp$openrepgrid, colors = c("palegreen", "darkgreen"))
 ```
@@ -327,7 +361,7 @@ bar_plot <- ggplot(test.wmahalanobis.df.sup, aes(x = constructo, y = m.dist, fil
   theme_minimal() +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
-    legend.position = "none" # Ocultar leyenda para fill
+    legend.position = "none" 
   ) +
   labs(x = "Constructos con h > 0", y = "Distancia de Mahalanobis", title = "Constructos con h>0 por distancia de Mahalanobis")
 
@@ -353,7 +387,7 @@ bar_plot <- ggplot(test.wmahalanobis.df.sub, aes(x = constructo, y = m.dist, fil
   theme_minimal() +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
-    legend.position = "none" # Ocultar leyenda para fill
+    legend.position = "none" 
   ) +
   labs(x = "Constructos con h < 0", y = "Distancia de Mahalanobis", title = "Constructos con h<0 por distancia de Mahalanobis")
 
@@ -386,7 +420,7 @@ bar_plot <- ggplot(test.wmahalanobis.df.sortP, aes(x = constructo, y = p, fill =
   theme_minimal() +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
-    legend.position = "none" # Ocultar leyenda para fill
+    legend.position = "none" 
   ) +
   labs(x = "Constructos", y = "Valor de P", title = "Constructos por distancia en P")
 
@@ -540,29 +574,33 @@ wp1.grph
 
 # Otros métodos de centralidad
 
-## Eigenvectores sobre matriz de implicaciones
+## Centralidad sobre caso individual de estudio
+
+### Eigenvectores sobre matriz de implicaciones
 
 La puntuación de centralidad para cada constructo se obtiene sumando los cuadrados de las componentes de los *n* primeros vectores propios, ponderados por los respectivos valores propios. Este vector de puntuciones representa cuánto contribuye cada constructo a las *n* principales dimensiones de variabilidad en los datos.
 
 ```{r test_eigenvalues}
 
 # Invocamos la función utilizando la matriz de implicaciones, y los dos primeros vectores propios
-cent.evalues.df <- GridFCM.practicum::eigen_index(wimp = wimp, method = "implications", num.vectors = 2)
+cent.evalues.df <- GridFCM.practicum::eigen_index(wimp = wimp, matrix = "weights", num.vectors = 2)
 DT::datatable(cent.evalues.df)
 ```
 
-## Análisis de componentes principales (PCA)
+### Análisis de componentes principales (PCA)
+
+#### Resultado de cálculo de centralidad
 
 La siguiente función calcula la centralidad de los constructos utilizando un PCA aplicado a la matriz de implicaciones. Se calcula la varianza explicada por cada componente principal y se usa para ponderar las cargas de los dos primeros componentes. La centralidad de cada constructo se determina sumando las cargas cuadradas de los *n* primeros componentes principales (valor indicado como parámetro), ponderadas por la varianza explicada por estos componentes.
 
 ```{r test_pcavalues}
 
 # Invocamos la función utilizando la matriz de implicaciones, y los dos primeros constructos principales
-cent.pcavalues.df <- GridFCM.practicum::pca_index(wimp = wimp, method = "implications", pr.comp = 2)
+cent.pcavalues.df <- GridFCM.practicum::pca_index(wimp = wimp, matrix = "weights", pr.comp = 2)
 DT::datatable(cent.pcavalues.df)
 ```
 
-## PCA Plot
+#### PCA Plot
 
 ```{r pca, fig.width = 10, fig.height = 10}
 
@@ -598,79 +636,218 @@ pca.plot
 
 ## Comparativa de métodos de centralidad
 
-En este punto, ofrecemos un "ranking" de centralidad de los constructos según los tres métodos empleados.
+### Definición de función
 
-```{r centrality_comparison}
+Utilizaremos la siguiente función para poder establecer una comparativa entre los tres métodos de centralidad trabajados:
 
-# Ejecución de las fuciones sobre la wimp del caso
-mahalanobis.res.lst <- mahalanobis_index(wimp)
-eigen.res <- GridFCM.practicum::eigen_index(wimp = wimp, method = "implications", num.vectors = 2)
-pca.res <- GridFCM.practicum::pca_index(wimp = wimp, method = "implications", pr.comp = 2)
+- Distancia de Mahalanobis con marcado de constructos "hub"
+- Vectores propios sobre matriz de pesos de rejilla de implicaciones ponderada
+- Análisis de componentes principales sobre matriz de pesos de rejilla de implicaciones ponderada
 
-mahalanobis.res <- as.data.frame(mahalanobis.res.lst)
-mahalanobis.res$constructs <- rownames(mahalanobis.res)
-
-unq.constructs <- unique(c(mahalanobis.res$constructs, eigen.res$constructs, pca.res$constructs))
-
-# Preparar un data frame final
-comb.df <- data.frame(constructs = unq.constructs)
-
-comb.df <- merge(comb.df, mahalanobis.res[, c("constructs", "m.dist")], by = "constructs", all.x = TRUE)
-comb.df <- merge(comb.df, eigen.res[, c("constructs", "centrality")], by = "constructs", all.x = TRUE,
-                 suffixes = c(".mahalanobis", ".eigen"))
-comb.df <- merge(comb.df, pca.res[, c("constructs", "centrality")], by = "constructs", all.x = TRUE)
-
-# Redondea las columnas numéricas a 3 decimales
-comb.df <- comb.df %>%
-  mutate(across(where(is.numeric), round, digits = 3))
-
-# Renombramos columnas
-names(comb.df)[2:4] <- c("Centr_Mahalanobis", "Centr_Eigen", "Centr_PCA")
-
-# Ranking de los constructos dentro de cada método
-comb.df$Rank_Mahalanobis <- rank(-comb.df$Centr_Mahalanobis, ties.method = "first")
-comb.df$Rank_Eigen <- rank(-comb.df$Centr_Eigen, ties.method = "first")
-comb.df$Rank_PCA <- rank(-comb.df$Centr_PCA, ties.method = "first")
-
-comb.df <- comb.df[order(comb.df$Rank_Mahalanobis),]
-
-DT::datatable(comb.df)
-```
+Invocaremos la función tanto para el caso actual de estudio, como para el conjunto de observaciones global con el que estamos trabajando.
 
 
-## Combinación con medidas de importancia subjetiva
+```{r centrality.comparison_function}
 
-```{r centrality_results, fig.width = 10, fig.height = 10}
+# Función que devuelve un dataframe de comparativa de métodos de centralidad, para un identificador de caso del conjunto de observaciones disponible. La función acepta un parámetro de selección de casos de Test o de Retest
 
-mahalanobis.res$importanciaSubjetiva <- NA
-mahalanobis.res$totalCentrl <- NA
-
-for (i in 1:nrow(mahalanobis.res)) {
-  mahalanobis.res$importanciaSubjetiva[i] <- sujeto.df[[paste("cen.ord.c", i, ".test", sep = "")]]
-  mahalanobis.res$totalCentrl[i] <- sujeto.df[[paste("cen.c", i, ".test", sep = "")]]
+centrality.comp <- function(id.obs, selection = "WT"){
+  
+  # Recupera el dataset asociado a la información general y de infomación de autoevaluación de importancia subjetiva de constructos
+  obs.id.df <- sample.raw.df$dataset[sample.raw.df$dataset$ID == id.obs,]
+  # Recupera el wimp de la muestra, para Test o pra Retest según el parámetro de selección
+  obs.wimp <- sample.raw.df$grids[[id.obs]][[selection]]
+  
+  # Cálculo de medidas de centralidad sobre el caso. Basaremos el cálculo en la matriz de pesos, y
+  # dos vectores propios para eigen_index / dos componentes principales para pca_index
+  mahalanobis.res.lst <- mahalanobis_index(obs.wimp)
+  eigen.res <- GridFCM.practicum::eigen_index(wimp = obs.wimp, matrix = "weights", num.vectors = 2)
+  pca.res <- GridFCM.practicum::pca_index(wimp = obs.wimp, matrix = "weights", pr.comp = 2)
+  
+  mahalanobis.res <- as.data.frame(mahalanobis.res.lst)
+  mahalanobis.res$constructs <- rownames(mahalanobis.res)
+  
+  # Conjunto de constructos que combina los métodos de centralidad
+  unq.constructs <- unique(c(mahalanobis.res$constructs, eigen.res$constructs, pca.res$constructs))
+  
+  # Dataframe con combinación de las medidas
+  comb.df <- data.frame(constructs = unq.constructs)
+  
+  comb.df <- merge(comb.df, mahalanobis.res[, c("constructs", "m.dist")], by = "constructs", all.x = TRUE)
+  comb.df <- merge(comb.df, eigen.res[, c("constructs", "centrality")], by = "constructs", all.x = TRUE,
+                   suffixes = c(".mahalanobis", ".eigen"))
+  comb.df <- merge(comb.df, pca.res[, c("constructs", "centrality")], by = "constructs", all.x = TRUE)
+  
+  # Redondea las columnas numéricas a 3 decimales
+  comb.df <- comb.df %>%
+    mutate(across(where(is.numeric), round, digits = 3))
+  
+  # Renombramos columnas
+  names(comb.df)[2:4] <- c("Centr_Mahalanobis", "Centr_Eigen", "Centr_PCA")
+  
+  # Ranking de los constructos dentro de cada método
+  comb.df$Rank_Mahalanobis <- rank(-comb.df$Centr_Mahalanobis, ties.method = "first")
+  comb.df$Rank_Eigen <- rank(-comb.df$Centr_Eigen, ties.method = "first")
+  comb.df$Rank_PCA <- rank(-comb.df$Centr_PCA, ties.method = "first")
+  
+  comb.df <- comb.df[order(comb.df$Rank_Mahalanobis),]
+  
+  # Medidas subjetivas de centralidad
+  mahalanobis.res$importanciaSubjetiva <- NA
+  mahalanobis.res$totalCentrl <- NA
+  
+  for (i in 1:nrow(mahalanobis.res)) {
+    mahalanobis.res$importanciaSubjetiva[i] <- obs.id.df[[paste("cen.ord.c", i, ".test", sep = "")]]
+    mahalanobis.res$totalCentrl[i] <- obs.id.df[[paste("cen.c", i, ".test", sep = "")]]
   }
+  
+  # Dataframe combinado para resultados
+  centrality.comb.df <- merge(mahalanobis.res, comb.df, by = "constructs", all = TRUE)
+  centrality.comb.df$ID <- id.obs
+  
+  # Redondea las columnas numéricas a 3 decimales
+  centrality.comb.pres.df <- centrality.comb.df %>%
+    mutate(across(where(is.numeric), round, digits = 3))
+  
+  return(centrality.comb.pres.df)
+}
 
-# Dataframe combinado para resultados
-centrality.comb.df <- merge(mahalanobis.res, comb.df, by = "constructs", all = TRUE)
-
-# Redondea las columnas numéricas a 3 decimales
-centrality.comb.pres.df <- centrality.comb.df %>%
-  mutate(across(where(is.numeric), round, digits = 3))
-
-DT::datatable(centrality.comb.pres.df)
 ```
 
+### Comparativa aplicada a caso individual de estudio
 
-## Correlaciones entre las medidas de centralidad
+#### Comparativa para medidas de Test
 
-```{r centrality_correlations}
+```{r centrality_ind_comp_test}
 
-corr.sel <- round(cor(centrality.comb.df[c("p", "h", "importanciaSubjetiva", "totalCentrl", "Rank_Eigen", "Rank_PCA", "Rank_Mahalanobis")],
-                use = "complete.obs", method = "kendall"), 3)
+test.result <- centrality.comp(id.obs, "WT")
+
+# Mostrar o manipular el dataframe global según sea necesario
+DT::datatable(test.result)
+
+```
+
+#### Correlaciones de medidas de centralidad.Test
+
+Para las medidas de correlación, en adelante, partiremos de las siguientes premisas:
+
+- Omitiremos las observaciones en las que existan datos faltantes. Pueden presentarse datos faltantes, por ejemplo, en aquellos constructos en los que no se haya podido calcular la centralidad basada en PCA
+- Emplearemos el método de Kendall (Tau-b), no paramétrico, para las correlaciones calculadas. Procedemos de este modo en la media en que:
+  - No asumimos normalidad de los datos
+  - Contamos con una muestra pequeña/media de datos
+  - Los datos cuentan con outliers, circunstancia a la que es menos sensible el método Kendall, frente al de Spearman o el de Pearson 
+
+```{r centrality_correlations_test}
+
+corr.sel <- round(cor(test.result[c("p", "h", "importanciaSubjetiva", "totalCentrl", "Rank_Eigen", "Rank_PCA",
+                                           "Rank_Mahalanobis")],
+                  use = "complete.obs", method = "kendall"), 3)
 
 DT::datatable(corr.sel)
 
 ```
+
+#### Comparativa para medidas de Retest
+
+```{r centrality_ind_comp_retest}
+
+test.result <- centrality.comp(id.obs, "WR")
+
+# Mostrar o manipular el dataframe global según sea necesario
+DT::datatable(test.result)
+
+```
+
+#### Correlaciones de medidas de centralidad. Retest
+
+```{r centrality_correlations_retest}
+
+corr.sel <- round(cor(test.result[c("p", "h", "importanciaSubjetiva", "totalCentrl", "Rank_Eigen", "Rank_PCA",
+                                           "Rank_Mahalanobis")],
+                  use = "complete.obs", method = "kendall"), 3)
+
+DT::datatable(corr.sel)
+
+```
+
+### Comparativa aplicada a todas las observaciones
+
+#### Comparativa para medidas de Test
+
+```{r lapply_centrality.comp}
+
+# Aplicamos centrality.comp a cada ID y almacenamos los resultados en una lista
+results.lst <- lapply(sample.df$ID, function(id) {
+  tryCatch({
+    # Intentar ejecutar centrality.comp y agregar la columna ID
+    temp.result <- centrality.comp(id, "WT")
+    temp.result$ID <- id  # Agregar la columna ID
+    return(temp.result)  # Devolver el resultado
+  }, error = function(e) {
+    # En caso de error, devolver un dataframe vacío
+    message("Error procesando ID:", id, "; Error: ", e$message)
+    return(data.frame())
+  })
+})
+
+# Combinar todos los dataframes de la lista en un solo dataframe
+global.centrality.test.df <- do.call(rbind, results.lst)
+
+# Mostrar o manipular el dataframe global según sea necesario
+DT::datatable(global.centrality.test.df)
+
+```
+
+#### Correlaciones entre las medidas generales de centralidad. Test
+
+```{r centrality_gen_correlations}
+
+corr.sel <- round(cor(global.centrality.test.df[c("p", "h", "importanciaSubjetiva", "totalCentrl", "Rank_Eigen", "Rank_PCA",
+                                           "Rank_Mahalanobis")],
+                  use = "complete.obs", method = "kendall"), 3)
+
+DT::datatable(corr.sel)
+
+```
+
+#### Comparativa para medidas de Retest
+
+```{r lapply_centrality.comp_retest}
+
+# Aplicamos centrality.comp a cada ID y almacenamos los resultados en una lista
+results.lst <- lapply(sample.df$ID, function(id) {
+  tryCatch({
+    # Intentar ejecutar centrality.comp y agregar la columna ID
+    temp.result <- centrality.comp(id, "WR")
+    temp.result$ID <- id  # Agregar la columna ID
+    return(temp.result)  # Devolver el resultado
+  }, error = function(e) {
+    # En caso de error, devolver un dataframe vacío
+    message("Error procesando ID:", id, "; Error: ", e$message)
+    return(data.frame())
+  })
+})
+
+# Combinar todos los dataframes de la lista en un solo dataframe
+global.centrality.retest.df <- do.call(rbind, results.lst)
+
+# Mostrar o manipular el dataframe global según sea necesario
+DT::datatable(global.centrality.retest.df)
+
+```
+
+#### Correlaciones entre las medidas generales de centralidad. Retest
+
+```{r centrality_gen_correlations_retest}
+
+corr.sel <- round(cor(global.centrality.retest.df[c("p", "h", "importanciaSubjetiva", "totalCentrl", "Rank_Eigen", "Rank_PCA",
+                                           "Rank_Mahalanobis")],
+                  use = "complete.obs", method = "kendall"), 3)
+
+DT::datatable(corr.sel)
+
+```
+
 
 # Análisis por conglomerados
 
