@@ -2,22 +2,27 @@
 % Please edit documentation in R/RtCFunctions.R
 \name{cq.fb_index}
 \alias{cq.fb_index}
-\title{Calculation of consequence and feedback effects for each construct of the
-system}
+\title{Calculation of consequence and feedback effects for each construct of the system in three different ways:
+Mode 1: Calculation the intensity of the effects of consequences and feedbacks
+Mode 2: Calculation of consequence and feedback negative effects for each construct of the system
+Mode 3: Calculation of consequence and feedback of both positive and negative effects for each construct of the system}
 \usage{
-cq.fb_index(wimp, std = FALSE)
+cq.fb_index(wimp, mode = 1, std = FALSE)
 }
 \arguments{
-\item{wimp}{An object of class 'wimp', which contains an implication grid and associated constructs.}
+\item{wimp}{An object of class 'wimp', which contains an implication grid and its associated constructs.}
+
+\item{mode}{A value with three options: 1 = Sum of consequences and feedback; 2 = Sum of negative consequences and feedback;
+3 = Sum of positive and negative consequences and feedback}
 
 \item{std}{A logical value indicating whether to standarize the scores (TRUE) or (FALSE)}
 }
 \value{
-Returns a dataframe with the intensity of the effects caused by consequences and feedback interactions
+Returns a dataframe showing the intensity of the effects caused by consequences and feedback interactions according to the previously selected mode
 }
 \description{
-This function calculates the intensity of the effects of consequences and feedbacks
-for each construct to analyze its resistance to change
+This function calculates the intensity of the effects of consequences and feedback
+for each construct to analyze its resistance to change in three different ways
 }
 \examples{
 cq.fb_index (example.wimp)

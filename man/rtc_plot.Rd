@@ -3,11 +3,16 @@
 \name{rtc_plot}
 \alias{rtc_plot}
 \title{Visualization of the effects of Consequences and Feedback}
+\title{Visualization of the effects of Consequences and Feedback using two different ways}
 \usage{
 rtc_plot(wimp, std = FALSE)
+rtc_plot(wimp, mode = 1, ...)
 }
 \arguments{
 \item{wimp}{An object of class 'wimp', which contains an implication grid and associated constructs.}
+
+\item{mode}{Value with two options: 1 = shows the sum of effects of consequences and feedback on each construct of the system;
+2= shows negative effects only}
 
 \item{std}{A logical value indicating whether to standarize the scores (TRUE) or (FALSE)}
 }
@@ -16,6 +21,7 @@ returns a scatter plot showing the effects of consequences and feedback on each 
 }
 \description{
 This function creates a scatter plot to show the effects of the consequences and feedbacks of each construct to analyze their resistance to change
+keeping in mind that mode 2 only shows the negative effects
 }
 \examples{
 rtc_plot (example.wimp)
