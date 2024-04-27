@@ -1,0 +1,96 @@
+---
+title: "Correlaciones p_h_index/mahalanobis_index (ordenados 1a10) con autoinformes de centralidad PEC"
+output: html_notebook
+---
+
+```{r}
+
+#IMPORTAMOS FUNCIONES
+
+#Función carga paquetes
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg))
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)}
+
+packages <- c("DT","readxl", "Rfast", "ggplot2", "plotly", "ggrepel","OpenRepGrid", "GridFCM.practicum", "viridisLite", "MVN", "ggpattern", "factoextra", "cluster", "RColorBrewer", "rcartocolor", "tidyr", "dplyr")
+
+#Carga paquetes
+ipak(packages)
+
+
+```
+
+
+```{r IMPORTAR CSV }
+# Importar el archivo CSV DataFrame
+
+objeto_dataset <- read.csv("C:\\Users\\gilmo\\Desktop\\2024_04_08\\correlaciones.csv")
+```
+
+```{r PRUEBA DE NORMALIDAD SHAPIRO}
+
+varibles_normalidad <- objeto_dataset[, c("p_norm_t", "h_norm_t")]
+
+# Aplicar el test de Shapiro-Wilk a las columnas seleccionadas
+resultados <- lapply(varibles_normalidad, shapiro.test)
+
+# Para imprimir los resultados
+print(resultados)
+```
+
+
+```{r TEST NORMALIDAD P}
+#test de normalidad
+
+# Gráfico QQ para la variable X
+ggplot(objeto_dataset, aes(sample = p_norm_t)) +
+  stat_qq() +
+  stat_qq_line(color = "blue") +
+  labs(title = "Gráfico QQ de la variable P", x = "Cuantiles teóricos", y = "Cuantiles observados")
+
+```
+
+```{r TEST NORMALIDAD H}
+ggplot(objeto_dataset, aes(sample = h_norm_t)) +
+  stat_qq() +
+  stat_qq_line(color = "blue") +
+  labs(title = "Gráfico QQ de la variable h", x = "Cuantiles teóricos", y = "Cuantiles observados")
+```
+
+# TABLA DE CORRELACIONES CONSTRUCTOS
+incluye todos los constructos de la pec una vez eliminados las WimpGrid con errores. 
+Incluye p, h y distancias mahalanobis ordenadas de 1a10 (tipo ranking). Pendiente pca_index y eigen_index
+
+```{r CORRELACIONES PEARSON}
+#MODO PEARSON
+corr.sel.pearson <- round(cor(objeto_dataset[c("p_norm_t_o", "h_norm_t_o", "p_norm_rt_o", "h_norm_rt_o", "ranking.dist", "hub", "cen.id", "cen_imp.orden", "cen.pres.test", "cen.rtc.orden", "cen.imp", "cen.total")],
+                      use = "complete.obs", method = "pearson"), 3)
+
+DT::datatable(corr.sel.pearson)
+```
+
+```{r CORRELACIONES SPEARMAN}
+####MODO SPEARMAN
+corr.sel.spearman <- round(cor(objeto_dataset[c("p_norm_t_o", "h_norm_t_o", "p_norm_rt_o", "h_norm_rt_o", "ranking.dist", "hub", "cen.id", "cen_imp.orden", "cen.pres.test", "cen.rtc.orden", "cen.imp", "cen.total")],
+                              use = "complete.obs", method = "spearman"), 3)
+
+DT::datatable(corr.sel.spearman)
+
+
+```
+
+```{r CORRELACIONES KENDALL}
+####MODO KENDALL
+corr.sel.kendall <- round(cor(objeto_dataset[c("p_norm_t_o", "h_norm_t_o", "p_norm_rt_o", "h_norm_rt_o", "ranking.dist", "hub", "cen.id", "cen_imp.orden", "cen.pres.test", "cen.rtc.orden", "cen.imp", "cen.total")],
+                               use = "complete.obs", method = "kendall"), 3)
+
+DT::datatable(corr.sel.kendall)
+
+```
+
+
+
+
+
