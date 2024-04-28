@@ -440,14 +440,28 @@ Adjustment_self_ideal <- function(wimp, normalize = TRUE, filtered_constructs = 
 #'   dist.w2 - Distance measure for emotional adjustment in the WIMP retest.
 #'   corr.w2 - Correlation measure for emotional adjustment in the WIMP retest.
 #'   magn.w2 - Magnitude measure for emotional adjustment in the WIMP retest.
+#'   toid.w1 - Toideal global index in the WIMP test.
+#'   toid.w2 - Toideal global index in the WIMP retest.
+#'   toid2.w1 - Toideal2 global index in the WIMP test.
+#'   toid2.w2 - Toideal2 global index in the WIMP retest.
+#'   onestep.w1 - OneStep global index in the WIMP test.
+#'   onestep.w2 - OneStep global index in the WIMP retest.
+#'   onestep2.w1 - OneStep2 global index in the WIMP test.
+#'   onestep2.w2 - OneStep2 global index in the WIMP retest.
+#'   wimp.w1 - Wimp global index in the WIMP test.
+#'   wimp.w2 - Wimp global index in the WIMP retest.
+#'   indself.w1 - Indefinition of self index in the WIMP test.
+#'   indself.w2 - Indefinition of self index in the WIMP retest.
+#'   indid.w1 - Indefinition of Ideal index in the WIMP test.
+#'   indid.w2 - Indefinition of Ideal index in the WIMP retest.
 #'   swls.testS - WLS test scores (Life Satisfaction).
 #'   swls.retest - SWLS retest scores (Life Satisfaction).
-#'   rse.testRSE -  test scores (Self-Esteem).
-#'   rse.retestRSE - retest scores (Self-Esteem).
-#'   tas.testTAS - test scores (Alexithymia).
-#'   tas.retestTAS - retest scores (Alexithymia).
-#'   mcq.testMCQ - test scores (Metacognition).
-#'   mcq.retestMCQ - retest scores (Metacognition).
+#'   rse.test - RSE test scores (Self-Esteem).
+#'   rse.retest - RSE retest scores (Self-Esteem).
+#'   tas.test - TAS test scores (Alexithymia).
+#'   tas.retest - TAS retest scores (Alexithymia).
+#'   mcq.test - MCQ test scores (Metacognition).
+#'   mcq.retest - MCQ retest scores (Metacognition).
 
 load_data_adjustment <- function () {
   data(data)
@@ -459,6 +473,20 @@ load_data_adjustment <- function () {
     dist.w2 = numeric(),
     corr.w2 = numeric(),
     magn.w2 = numeric(),
+    toid.w1 = numeric(),
+    toid.w2 = numeric(),
+    toid2.w1 = numeric(),
+    toid2.w2 = numeric(),
+    onestep.w1 = numeric(),
+    onestep.w2 = numeric(),
+    onestep2.w1 = numeric(),
+    onestep2.w2 = numeric(),
+    wimp.w1 = numeric(),
+    wimp.w2 = numeric(),
+    indself.w1 = numeric(),
+    indself.w2 = numeric(),
+    indid.w1 = numeric(),
+    indid.w2 = numeric(),
     swls.test = numeric(),
     swls.retest = numeric(),
     rse.test = numeric(),
@@ -471,18 +499,36 @@ load_data_adjustment <- function () {
 
   for (i in 1:nrow(data$dataset)) {
     id_index <- match(data$dataset$ID[i], names(data$grids))
+
     if (!is.na(id_index)) {
-      adjustw1 <- calculate_adjustment_self_ideal(data$grids[[id_index]][[3]])
-      adjustw2 <- calculate_adjustment_self_ideal(data$grids[[id_index]][[4]])
+      adjustw1 <- calculate_adjustment_wimp(data$grids[[id_index]][[3]])
+      adjustw2 <- calculate_adjustment_wimp(data$grids[[id_index]][[4]])
 
       row_data <- data.frame(
         ID = data$dataset$ID[i],
-        dist.w1 = adjustw1[1],
-        corr.w1 = adjustw1[2],
-        magn.w1 = adjustw1[3],
-        dist.w2 = adjustw2[1],
-        corr.w2 = adjustw2[2],
-        magn.w2 = adjustw2[3],
+        dist.w1 = adjustw1$self[1],
+        corr.w1 = adjustw1$self[2],
+        magn.w1 = adjustw1$self[3],
+        dist.w2 = adjustw2$self[1],
+        corr.w2 = adjustw2$self[2],
+        magn.w2 = adjustw2$self[3],
+
+        toid.w1 = if (!is.na(adjustw1$future$ToIdeal$GlobalIndex)){adjustw1$future$ToIdeal$GlobalIndex} else {-1000},
+        toid.w2 = if (!is.na(adjustw2$future$ToIdeal$GlobalIndex)){adjustw2$future$ToIdeal$GlobalIndex} else {-1000},
+        toid2.w1 = if (!is.na(adjustw1$future$ToIdeal2$GlobalIndex)){adjustw1$future$ToIdeal2$GlobalIndex} else {-1000},
+        toid2.w2 = if (!is.na(adjustw2$future$ToIdeal2$GlobalIndex)){adjustw2$future$ToIdeal2$GlobalIndex} else {-1000},
+
+        onestep.w1 = if (!is.na(adjustw1$future$OneStep$GlobalIndex)){adjustw1$future$OneStep$GlobalIndex} else {-1000},
+        onestep.w2 = if (!is.na(adjustw2$future$OneStep$GlobalIndex)){adjustw2$future$OneStep$GlobalIndex} else {-1000},
+        onestep2.w1 = if (!is.na(adjustw1$future$OneStep2$GlobalIndex)){adjustw1$future$OneStep2$GlobalIndex} else {-1000},
+        onestep2.w2 = if (!is.na(adjustw2$future$OneStep2$GlobalIndex)){adjustw2$future$OneStep2$GlobalIndex} else {-1000},
+        wimp.w1 = if (!is.na(adjustw1$future$Wimp$GlobalIndex)){adjustw1$future$Wimp$GlobalIndex} else {-1000},
+        wimp.w2 = if (!is.na(adjustw1$future$Wimp$GlobalIndex)){adjustw2$future$Wimp$GlobalIndex} else {-1000},
+        indself.w1 = if (!is.na(adjustw1$indefinition$`Indefinition of Self`)){adjustw1$indefinition$`Indefinition of Self`} else {-1000},
+        indself.w2 = if (!is.na(adjustw2$indefinition$`Indefinition of Self`)){adjustw2$indefinition$`Indefinition of Self`} else {-1000},
+        indid.w1 = if (!is.na(adjustw1$indefinition$`Indefinition of Ideal`)){adjustw1$indefinition$`Indefinition of Ideal`} else {-1000},
+        indid.w2 = if (!is.na(adjustw2$indefinition$`Indefinition of Ideal`)){adjustw2$indefinition$`Indefinition of Ideal`} else {-1000},
+
         swls.test = data$dataset$swls.test[i],
         swls.retest = data$dataset$swls.retest[i],
         rse.test = data$dataset$rse.test[i],
@@ -491,9 +537,10 @@ load_data_adjustment <- function () {
         tas.retest = data$dataset$tas.retest[i],
         mcq.test = data$dataset$mcq.test[i],
         mcq.retest = data$dataset$mcq.retest[i]
+
       )
 
-      df_data <- rbind(df_data, row_data)
+        df_data <- rbind(df_data, row_data)
     }
   }
 
