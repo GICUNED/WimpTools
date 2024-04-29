@@ -143,6 +143,7 @@ calculate_adjustment_wimp <- function(wimp, filtered_constructs = c(1)) {
   # Build the matrix with the difference on the diagonal and zeros elsewhere
   change_vectors_ToIdeal <- diag(difference, nrow = length, ncol = length)
   # change_vectors_OneStep <- change_vectors_ToIdeal / abs(change_vectors_ToIdeal)
+
   change_vectors_OneStep <- diag(difference_OneStep, nrow = length, ncol = length) * 2 / 3
 
   # Get the weight matrix
@@ -158,6 +159,7 @@ calculate_adjustment_wimp <- function(wimp, filtered_constructs = c(1)) {
   # Sum the result with the vector_self and change_vectors for all the options
   vector_future_ToIdeal <- vector_self_row_sum + change_vectors_ToIdeal + result_matrix_ToIdeal
   vector_future_ToIdeal2 <- vector_self_row_sum + result_matrix_ToIdeal
+
   vector_future_OneStep <- vector_self_row_sum + change_vectors_OneStep + result_matrix_OneStep
   vector_future_OneStep2 <- vector_self_row_sum + result_matrix_OneStep
 
@@ -546,3 +548,4 @@ load_data_adjustment <- function () {
 
   return(df_data)
 }
+
