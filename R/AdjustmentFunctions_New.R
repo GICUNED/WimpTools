@@ -135,7 +135,8 @@ calculate_adjustment_wimp <- function(wimp, filtered_constructs = c(1)) {
   # Calculate vector_future
   # Calculate the difference between the ideal and self vectors
   difference <- vector_ideal - vector_self
-  difference_OneStep <- (vector_ideal - vector_self)/abs(vector_ideal - vector_self)
+  difference_OneStep <- (vector_ideal - vector_self) / ifelse(abs(vector_ideal - vector_self) == 0, 1, abs(vector_ideal - vector_self))
+
 
   # Get the length of the difference vector
   length <- length(difference)
