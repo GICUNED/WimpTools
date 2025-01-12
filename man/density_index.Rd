@@ -2,13 +2,13 @@
 % Please edit documentation in R/WimpIndicesFunctions.R
 \name{density_index}
 \alias{density_index}
-\title{Fuzzy Cognitive Map density -- density_index()}
+\title{Digraph Density Index -- density_index()}
 \usage{
 density_index(wimp)
 }
 \arguments{
 \item{wimp}{Subject's Weigthed ImpGrid. It must be a "wimp" S3 object
-imported by  the \code{\link{importwimp}} function.}
+imported by the \code{\link{importwimp}} function.}
 }
 \value{
 Returns a value from 0 to 1 representing the ratio of the number of
@@ -17,4 +17,8 @@ edges in the graph over the maximum number of possible edges.
 \description{
 Function used to calculate the density of edges of the
 calculated digraph of the impgrid
+}
+\examples{
+
+density_index(example.wimp)
 }

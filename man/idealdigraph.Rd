@@ -4,11 +4,32 @@
 \alias{idealdigraph}
 \title{Ideal digraph -- idealdigraph()}
 \usage{
-idealdigraph(wimp, inc = TRUE, layout = "circle", ...)
+idealdigraph(wimp, inc = FALSE, layout = "circle", ...)
 }
 \arguments{
-\item{layout}{}
+\item{wimp}{Subject's WimpGrid. It must be a "wimp" S3 object
+imported by the \code{\link{importwimp}} function.}
+
+\item{inc}{If TRUE, hide direct relationship between nodes of the graph. Default is FALSE.}
+
+\item{layout}{Layout with which the digraph will be displayed. The options
+are: "circle", "rtcircle", "tree", "graphopt", "mds" and "grid". Default is "circle".}
+
+\item{...}{additional arguments are passed from \code{\link{digraph}}
+function.}
+}
+\value{
+A digraph made with visNetwork
 }
 \description{
-Ideal digraph -- idealdigraph()
+A digraph that represents the ideal self of the person being assessed
+             on the basis of its constructs and the relationships between them.
+}
+\examples{
+
+idealdigraph(example.wimp)
+
+}
+\author{
+Alejandro Sanfeliciano
 }

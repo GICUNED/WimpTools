@@ -1,8 +1,16 @@
 ### HIDE FUNCTIONS ###
 
-# Lineal Threshold Function -----------------------------------------------
 
-.thr <- function(x, method){
+#' @importFrom dplyr select arrange case_when
+#' @importFrom magrittr %>%
+#' @importFrom igraph degree layout_with_graphopt layout_in_circle
+#' @importFrom igraph layout_as_tree layout_with_mds layout_on_grid
+#' @importFrom igraph betweenness closeness
+
+
+
+# Threshold Function -----------------------------------------------
+.thr <- function(x, method = "saturation"){
 
   if(method == "none"){
     result <- x
@@ -23,7 +31,6 @@
 
 
 # Color function ----------------------------------------------------------
-
 .color.selection <- function(x){                                                # Order: c(discrepant, congruent, undefined , dilemmatic)
 
   if(x == "red/green"){
@@ -37,9 +44,7 @@
   return(res)
 }
 
-
 # Align wimp function -----------------------------------------------------
-
 .align.wimp <- function(wimp, exclude.dilemmatics = TRUE){
 
   ideal <- wimp$ideal[[2]]
@@ -48,12 +53,10 @@
   dil.indeces <- which(ideal == 0)
 
 # Scale transformation
-
   wimp$scale[1] <- -1
   wimp$scale[2] <- 1
 
 # Constructs transformation
-
   old.left.poles <- wimp$constructs$left.poles
   old.right.poles <- wimp$constructs$right.poles
 
@@ -68,14 +71,13 @@
     right.poles <- right.poles[-dil.indeces]
   }
 
-  constructs <- paste(left.poles,"—",right.poles,sep = "")
+  constructs <- paste(left.poles,"-",right.poles,sep = " ")
 
   wimp$constructs$left.poles <- left.poles
   wimp$constructs$right.poles <- right.poles
   wimp$constructs$constructs <- constructs
 
 # Self transformation
-
   self <- wimp$self$standarized
   self[swap.indeces] <- self[swap.indeces] * -1
 
@@ -87,7 +89,6 @@
   wimp$self$standarized <- self
 
 # Ideal transformation
-
   ideal <- wimp$ideal$standarized
   ideal[swap.indeces] <- ideal[swap.indeces] * -1
 
@@ -99,7 +100,6 @@
   wimp$ideal$standarized <- ideal
 
 # Hypothetical transformation
-
   hypothetical <- wimp$hypothetical$standarized
   hypothetical[swap.indeces] <- hypothetical[swap.indeces] * -1
 
@@ -111,7 +111,6 @@
   wimp$hypothetical$standarized <- hypothetical
 
 # Scores transformation
-
   implications <- wimp$scores$implications
   weights <- wimp$scores$weights
 
@@ -133,14 +132,11 @@
   wimp$scores$implications <- implications
   wimp$scores$weights <- weights
 
-# OpenRepGrid transformation
-
 # Return
   return(wimp)
 }
 
 # Hypothetical calculation ------------------------------------------------
-
 .calc.hypo <- function(self, ideal) {
   if (self != 0) {
     return(self / (-1 * abs(self)))
@@ -154,7 +150,6 @@
 }
 
 # Dilemmatics detection ---------------------------------------------------
-
 .which.dilemmatics <- function(wimp){
   ideal <- wimp$ideal[[2]]
   dil.indeces <- which(ideal == 0)
@@ -163,77 +158,146 @@
 
 
 # PCSD Y-Axis label -------------------------------------------------------
-
 .label.y <- function(infer){
   if(infer == "self dynamics"){return("SELF DIFFERENTIAL")}
-  if(infer == "adjustment dynamics"){return("ADJUSTMENT IMPACT")}
+  if(infer == "impact dynamics"){return("IMPACT")}
 }
 
-# Mahalanobis distance matrix--------------------
-
-.mahalanobis.dist.matrix <- function(ph.mat){
-  # Dissimilarity matrix modeled as a matrix of Mahalanobis distances
-  # Covariance matrix
-  cov.matrix <- cov(ph.mat)  # Calculates the covariance matrix
-  # Mean vector
-  means.vector <- colMeans(ph.mat)
-
-  # Initializes a matrix to store Mahalanobis distances. Diagonal will keep 0's
-  n <- nrow(ph.mat)
-  dist.mat <- matrix(0, n, n)
-
-  # Calculates Mahalanobis distance between each pair of rows in ph.mat
-  for (i in 1:n) {
-    for (j in i:n) {
-      diff <- ph.mat[i, ] - ph.mat[j, ]
-      dist.mat[i, j] <- sqrt(t(diff) %*% solve(cov.matrix) %*% diff)
-      dist.mat[j, i] <- dist.mat[i, j]  # The matrix is symmetric
-    }
-  }
-
-  row.names(dist.mat) <- row.names(ph.mat)
-  colnames(dist.mat) <- row.names(ph.mat)
-
-  return(dist.mat)
-}
-
-# Optimal number of clusters---------------------
-
-.optimal.num.clusters <- function(...){
-  # P-H matrix
-  ph.mat <- GridFCM.practicum::ph_index(...)
-  rownames(ph.mat) <- wimp$constructs$self.poles
-
-  # Mahalanobis distance matrix
-  dist.mat <- .mahalanobis.dist.matrix(ph.mat)
-
-  # Calculation of number of clusters per silhouette coefficient-----
-  # Vector to store the averages of silhouette coefficients
-  sil.widths <- numeric()
-
-  # Maximum number of clusters to evaluate. We limit the maximum number of constructs available minus 1.
-  max.clusters <- length(wimp$constructs$constructs) - 1
-
-  # We calculate PAM and the silhouette coefficient for different numbers of clusters
-  for(j in 2:max.clusters) {
-    pam.stp <- pam(dist.mat, j)
-    sil.stp <- silhouette(pam.stp)
-    sil.widths[j] <- mean(sil.stp[, "sil_width"])
-  }
-
-  # Identify the number of clusters that maximizes the silhouette coefficient.
-  k <- which.max(sil.widths)
-  return(k)
-}
-
-# Self Construct detection
+# Self Construct detection---------------------------
 .self.poles <- function(self,l.pole,r.pole){
 
-  construct <- paste(l.pole,"—",r.pole)
+  construct <- paste(l.pole,"-",r.pole)
 
   if(self > 0){return(r.pole)}
 
   if(self < 0){return(l.pole)}
 
   if(self == 0){return(construct)}
+}
+
+# Hypothetical Self matrix-----------------------------
+.hypo.matrix <- function(wimp){
+
+  imp.matrix <- wimp$scores$implications
+  hypo.vector <- wimp$hypothetical$standarized
+  self.vector <- wimp$self$standarized
+  ideal.vector <- wimp$ideal$standarized
+
+  constructs <- wimp$constructs$constructs
+  left.poles <- wimp$constructs$left.poles
+  right.poles <- wimp$constructs$right.poles
+  hypo.poles <- mapply(.self.poles, hypo.vector,left.poles,right.poles)
+  hypo.names <- hypo.poles
+
+  hypo.matrix <- t(imp.matrix)
+  diag(hypo.matrix) <- hypo.vector
+
+  result <- cbind(self.vector,hypo.matrix,ideal.vector)
+
+  colnames(result) <- c("SELF", hypo.names, "IDEAL")
+  rownames(result) <- constructs
+
+  return(result)
+}
+
+# Construct colors ------------------------------------------------------------
+.construct.colors <- function(wimp, mode){
+  # Construct category colors
+  col.sel <- .color.selection(mode)
+  color.mat <- matrix(data = 0, nrow = length(wimp$constructs$constructs), ncol = 1)
+  rownames(color.mat) <- wimp$constructs$constructs
+  colnames(color.mat) <- c("color")
+
+  color.mat[wimp$constructs$discrepants,"color"] <- col.sel[1]
+  color.mat[wimp$constructs$congruents,"color"] <- col.sel[2]
+  color.mat[wimp$constructs$undefined,"color"] <- col.sel[3]
+  color.mat[wimp$constructs$dilemmatic,"color"] <- col.sel[4]
+
+  return(color.mat)
+}
+
+# Merge two wimps --------------------------------------------------------------
+.merge.wimp <- function(wimp1,wimp2){
+
+  df1 <- data.frame(wimp1$constructs$constructs, wimp1$constructs$left.poles, wimp1$constructs$right.poles, 1:length(wimp1$constructs$constructs))
+  names(df1) <- c("Construct", "lpoles", "rpoles", "index1")
+  df2 <- data.frame(wimp2$constructs$constructs, wimp2$constructs$left.poles, wimp2$constructs$right.poles, 1:length(wimp2$constructs$constructs))
+  names(df2) <- c("Construct", "lpoles", "rpoles", "index2")
+
+  result <- merge(df1,df2, by=1:3, sort=FALSE)
+
+  return(result)
+}
+
+# Compatibility merge wimps --------------------------------------------------------------
+.compatibility.merge.wimp <- function(wimp1,wimp2){
+
+  merge <- nrow(.merge.wimp(wimp1,wimp2))
+
+  if(merge == length(wimp1$constructs$constructs) && merge == length(wimp2$constructs$constructs)){
+    result <- "Full Compatibility"
+  }
+  if(merge != length(wimp1$constructs$constructs) || merge != length(wimp2$constructs$constructs)){
+    result <- "Partial Compatibitily"
+  }
+  if(merge == 0){
+    result <- "Incompatibility"
+  }
+
+  return(result)
+}
+
+# Tversky Similarity function---------------------------------------------------
+.sim_index <- function(x,y,alpha = .5, beta = .5){
+
+  s.vec <- ifelse(y^2 > 0.25,
+                  (-(x - y)^2) / (y^2) + 1,
+                  (-(x - y)^2) / ((1 - abs(y)^2) + 1))
+
+  vec.int <- s.vec[which(x*y > 0)]
+  vec.x.minus.y <- x[which(x*y <= 0)]
+  vec.y.minus.x <- y[which(x*y <= 0)]
+
+  int.xy <- sum(abs(vec.int))
+  x.minus.y <- sum(abs(vec.x.minus.y))
+  y.minus.x <- sum(abs(vec.y.minus.x))
+
+  sim.ratio <- int.xy / (int.xy + alpha * x.minus.y + beta * y.minus.x)
+  return(sim.ratio)
+
+}
+# Isolate Construct ------------------------------------------------------------
+.isolate.construct <- function(wimp,construct){
+
+wmatrix <- wimp$scores$weights
+wmatrix[-construct,-construct] <- 0
+
+m <- which(apply(wmatrix, 1, function(fila) any(fila != 0)))
+n <- which(apply(wmatrix, 2, function(columna) any(columna != 0)))
+i <- union(m,n)
+
+result <- list()
+
+wimp$constructs$left.poles <- wimp$constructs$left.poles[i]
+wimp$constructs$right.poles <- wimp$constructs$right.poles[i]
+wimp$scores$weights <- wmatrix[i,i]
+wimp$self$standarized <- wimp$ideal$standarized[i]
+wimp$ideal$standarized <- wimp$ideal$standarized[i]
+
+return(wimp)
+
+}
+
+# Similarity function-----------------------------------------------------------
+.sim <- function(s,i){
+
+  result <- 1 - ((s - i)^2 / 4)
+  return(result)
+}
+
+# Impact function---------------------------------------------------------------
+.impact <- function(w,s,i){
+  s.1 <- .thr(s + w)
+  result <- .sim(s.1,i) - .sim(s,i)
+  return(result)
 }

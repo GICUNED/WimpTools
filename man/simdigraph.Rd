@@ -7,8 +7,27 @@
 simdigraph(scn, niter = 0, ...)
 }
 \arguments{
-\item{...}{}
+\item{scn}{A scenario matrix. It must be a "scn" S3 object
+from the \code{\link{scenariomatrix}} function.}
+
+\item{niter}{Iteration displayed in the digraph. Default is 0.}
+
+\item{...}{Additional arguments are passed from \code{\link{digraph}}
+function.}
+}
+\value{
+A digraph made with visNetwork
 }
 \description{
-Simulation digraph -- simdigraph()
+A digraph that represents the hypothetical self of the person being assessed
+             on the basis of its constructs and the relationships between them.
+}
+\examples{
+
+ scn <- scenariomatrix(example.wimp, rep(1,5))
+ simdigraph(scn, niter = 2)
+
+}
+\author{
+Alejandro Sanfeliciano
 }

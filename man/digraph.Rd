@@ -13,12 +13,44 @@ digraph(
   color = "red/green",
   layout = "graphopt",
   show = TRUE,
-  hide.inverse = FALSE
+  hide.direct = FALSE
 )
 }
 \arguments{
-\item{hide.inverse}{}
+\item{wimp}{Subject's WimpGrid. It must be a "wimp" S3 object
+imported by the \code{\link{importwimp}} function.}
+
+\item{vertex.vector}{Vector defining the value of each of the vertices of the digraph.
+Default is the value of the standarized self from the wimp object.}
+
+\item{ideal.vector}{Vector defining the ideal value of each of the vertices of the digraph.
+Default is the value of the standarized ideal self from the wimp object.}
+
+\item{width}{digraph width.}
+
+\item{height}{Digraph heigth.}
+
+\item{color}{Color palette to be used. The options are "red/green" and "grey scale". Default is "red/green".}
+
+\item{layout}{Layout with which the digraph will be displayed. The options
+are: "circle", "rtcircle", "tree", "graphopt", "mds" and "grid". Default is "graphopt".}
+
+\item{show}{Logical vector defining which constructs to display. By default all constructs are shown.}
+
+\item{hide.direct}{If TRUE, hide direct relationship between nodes of the graph. Default is FALSE.}
+}
+\value{
+A digraph made with visNetwork
 }
 \description{
-Selfdigraph -- digraph()
+A digraph that represents the self of the person being assessed
+             on the basis of its constructs and the relationships between them.
+}
+\examples{
+
+ digraph(su.wimp)
+
+}
+\author{
+Alejandro Sanfeliciano
 }

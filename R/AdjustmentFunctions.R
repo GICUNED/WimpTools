@@ -1,197 +1,332 @@
+## ADJUSTMENT FUNCTIONS ##
 
-## EMOTIONAL ADJUSTMENT ##
+# Construct proportions index  ---------------------------------------------------
 
-# calculate_adjustment_self_ideal ------------------------------------------------------------
+#' Frencuency and proportions of constructs -- construct_index()
 #'
-#' This function calculates the Ecuclidean distance and the correlation between the ideal vector and self vector.
+#' @description This function calculates frequency and proportion of
+#'              congruents, discrepants, dilemmatics and undefined constructs.
 #'
-#' @param wimp Object containing ideal and self vectors.
-#' @param normalize Logical. If TRUE, normalize the distance; otherwise, use the raw Euclidean distance.
-#' @param filtered_constructs In case we want to use only specific values (e.g use nuclear constructs only). Vector with 0s and 1s.
-#'Only the values from the 'vector_ideal' and 'vector_self' vectors at positions where there is a 1 will be included.
-#'By default, the 'vector_ideal' and 'vector_self' vectors are kept.#'
-#' @return A list with the calculated values: distance and correlation.
-#' @examples calculate_adjustment_self_ideal (wimp,TRUE,c(1,1,0,0,1,0,1,0))
+#' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
+#'        imported by the \code{\link{importwimp}} function.
+#'
+#' @author Alejandro Sanfeliciano
+#'
+#' @return A matrix with the frequency and proportion of congruents, discrepants
+#'        , dilemmatics and undefined constructs.
+#'
 #' @export
+#'
+#' @examples
+#'
+#' construct_index(example.wimp)
+#'
 
-calculate_adjustment_self_ideal <- function(wimp, normalize = TRUE, filtered_constructs = c(1)) {
+construct_index <- function(wimp){
 
-  # Get ideal and self vectors from the wimp variable
-  vector_ideal <- wimp$ideal[[2]]
-  vector_self <- wimp$self[[2]]
+n.congruents <- length(wimp$constructs$congruents)
+n.discrepants <- length(wimp$constructs$discrepants)
+n.dilemmatics <- length(wimp$constructs$dilemmatics)
+n.undefined <- length(wimp$constructs$undefined)
+
+n <- length(wimp$self$standarized)
+
+congruents <- c(n.congruents, n.congruents / n)
+discrepants <- c(n.discrepants, n.discrepants / n)
+dilemmatics <- c(n.dilemmatics, n.dilemmatics / n)
+undefined <- c(n.undefined, n.undefined / n)
+
+result <- rbind(congruents,discrepants,dilemmatics,undefined)
+
+rownames(result) <- c("Congruents","Discrepants","Dilemmatics","Undefined")
+colnames(result) <- c("Frequency","Proportion")
+
+return(result)
+}
 
 
-  # Use only filtered_constructs:
-  if (length(filtered_constructs) != 0) {
-    n <- length(filtered_constructs)
-    elems <- 1:n
+# Self Correlations ---------------------------------------------------
 
-    for (i in elems) {
-      if (filtered_constructs[n+1-i] == 0) {
-        vector_ideal <- vector_ideal[-n-1+i]
-        vector_self <- vector_self[-n-1+i]
-      }
+#' Correlations between Self and Hypothetical scenarios -- self_index()
+#'
+#' @description this function Calculates the global and specific adjustment
+#'              indices of the self for each hypothetical scenario in the WimpGrid.
+#'
+#' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
+#'        imported by the \code{\link{importwimp}} function.
+#' @param method The correlation method to use. All methods of the \code{\link{cor}} function
+#'        are allowed and "sim" for Tversky similarity. Default is "sim".
+#' @param rc Use Cohen's rc which is invariant to construct reflection. Default is TRUE.
+#' @param alpha Alpha value for Tversky similarity calculation. Default is .5.
+#' @param beta Beta value for Tversky similarity calculation. Default is .5.
+#'
+#' @author Alejandro Sanfeliciano
+#'
+#' @return A list with global adjustment self indices and specific indices for each construct.
+#'
+#' @export
+#'
+#' @examples
+#'
+#' self_index(example.wimp)
+#'
+
+self_index <- function(wimp, method = "sim", rc = TRUE, alpha = .5, beta = .5){
+
+  result <- list()
+
+  congruence <- rep("Undefined",length(wimp$self$standarized))
+  congruence[wimp$constructs$congruents] <- "Discrepant"
+  congruence[wimp$constructs$undefined] <- "Congruent"
+  congruence[wimp$constructs$discrepants] <- "Congruent"
+  congruence[wimp$constructs$dilemmatics] <- "Undefined"
+
+  hypo.matrix <- .hypo.matrix(wimp)
+  ncol <- ncol(hypo.matrix)
+  hypo.names <- colnames(hypo.matrix)[-c(1,ncol)]
+  hypo.names <- paste("Totally", hypo.names, sep = " ")
+
+  rc.text <- "no rc"
+  if(rc){
+    hypo.matrix <- rbind(hypo.matrix, -hypo.matrix)
+    rc.text <- "rc"
     }
+
+  if(method == "sim"){
+
+    self.vector <- hypo.matrix[,1]
+    ideal.vector <- hypo.matrix[,ncol]
+
+    discrepants <- wimp$constructs$discrepants
+    congruents <- wimp$constructs$congruents
+
+    self.cor <- apply(hypo.matrix[,-c(1, ncol(hypo.matrix))], 2, function(col) .sim_index(self.vector, col, alpha = alpha, beta = beta))
+    ideal.cor <- apply(hypo.matrix[,-c(1, ncol(hypo.matrix))], 2, function(col) .sim_index(ideal.vector, col, alpha = alpha, beta = beta))
+
+    self.ideal.cor <- .sim_index(self.vector,ideal.vector, alpha = alpha, beta = beta)
+    self.hypo.cor <- mean(self.cor)
+    ideal.hypo.cor <- mean(ideal.cor)
+
+    ideal.hypo.congruents.cor <- mean(ideal.cor[congruents])
+    ideal.hypo.discrepants.cor <- mean(ideal.cor[discrepants])
+
+  }
+  if(!( method == "sim" | method == "cos" )){
+    self.vector <- hypo.matrix[,1]
+    ideal.vector <- hypo.matrix[,ncol]
+
+    discrepants <- wimp$constructs$discrepants
+    congruents <- wimp$constructs$congruents
+
+    self.cor <- cor(self.vector,hypo.matrix[,-c(1,ncol)], method = method)
+    ideal.cor <- cor(ideal.vector,hypo.matrix[,-c(1,ncol)], method = method)
+
+    self.ideal.cor <- cor(self.vector,ideal.vector, method = method)
+    self.hypo.cor <- mean(self.cor)
+    ideal.hypo.cor <- mean(ideal.cor)
+
+    ideal.hypo.congruents.cor <- mean(ideal.cor[congruents])
+    ideal.hypo.discrepants.cor <- mean(ideal.cor[discrepants])
   }
 
-  # Calculate the euclidean distance between both vectors
-  eu_distance <- sqrt(sum((vector_ideal - vector_self)^2))
+  global <- mean(cor(ideal.vector,hypo.matrix[,-ncol]))
 
-  # Normalize the Euclidean distance if specified
-  distance <- if (normalize) eu_distance / (2 * sqrt(length(vector_ideal)))  else eu_distance
+  df.global <- data.frame(self.ideal.cor,self.hypo.cor,ideal.hypo.cor,ideal.hypo.congruents.cor,ideal.hypo.discrepants.cor)
+  names(df.global) <- c("Self/Ideal", "Self/Hypo", "Ideal/Hypo", "Ideal/Discrepant", "Ideal/Congruent")
 
-  # Calculate the correlation between the vectors (cosine)
-  correlation <- sum(vector_ideal * vector_self) / (norm(vector_ideal, type = "2") * norm(vector_self, type = "2"))
+  df.construct <- data.frame(cbind(hypo.names,congruence,round(as.numeric(self.cor),4),round(as.numeric(ideal.cor),4)))
+  names(df.construct) <- c("Hypothetical Scenario","Congruence Scenario","Self Similarity", "Ideal Similarity")
 
-  # General adjustment value (magnitude of the calculated vector)
-  magnitude <- if (normalize) 1 - (sqrt(correlation^2 + distance^2)) / sqrt(5) else NULL
+  result$global <- df.global
+  result$construct <- df.construct
+  result$method <- c(method, rc.text)
 
-  # Return the results
-  return(list(distance = distance, correlation = correlation, magnitude=magnitude))
+  return(result)
 }
 
-#' plot_adjustment_self_ideal -----------------------------------------------------------------
+# Adjustment Radar Chart ---------------------------------------------------
+
+#' Adjustment Radar Chart -- adj_plot()
 #'
-#' Plot graphs for ideal, self, and adjustment vectors.
+#' @description This function creates a radar chart showing the value of the
+#'              self for each construct and its adjustment with respect to the ideal.
 #'
-#' @param wimp Object containing ideal and self vectors.
-#' @param calculated_values Results from the calculate_adjustment_self_ideal function. If empty get the wimp ones.
-#' @param filtered_constructs In case we want to use only specific values (e.g use nuclear constructs only). The function is
-#'        set to get a list with two vectors with the standardized ideal and self values "vector_ideal" and "vector_self".
-#' @return The graphic vector for further use.
+#' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
+#'        imported by  the \code{\link{importwimp}} function.
+#'
+#' @return A Plotly radar polar plot.
+#'
+#' @author Alejandro Sanfeliciano
+#'
+#' @import plotly
+#' @export
+#'
+#' @examples
+#'
+#' adj_plot(example.wimp)
 #'
 
-plot_adjustment_self_ideal <- function(wimp, calculated_values = list(), filtered_constructs = c(1)) {
+adj_plot <- function(wimp){
 
-  # Get ideal and self vectors
+  wimp <- .align.wimp(wimp, exclude.dilemmatics = FALSE)
 
-  vector_ideal <- wimp$ideal[[2]]
-  vector_self <- wimp$self[[2]]
+  self <- wimp$self$standarized
+  self <- c(self,self[1])
 
+  ideal <- wimp$ideal$standarized
+  ideal <- c(ideal,ideal[1])
 
-  # Use only filtered_constructs:
-  if (length(filtered_constructs) != 0) {
-    n <- length(filtered_constructs)
-    elems <- 1:n
+  r.poles <- wimp$constructs$right.poles
+  l.poles <- wimp$constructs$left.poles
+  poles <- paste(r.poles," (",l.poles,")", sep="")
+  poles <- c(poles,poles[1])
 
-    for (i in elems) {
-      if (filtered_constructs[n + 1 - i] == 0) {
-        vector_ideal <- vector_ideal[-n - 1 + i]
-        vector_self <- vector_self[-n - 1 + i]
-      }
-    }
-  }
+  construct<- wimp$constructs$constructs
+  construct <- c(construct,construct[1])
 
-  # Get the calculated graphic vector
-  calculated_values <- if (length(calculated_values) == 0) calculate_adjustment_self_ideal(wimp) else calculated_values
-  graphic_vector <- c(1, 0, calculated_values$correlation, calculated_values$distance)
+  colors <- .construct.colors(wimp, mode = "red/green")[,1]
+  colors <- c(colors,colors[1])
 
-  # Set ideal and self vectors values for the plot
-  vector_ideal_norm <- norm(vector_ideal, type="2")
-  vector_self_norm <- norm(vector_self, type="2")
-  n <- length (vector_ideal)
-  vector_ideal_x <- 0
-  vector_ideal_y <- vector_ideal_norm / sqrt(n)
-  theta <- acos(calculated_values$correlation) #radians
-  vector_self_x <- vector_self_norm * sin(theta) / sqrt(n)
-  vector_self_y <- vector_self_norm * calculated_values$correlation / sqrt(n)
+  plot <- plot_ly(
+    type = 'scatterpolar',
+    fill = 'toself'
+  )
+  plot <- plot %>%
+    add_trace(
+      mode = "lines",
+      r = 0,
+      theta = poles,
+      fill = "none",
+      line = list(color = "#444444", width = 1.5, shape = 'spline', smoothing = 1),
+      name = 'Pole Threshold',
+      hoverinfo = 'none'
+    )
+  plot <- plot %>%
+    add_trace(
+      mode = "lines",
+      r = ideal,
+      theta = poles,
+      fill = "none",
+      line = list(color = "darkgreen", width = 3, shape = 'line'),
+      name = 'Ideal',
+      hoverinfo = 'none'
+    )
+  plot <- plot %>%
+    add_trace(
+      r = self,
+      theta = poles,
+      name = paste("SSI Index:",round(self_index(wimp)$global[1],2)),
+      marker = list(color = colors, size = 7, line = list(color = '#FA9D13', width = 1.5)),
+      fillcolor = 'rgba(255, 217, 125, 0.5)',
+      line = list(width = 1, color = "#FA9D13"),
+      text = ~paste('<B>',construct,'</B>', '\nSelf:', round(self, 2), '\nIdeal:', round(ideal,2)),
+      hoverinfo = 'text',
+      hoverlabel=list(bgcolor = colors)
+    )
+  plot <- plot %>%
+    layout(
+      showlegend = FALSE,
+      polar = list(
+        radialaxis = list(
+          visible = T,
+          range = c(-1,1)
+        )
+      )
+    )
 
-  #
-  # Set graphic for ideal and self vector
-  #
-
-  result <- c(45, 45, 45, 45, 45, 45, 45, 45)
-  colors <- c("palegreen", "yellow","orange", "red", "red", "orange","yellow", "palegreen" )
-
-  # if labels and no legend
-  #alabels <- c("muy buen ajuste","buen ajuste","mal ajuste","muy mal ajuste",
-  #            "muy mal ajuste","mal ajuste","buen ajuste","muy buen ajuste")
-  #pie(result, main="Nivel de ajuste I", init.angle = 90, radius = 1, col=colors, labels=alabels)
-
-  # if legend and no labels:
-  pie(result, main="Nivel de ajuste", init.angle = 90, radius = 1, col=colors, labels=c(""))
-  # draw the legend
-  #legend(-2, 1, c("muy buen ajuste", "buen ajuste", "mal ajuste","muy mal ajuste"), fill=c("green", "yellow","orange", "red"))
-
-  #circumferences aroud ideal vector
-  xcenter <- 0
-  ycenter <- vector_ideal_y
-  theta <- seq(0, 2 * pi, length = 200)
-
-  rad     <- vector_ideal_y + 1
-  polygon(x=rad * cos(theta) + xcenter,
-          y=rad * sin(theta) + ycenter,
-          lwd=3, lty="solid", border='firebrick')
-
-  rad     <- 0.75 * (vector_ideal_y + 1)
-  polygon(x=rad * cos(theta) + xcenter,
-          y=rad * sin(theta) + ycenter,
-          lwd=3, lty="dashed", border='darkorange1')
-
-  rad     <- 0.5 * (vector_ideal_y + 1)
-  polygon(x=rad * cos(theta) + xcenter,
-          y=rad * sin(theta) + ycenter,
-          lwd=3, lty="dotted", border='khaki4')
-
-  rad     <- 0.25 * (vector_ideal_y + 1)
-  polygon(x=rad * cos(theta) + xcenter,
-          y=rad * sin(theta) + ycenter,
-          lwd=3, lty="twodash", border='darkgreen')
-
-  # Draw ideal and self vectors
-  arrows(0, 0, vector_ideal_x, vector_ideal_y, col = "blue", length = 0.1, lwd = 4)
-  arrows(0, 0, vector_self_x, vector_self_y, col = "purple", length = 0.1,lwd = 4)
-  text(-0, 0.5, expression(bold("Vector Ideal")), col = "blue")
-  text(vector_self_x + 0.2, vector_self_y + 0.2, expression(bold("Vector Self")), col = "purple")
-
-  #
-  #
-  # Set graphic for adjustment vector: origin (1, 0) and end point (correlation, distance)
-  #
-  plot(c(0, 1.5), c(0, 1.5), type = "n", xlab = "correlación", ylab = "distancia normalizada", asp = 1, xlim = c(-1, 1), ylim = c(0, 1.5))
-
-  # Draw the different adjustement areas
-  rect(-1, 0, 1, 1, density=20, col='red')
-  rect(-0.5, 0, 1, 1, density=20, col='orange')
-  rect(0.25, 0, 1, 0.75, density=20, col='yellow')
-  rect(0.75, 0, 1, 0.5, density=20, col='green')
-
-  # Define the margins of the graphic and the Abscissa and ordinate axis
-  abline(v=c(-1,0,1), lwd = 2, lty=c(2,1,2), col=c("red","black","red"))
-  abline(h=c(0,1), lwd = 2, lty=c(1,2), col=c("black","red"))
-
-  # Draw the final vector [(1,0), (correlation, stand. distance)]
-    tolerance <- 1e-10  # Define a small tolerance
-    if (abs(calculated_values$correlation - 1) < tolerance && calculated_values$distance==0){
-    points(1, 0, col = "blue", pch = 16, cex = 1.2)}
-  else{
-    arrows(1, 0, calculated_values$correlation, calculated_values$distance, col = "blue", length = 0.1)
-  }
-
-  text(1.2, 0.1, "Vector (1,0) a (correlación, distancia_normalizada)", col = "blue")
-
-  # Return the graphic vector for further use if needed
-  return(graphic_vector)
+  return(plot)
 
 }
 
-#' Adjustment_self_ideal ---------------------------------------------------------------------------------------
+# Adjustment Heatmap -----------------------------------------------------------
 #'
-#' This function calculates the Ecuclidean distance and the correlation between the ideal vector and self vector and plot corresponding graphs.
+#' Adjustment Heatmap -- ssi_heatmap()
 #'
-#' @param wimp Object containing ideal and self vectors.
-#' @param normalize Logical. If TRUE, normalize the distance; otherwise, use the raw Euclidean distance.
-#' @return A list with the calculated values and the graphic vector.
+#' @description A heat map representing the fit between I-actual and I-ideal as
+#'              a function of the person's different cognitive states. It uses
+#'              Tversky's concept of similarity in its calculations.
+#'
+#' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
+#'        imported by  the \code{\link{importwimp}} function.
+#'
+#' @return A plotly heatmap.
+#'
+#' @author Alejandro Sanfeliciano
+#'
+#' @import plotly
+#' @export
+#'
+#' @examples
+#'
+#' ssi_heatmap(example.wimp)
 #'
 
-Adjustment_self_ideal <- function(wimp, normalize = TRUE, filtered_constructs = c(1)) {
-  # Calculate adjustment and self-ideal values
-  calculated_values <- calculate_adjustment_self_ideal(wimp, normalize = normalize, filtered_constructs = filtered_constructs )
+ssi_heatmap <- function(wimp){
 
-  # Plot the graphs
-  graphic_vector <- plot_adjustment_self_ideal(wimp, calculated_values, filtered_constructs = filtered_constructs)
+  x <- wimp$self$standarized
+  y <- wimp$ideal$standarized
 
-  # Return data
-  return(list(distance = calculated_values$distance, correlation = calculated_values$correlation, magnitude = calculated_values$magnitude, graphic = graphic_vector))
+  alpha.values <- seq(0, 1, by = 0.01)
+  beta.values <- seq(0, 1, by = 0.01)
+
+  sim_matrix <- outer(alpha.values, beta.values, Vectorize(function(alpha, beta) {
+    .sim_index(x, y, alpha = alpha, beta = beta)
+  }))
+
+  plot <- plot_ly(
+    x = alpha.values,
+    y = beta.values,
+    z = sim_matrix,
+    type = "heatmap",
+    colorscale = list(c(0, "#F52722"), c(0.5, "white"), c(1, "#A5D610")),
+    zmin = 0,
+    zmax = 1,
+    hovertemplate = '<b>Alpha:</b> %{x}<br><b>Beta:</b> %{y}<br><b>Adjustment:</b> %{z}<extra></extra>'
+  ) %>%
+    layout(
+      title = "",
+      xaxis = list(title = "Attention to Self Discrepancies (Alpha)"),
+      yaxis = list(title = "Attention to the Desired Change (Beta) "),
+      shapes = list(
+        list(
+          type = "rect",
+          x0 = -0.005,
+          x1 = 1.005,
+          y0 = -0.005,
+          y1 = 1.005,
+          line = list(color = "black", width = 2)),
+        list(
+          type = "line",
+          x0 = 0,
+          y0 = 1,
+          x1 = 1,
+          y1 = 0,
+          line = list(
+            color = "black",
+            width = 1,
+            dash = "dot"
+          )
+        )
+      ),
+      annotations = list(
+        list(
+          x = 0.5,
+          y = 0.5,
+          xref = "x",
+          yref = "y",
+          text = "+",
+          showarrow = FALSE,
+          font = list(color = "black", size = 20)
+        )
+      )
+    ) %>%
+    style(
+      hoverlabel = list(
+        bgcolor = 'rgba(255, 255, 255, 0.8)',
+        bordercolor = 'black',
+        font = list(size = 12)
+      )
+    )
+
+  return(plot)
 }
-

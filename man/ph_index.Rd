@@ -2,34 +2,40 @@
 % Please edit documentation in R/CentralityFunctions.R
 \name{ph_index}
 \alias{ph_index}
-\title{Calculate Presence and Hierarchy Indices}
+\title{Presence and Hierarchy Indices -- ph_index()}
 \usage{
 ph_index(wimp, method = "wnorm", std = "none")
 }
 \arguments{
-\item{wimp}{An object of class 'wimp', which contains an implication grid
-and associated constructs.}
+\item{wimp}{A WIMP object containing an implication grid and associated constructs.}
 
-\item{method}{A character string specifying the method used to calculate
-the degree indices. Default is "weight". Other methods may be available
-depending on the implementation of 'degree_index' function.}
+\item{method}{A character string specifying the method used to calculate the degree indices.
+Default is "wnorm". Acceptable values include "wnorm", "simple", "weight", or any other method
+implemented in the 'degree_index' function.}
 
-\item{std}{A logical value indicating whether to standardize the P and H
-indices based on the maximum total degree of the constructs. Defaults to FALSE}
+\item{std}{A character string indicating how to standardize the P and H indices. Available options are:
+- 'none': No standardization (default).
+- 'vertices': Standardizes by the maximum total degree, which is calculated based on the number of vertices.
+- 'edges': Standardizes by the total number of edges.
+- 'max_edges': Standardizes by the maximum number of outgoing edges from any single vertex.
+- 'density': Adjusts P and H by the density of the grid, which considers the total edges possible versus actual.}
 }
 \value{
-A 2-column matrix with the presence index 'p' and the hierarchy index 'h'
-  for each construct. If 'std' is TRUE, these values are standardized.
+A matrix with two columns, 'p' for presence and 'h' for hierarchy, containing the indices for each construct.
+        If standardization is applied, these values are modified according to the selected method.
 }
 \description{
-This function computes the presence (P, frequency of occurrence) and
-hierarchy (H, influence on others) indices for constructs within an implication grid.
-It can standardize these indices based on the maximum degree if required.
+This function computes the presence (P) and hierarchy (H) indices for constructs within an weigthed implication grid.
+             These indices represent the frequency of occurrence and influence on other constructs, respectively.
+             The function allows for different methods of standardization based on the context of the constructs.
 }
 \examples{
-# Assuming 'wimp' is an object with an implication grid
-ph_indices <- ph_index(wimp)
-ph_indices_std <- ph_index(wimp, std = TRUE)
-ph_indices_wnorm_non_std <- ph_index(wimp, method = "wnorm", std = FALSE)
 
+ph_index(example.wimp)
+ph_index(example.wimp, std = TRUE)
+ph_index(example.wimp, method = "wnorm", std = FALSE)
+
+}
+\author{
+Carlos Hurtado and Alejandro Sanfeliciano
 }

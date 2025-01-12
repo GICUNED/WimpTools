@@ -1,184 +1,43 @@
-## GRAPH FUNCTIONS ##
-
-# PCSD -----------------------------------------------------------------
-
-#' Personal Constructs System Dynamics plot -- pcsd()
-#'
-#' @description Interactive line plot of personal constructs system dinamics.
-#' Show \code{\link{scenariomatrix}} values expressed in terms of distance to
-#' Ideal-Self for each personal construct across the mathematical iterations.
-#'
-#'
-#' @param scn
-#'
-#' @param vline
-#'
-#' @return Interactive plot created with plotly.
-#'
-#' @import plotly
-#'
-#' @export
-#'
-#' @examples
-
-pcsd <- function(scn, vline = NA){
-
-
-
-  lpoles <- scn$constructs[[1]]
-  rpoles <- scn$constructs[[2]]
-  poles <- scn$constructs[[3]]
-
-  iter <- nrow(scn$values)
-
-
-  ideal.vector <- scn$self[[2]]
-  ideal.matrix <- matrix(ideal.vector, ncol = length(ideal.vector),             # Create a matrix with Ideal-Self values repeated by rows.
-                         nrow = iter, byrow = TRUE)
-
-  res <- scn$values
-
-
-  x <- c(0:(iter -1))
-  y <- c(0:length(poles))
-  y <- as.character(y)
-  df <- data.frame(x, abs(res - ideal.matrix) / 2)                              # Dataframe with the standardised distances between self-now and ideal-self.
-  colnames(df) <- y
-
-  fig <- plotly::plot_ly(df, x = ~x, y = df[,2], name = poles[1],
-                         type = 'scatter',
-                         mode = 'lines+markers',line = list(shape = "spline"))  # Build PCSD with plotly.
-
-  for (n in 3:(length(poles)+1)) {
-    fig <- fig %>% plotly::add_trace(y = df[,n], name = poles[n-1],
-                                     mode = 'lines+markers'
-                                     ,line = list(shape = "spline"))
-  }
-  fig <- fig %>% plotly::layout(
-    xaxis = list(
-      title = "ITERATIONS"
-    ),
-    yaxis = list(
-      title = "DISTANCE TO IDEAL SELF",
-      range = c(-0.05,1.05)
-    )
-  )
-  fig <- fig %>% plotly::layout(legend=list(
-    title=list(text='<b>PERSONAL CONSTRUCTS</b>')
-  )
-  )
-
-  fig <- fig %>% add_lines(
-    x = vline,
-    y = c(0,1),
-    line = list(
-      color = "grey",
-      dash = "dot"
-    ),
-    inherit = FALSE,
-    showlegend = FALSE
-  )
-
-  fig                                                                           # Run the results.
-}
-
-
-# PCSD Derivative ---------------------------------------------------------
-
-#' PCSD derivative -- pcsd_derivative()
-#'
-#' @description This function represents the first derivative for each of the
-#' PCSD curves.
-#'
-#' @param scn
-#'
-#' @return Return a plot create via plotly r-package.
-#'
-#' @import plotly
-#'
-#' @export
-
-pcsd_derivative <- function(scn){
-
-
-  lpoles <- scn$constructs[[1]]
-  rpoles <- scn$constructs[[2]]
-  poles <- scn$constructs[[3]]
-
-
-  iter <- scn$convergence                                                       # Save convergence value.
-
-  ideal.vector <- scn$self[[2]]
-  ideal.matrix <- matrix(ideal.vector, ncol = length(ideal.vector),             # Create a matrix with Ideal-Self values repeated by rows.
-                         nrow = iter + 4, byrow = TRUE)
-
-
-  res.pre <- scn$values
-  res.pre <- abs(res.pre - ideal.matrix) / 2
-
-  print(res.pre)
-
-  x <- c(0:(iter + 2))
-  y <- c(0:length(poles))
-
-  res <- matrix(ncol = length(poles), nrow = iter + 3)
-
-  for (i in 1:length(poles)) {
-    res[,i] <- diff(res.pre[,i])/diff(0:(iter + 3))                               # Calculate de diffs
-  }
-
-  y <- as.character(y)
-
-  df <- data.frame(x,res)                                                       # Made a dataframe with the results.
-  colnames(df) <- y
-
-  fig <- plotly::plot_ly(df, x = ~x, y = df[,2], name = poles[1],
-                         type = 'scatter', mode = 'lines+markers',
-                         line = list(shape = "spline"))
-
-  for (n in 3:(length(poles)+1)) {
-    fig <- fig %>% plotly::add_trace(y = df[,n], name = poles[n-1],
-                                     mode = 'lines+markers',
-                                     line = list(shape = "spline"))
-  }
-
-  fig <- fig %>% plotly::layout(xaxis = list(
-    title = "ITERATIONS"),
-    yaxis = list(
-      title = "DERIVATIVE"))
-
-  fig <- fig %>% plotly::layout(legend=list(
-    title=list(text='<b>PERSONAL CONSTRUCTS</b>')))
-
-  fig                                                                           # Config the plot and run it.
-}
+## DIGRAPH FUNCTIONS ##
 
 
 # Self Digraph ------------------------------------------------------------
 
 #' Selfdigraph -- digraph()
 #'
-#' @param wimp
-#' @param vertex.vector
-#' @param ideal.vector
-#' @param width
-#' @param height
-#' @param color
-#' @param layout
-#' @param show
-#' @param hide.inverse
+#' @description A digraph that represents the self of the person being assessed
+#'              on the basis of its constructs and the relationships between them.
 #'
-#' @return
-#' @import dplyr
+#' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
+#'        imported by the \code{\link{importwimp}} function.
+#'
+#' @param vertex.vector Vector defining the value of each of the vertices of the digraph.
+#'        Default is the value of the standarized self from the wimp object.
+#' @param ideal.vector Vector defining the ideal value of each of the vertices of the digraph.
+#'        Default is the value of the standarized ideal self from the wimp object.
+#' @param width digraph width.
+#' @param height Digraph heigth.
+#' @param color Color palette to be used. The options are "red/green" and "grey scale". Default is "red/green".
+#' @param layout Layout with which the digraph will be displayed. The options
+#'        are: "circle", "rtcircle", "tree", "graphopt", "mds" and "grid". Default is "graphopt".
+#' @param show Logical vector defining which constructs to display. By default all constructs are shown.
+#' @param hide.direct If TRUE, hide direct relationship between nodes of the graph. Default is FALSE.
+#'
+#' @author Alejandro Sanfeliciano
+#'
+#' @return A digraph made with visNetwork
+#'
 #' @import visNetwork
 #' @export
 #'
 #' @examples
 #'
+#'  digraph(su.wimp)
+#'
 
 digraph <- function(wimp, vertex.vector = NA, ideal.vector = NA, width="100%",
                     height="1000px", color = "red/green", layout ="graphopt",
-                    show = TRUE, hide.inverse = FALSE){
+                    show = TRUE, hide.direct = FALSE){
 
   if(inherits(wimp,"wimp")){
     lpoles <- wimp$constructs[[1]]
@@ -201,6 +60,7 @@ digraph <- function(wimp, vertex.vector = NA, ideal.vector = NA, width="100%",
   }else{
     vertex.vector <- vertex.vector
   }
+    vertex.vector <- sapply(vertex.vector,.thr)
 
   if(is.na(ideal.vector[1])){
     ideal.vector <- ideal
@@ -233,7 +93,7 @@ digraph <- function(wimp, vertex.vector = NA, ideal.vector = NA, width="100%",
     x > 0 && x != Inf ~ congruent.color,
     x == 0 ~ undefined.color,
     is.infinite(x) ~ dilemmatic.color,
-    .default = congruent.color)
+    .default = dilemmatic.color)
   )
 
   vertex.group <- sapply(congruency.vector, function(x) case_when(
@@ -279,7 +139,7 @@ digraph <- function(wimp, vertex.vector = NA, ideal.vector = NA, width="100%",
   }
   n.vertex <- nrow(wmatrix)
 
-  if(hide.inverse){
+  if(hide.direct){
     logical.dilemmatic <- ideal == 0
 
     wmatrix[wmatrix > 0] <- 0
@@ -328,68 +188,132 @@ digraph <- function(wimp, vertex.vector = NA, ideal.vector = NA, width="100%",
     dashes = edges.dashes,
     smooth = edge.curved,
     color = edges.color,
-    title = round(weight.vector,2)
+    title = round(weight.vector, 2)
   )
 
-  if(layout == "graphopt"){layout <- "layout_with_graphopt"}
-  if(layout == "circle"){layout <- "layout_in_circle"}
-  if(layout == "tree"){layout <- "layout_as_tree"}
-  if(layout == "mds"){layout <- "layout_with_mds"}
-  if(layout == "grid"){layout <- "layout_on_grid"}
+  if(layout == "graphopt") {layout <- "layout_with_graphopt"}
+  if(layout == "circle") {layout <- "layout_in_circle"}
+  if(layout == "tree") {layout <- "layout_as_tree"}
+  if(layout == "mds") {layout <- "layout_with_mds"}
+  if(layout == "grid") {layout <- "layout_on_grid"}
 
-  if(layout == "rtcircle"){
+  if(layout == "rtcircle") {
     visNetwork(vertex, edges, height = height, width = width) %>%
       visIgraphLayout(layout = "layout_as_tree", circular = TRUE) %>%
-      visOptions(highlightNearest =
-                   list(enabled = T, degree = 0, labelOnly = TRUE),
-                 selectedBy = list(variable = "group",main = "All" )) %>%
-      visInteraction(navigationButtons = TRUE,multiselect = TRUE)
-  }else{
+      visOptions(highlightNearest = list(enabled = TRUE, degree = 0, labelOnly = TRUE),
+                 selectedBy = list(variable = "group", main = "All")) %>%
+      visInteraction(navigationButtons = TRUE, multiselect = TRUE)
+  } else {
     visNetwork(vertex, edges, height = height, width = width) %>%
-      visIgraphLayout(layout = layout,randomSeed = 33) %>%
-      visOptions(highlightNearest =
-                   list(enabled = T, degree = 0, labelOnly = TRUE),
-                 selectedBy = list(variable = "group",main = "All" )) %>%
-      visInteraction(navigationButtons = TRUE,multiselect = TRUE)
+      visIgraphLayout(layout = layout, randomSeed = 33) %>%
+      visOptions(highlightNearest = list(enabled = TRUE, degree = 0, labelOnly = TRUE),
+                 selectedBy = list(variable = "group", main = "All")) %>%
+      visInteraction(navigationButtons = TRUE, multiselect = TRUE)
   }
 }
-
 # Ideal Digraph -----------------------------------------------------------
 
 #' Ideal digraph -- idealdigraph()
 #'
-#' @param wimp
-#' @param inc
-#' @param ...
-#' @param layout
+#' @description A digraph that represents the ideal self of the person being assessed
+#'              on the basis of its constructs and the relationships between them.
 #'
-#' @return
+#' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
+#'        imported by the \code{\link{importwimp}} function.
+#' @param inc If TRUE, hide direct relationship between nodes of the graph. Default is FALSE.
+#' @param ... additional arguments are passed from \code{\link{digraph}}
+#'        function.
+#' @param layout Layout with which the digraph will be displayed. The options
+#'        are: "circle", "rtcircle", "tree", "graphopt", "mds" and "grid". Default is "circle".
+#'
+#' @author Alejandro Sanfeliciano
+#'
+#' @return A digraph made with visNetwork
+#'
 #' @export
 #'
 #' @examples
 #'
+#' idealdigraph(example.wimp)
+#'
 
-idealdigraph <- function(wimp, inc=TRUE, layout = "circle", ...){
+idealdigraph <- function(wimp, inc=FALSE, layout = "circle", ...){
 
   ideal.vector <- wimp$ideal[[2]]
-  digraph(wimp = wimp, hide.inverse = inc, vertex.vector = ideal.vector, layout = layout, ...)
+  plot <- digraph(wimp = wimp, hide.direct = inc, vertex.vector = ideal.vector, layout = layout, ...)
+  return(plot)
 }
 
 # Simulation Digraph ---------------------------------------------------------
 
 #' Simulation digraph -- simdigraph()
 #'
-#' @param scn
-#' @param niter
-#' @param ...
+#' @description A digraph that represents the hypothetical self of the person being assessed
+#'              on the basis of its constructs and the relationships between them.
 #'
-#' @return
+#' @param scn A scenario matrix. It must be a "scn" S3 object
+#'         from the \code{\link{scenariomatrix}} function.
+#' @param niter Iteration displayed in the digraph. Default is 0.
+#' @param ... Additional arguments are passed from \code{\link{digraph}}
+#'        function.
+#'
+#' @author Alejandro Sanfeliciano
+#'
+#' @return A digraph made with visNetwork
+#'
 #' @export
 #'
 #' @examples
+#'
+#'  scn <- scenariomatrix(example.wimp, rep(1,5))
+#'  simdigraph(scn, niter = 2)
+#'
 
 simdigraph <- function(scn, niter = 0, ...){
 
   vertex.vector <- scn[[1]][niter+1,]
   digraph(wimp = scn, vertex.vector = vertex.vector, ...)
+}
+
+# In - Out Digraph -------------------------------------------------------------
+
+#' In - Out digraph -- inout_digraph()
+#'
+#' @description A digraph showing the in and out vertices for a given construct.
+#'
+#' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
+#'        imported by the \code{\link{importwimp}} function.
+#' @param iso.con Objective construct to analyse the in and out. Must be an
+#'        integer representing its position in the list of constructs.
+#' @param ... additional arguments are passed from \code{\link{digraph}}
+#'        function.
+#'
+#' @author Alejandro Sanfeliciano
+#'
+#' @return A digraph made with visNetwork
+#'
+#' @export
+#'
+#' @examples
+#'
+#' idealdigraph(example.wimp)
+
+inout_digraph <- function(wimp,iso.con, ...){
+
+  wimp <- .isolate.construct(wimp,iso.con)
+
+  wmatrix <- abs(wimp$scores$weights)
+  center <- which.max( colSums(wmatrix) + rowSums(wmatrix))
+
+  out.vertex <- which(colSums(wmatrix)!=0)
+  in.vertex <- which(rowSums(wmatrix)!=0)
+  inout.v <- intersect(in.vertex,out.vertex)
+
+  out.v <- setdiff(out.vertex,in.vertex)
+  in.v <- setdiff(in.vertex,out.vertex)
+
+  order <- c(in.v,out.v,inout.v)
+
+  plot <- idealdigraph(wimp, ...)
+    visIgraphLayout(plot,layout = "layout_as_star", center = center, order = order)
 }

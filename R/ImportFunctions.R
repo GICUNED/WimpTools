@@ -2,11 +2,10 @@
 
 # Import Weigthed ImpGrid -------------------------------------------------
 
-#' Import Weighted Implication Grid
+#' Import Weighted Implication Grid -- importwimp()
 #'
 #' @description Function to transform the data of a WimpGrid contained in an
 #' Excel file into an S3 object of class wimp.
-#'
 #'
 #' @param path Path to the excel file on your computer. The file suffix has to be .xlsx.
 #' @param sheet Number of the Excel sheet that contains the WimpGrid data.
@@ -16,15 +15,9 @@
 #' @export
 #'
 #' @import readxl
-#' @import OpenRepGrid
-#'
-#' @examples
-#'  wimp <- importwimp(file.choose())
-#'  wimp
 
 
-
-importwimp <- function(path, sheet = 1, opr = TRUE){
+importwimp <- function(path, sheet = 1){
 
   wimp <- list()
   class(wimp) <- c("wimp","list")
@@ -44,7 +37,7 @@ importwimp <- function(path, sheet = 1, opr = TRUE){
   # Constructs --------------------------------------------------------------
   left.poles <- as.vector(xlsx[,1])[[1]]
   right.poles <- as.vector(xlsx[,n.constructs + 3])[[1]]
-  constructs <- paste(left.poles,"—",right.poles,sep = "")
+  constructs <- paste(left.poles,"-",right.poles,sep = " ")
   wimp$constructs[[1]] <- left.poles
   wimp$constructs[[2]] <- right.poles
   wimp$constructs[[3]] <- constructs
@@ -103,46 +96,6 @@ importwimp <- function(path, sheet = 1, opr = TRUE){
   wimp$scores[[3]] <- weight.matrix
   names(wimp$scores) <- c("direct","implications","weights")
 
-  # OpenRepGrid adaptation --------------------------------------------------
-  if(opr == TRUE){
-  openrepgrid.object <- OpenRepGrid::importExcel(path, sheetIndex = sheet)
-  wimp$openrepgrid <- openrepgrid.object
-  }
-
   # Function return ---------------------------------------------------------
   return(wimp)
-}
-
-#' Print method for class 'wimp'
-#'
-#' @description Print method for S3 objects of the "wimp" class belonging to the
-#' GridFCM package. Prints the WimpGrid matrix along with other related data and
-#' executes a Bertin plot. You must have made the object compatible with
-#' OpenRepGrid by setting the opr argument to TRUE in the
-#' \code{\link{importwimp}} function.
-#'
-#' @param wimp A wimp S3 object.
-#' @param bertin If TRUE run a bertin plot from the WimpGrid data. Default is TRUE.
-#'
-#' @return Displays the WimpGrid information on the screen.
-#'
-#' @export
-#'
-#' @examples
-#'
-#' # Print without bertin plot.
-#' print(example.wimp, bertin = FALSE)
-#'
-#' # Print with bertin plot.
-#' print(example.wimp)
-
-print.wimp <- function(wimp, bertin = TRUE){
-
-  if(!is.null(wimp$openrepgrid)){
-  if(bertin){OpenRepGrid::bertin(wimp$openrepgrid)}
-  print(wimp$openrepgrid)
-  }else{
-    cat("OpenRepGrid support is required to print the wimp object. Try importing
-        it by setting the opr argument to true in the importwimp() function.")
-  }
 }

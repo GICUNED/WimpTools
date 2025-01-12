@@ -1,40 +1,236 @@
 ## CENTRALITY FUNCTIONS ##
 
-# PH Indices ------------------------------------------------------------
+# Degree Index Centrality -------------------------------------------------
 
-#' Calculate Presence and Hierarchy Indices
+#' Degree Index -- degree_index()
 #'
-#' This function computes the presence (P) and hierarchy (H) indices for constructs within an implication grid.
-#' These indices represent the frequency of occurrence and influence on other constructs, respectively.
-#' The function allows for different methods of standardization based on the context of the constructs.
+#' @description Function to calculate the centrality of the constructs.
+#'              In this case, centrality is understood as the degree of connection that each
+#'              construct maintains with the rest, i.e. the number of links for each vertex.
 #'
-#' @param wimp A WIMP object containing an implication grid and associated constructs.
-#' @param method A character string specifying the method used to calculate the degree indices.
-#'   Default is "wnorm". Acceptable values include "wnorm", "simple", "weight", or any other method
-#'   implemented in the 'degree_index' function.
-#' @param std A character string indicating how to standardize the P and H indices. Available options are:
-#'   - 'none': No standardization (default).
-#'   - 'vertices': Standardizes by the maximum total degree, which is calculated based on the number of vertices.
-#'   - 'edges': Standardizes by the total number of edges.
-#'   - 'max_edges': Standardizes by the maximum number of outgoing edges from any single vertex.
-#'   - 'density': Adjusts P and H by the density of the grid, which considers the total edges possible versus actual.
+#' @param wimp Subject's Weigthed ImpGrid. It must be a "wimp" S3 object
+#'        imported by  the \code{\link{importwimp}} function.
+#' @param method Method for calculating centrality. You can use the simple
+#'        method with "simple", normalized with "norm", weighted with "weigth",
+#'        normalized weighted with "wnorm" and the ego density method with "ego".
+#'        Default is Weigthed Method.
 #'
-#' @return A matrix with two columns, 'p' for presence and 'h' for hierarchy, containing the indices for each construct.
-#'   If standardization is applied, these values are modified according to the selected method.
+#' @author Alejandro Sanfeliciano
 #'
+#' @return Returns a list with the centrality data by construct and separated by
+#'         input degree, output degree and total degree (in and out).
 #'
 #' @export
 #'
 #' @examples
-#' # Assuming 'wimp' is an object with an implication grid
-#' ph_indices <- ph_index(wimp)
-#' ph_indices_std <- ph_index(wimp, std = TRUE)
-#' ph_indices_wnorm_non_std <- ph_index(wimp, method = "wnorm", std = FALSE)
 #'
+#' degree_index(example.wimp)
+#'
+
+degree_index <- function(wimp, method="weight"){
+
+  lpoles <- wimp$constructs[[1]]
+  rpoles <- wimp$constructs[[2]]
+  poles <- wimp$constructs[[3]]
+
+  wmat <- wimp$scores[[3]]
+  N <- dim(wmat)[1]
+
+  if(method == "simple" | method == "norm" | method == "ego"){
+    wmat.1 <- wmat/wmat
+    wmat.1[is.nan(wmat.1)] <- 0
+    Cout <- rowSums(wmat.1)
+    Cin <- colSums(wmat.1)
+  }
+
+  if(method == "weight" | method == "wnorm"){
+    Cout <- rowSums(abs(wmat))
+    Cin <- colSums(abs(wmat))
+  }
+
+  if(method == "norm" | method == "wnorm"){
+    Cout <- Cout/(N-1)
+    Cin <- Cin/(N-1)
+  }
+
+  if(method == "ego"){
+    Cout <- Cout/(N*(N-1))
+    Cin <- Cin/(N*(N-1))
+  }
+
+  names(Cout) <- poles
+  names(Cin) <- poles
+
+  result <- cbind(Cout, Cin , Cout + Cin)
+  rownames(result) <- poles
+  colnames(result) <- c("Out","In", "All")
+  return(result)
+}
+
+# Distance Matrix ---------------------------------------------------------
+
+#' Distance Matrix -- dismatrix()
+#'
+#' @description Function that calculates the shortest distance between each of
+#'              the pairs of digraph constructions.
+#'
+#' @param wimp  Subject's Weigthed ImpGrid. It must be a "wimp" S3 object
+#'        imported by the \code{\link{importwimp}} function.
+#' @param mode Method to calculate the distances depending on the direction of
+#'        the edges. With "out" we calculate them respecting the direction of the edges,
+#'        "in" through the inverse of the direction of the edges and "all" without
+#'        taking into account the direction. Default is "out"
+#'
+#' @author Alejandro Sanfeliciano
+#'
+#' @return Returns the digraph distance matrix. Matrix that contains the
+#'         distances of the shortest paths from one construct to another.
+#'
+#' @export
+#'
+
+dismatrix <- function(wimp,mode="out"){
+
+  poles <- wimp$constructs[[3]]
+  wmat <- wimp$scores[[3]]
+
+  G <- igraph::graph.adjacency(wmat,mode = "directed",weighted = T)
+
+  result <- igraph::shortest.paths(G, weights = NA,mode = mode)
+
+  rownames(result) <- poles
+  colnames(result) <- poles
+
+  return(result)
+}
+
+# Closeness Centrality Index ----------------------------------------------
+
+#' Closeness index -- close_index()
+#'
+#' @description Function to calculate the closeness of a construct to the rest
+#'              of the constructs within the digraph.
+#'
+#' @param wimp Subject's Weigthed ImpGrid. It must be a "wimp" S3 object
+#'        imported by the \code{\link{importwimp}} function.
+#' @param norm If TRUE, the values will be standardized. Default is TRUE.
+#'
+#' @author Alejandro Sanfeliciano
+#'
+#' @return Returns a vector with the closeness index for each of the
+#'         constructs.
+#'
+#' @export
+#'
+#' @examples
+#'
+#' close_index(example.wimp)
+#' close_index(example.wimp, norm = FALSE)
+#'
+
+close_index <- function(wimp, norm = TRUE){
+
+  lpoles <- wimp$constructs[[1]]
+  rpoles <- wimp$constructs[[2]]
+  poles <- wimp$constructs[[3]]
+
+  dist <- dismatrix(wimp)
+  N <- dim(dist)[1]
+
+  result <- 1/(rowSums(dist))
+
+  if(norm){
+    result <- (N-1)/(rowSums(dist))
+  }
+
+  result <- matrix(result)
+  rownames(result) <- poles
+  colnames(result) <- "Closeness"
+
+  return(result)
+}
+
+# Betweeness Centrality Index ---------------------------------------------
+
+#' Betweeness index -- betw_index()
+#'
+#' @description Function that calculates the betweenness of each of the
+#'              constructs. This is the number of times a geodesic path (shortest path)
+#'              between two other constructs passes through that construct in the digraph.
+#'
+#' @param wimp  Subject's Weigthed ImpGrid. It must be a "wimp" S3 object
+#'        imported by the \code{\link{importwimp}} function.
+#' @param norm If TRUE, the values will be standardized. Default is TRUE.
+#'
+#' @author Alejandro Sanfeliciano
+#'
+#' @return Returns a vector with the betweeness index for each of the
+#'         constructs.
+#'
+#' @export
+#'
+#' @examples
+#'
+#' betw_index(example.wimp)
+#' betw_index(example.wimp, norm = FALSE)
+#'
+
+betw_index <- function(wimp,norm=TRUE){
+
+  lpoles <- wimp$constructs[[1]]
+  rpoles <- wimp$constructs[[2]]
+  poles <- wimp$constructs[[3]]
+
+
+  wmat <- wimp$scores[[3]]
+
+  G <- igraph::graph.adjacency(wmat,mode = "directed",weighted = T)
+
+  result <- igraph::betweenness(G,normalized = norm,weights = NA )
+
+  result <- matrix(result)
+  rownames(result) <- poles
+  colnames(result) <- "Betweenness"
+
+  return(result)
+}
+
+# PH Centrality Index ------------------------------------------------------------
+
+#' Presence and Hierarchy Indices -- ph_index()
+#'
+#' @description This function computes the presence (P) and hierarchy (H) indices for constructs within an weigthed implication grid.
+#'              These indices represent the frequency of occurrence and influence on other constructs, respectively.
+#'              The function allows for different methods of standardization based on the context of the constructs.
+#'
+#' @param wimp A WIMP object containing an implication grid and associated constructs.
+#' @param method A character string specifying the method used to calculate the degree indices.
+#'        Default is "wnorm". Acceptable values include "wnorm", "simple", "weight", or any other method
+#'        implemented in the 'degree_index' function.
+#' @param std A character string indicating how to standardize the P and H indices. Available options are:
+#'        - 'none': No standardization (default).
+#'        - 'vertices': Standardizes by the maximum total degree, which is calculated based on the number of vertices.
+#'        - 'edges': Standardizes by the total number of edges.
+#'        - 'max_edges': Standardizes by the maximum number of outgoing edges from any single vertex.
+#'        - 'density': Adjusts P and H by the density of the grid, which considers the total edges possible versus actual.
+#'
+#' @author Carlos Hurtado and Alejandro Sanfeliciano
+#'
+#' @return A matrix with two columns, 'p' for presence and 'h' for hierarchy, containing the indices for each construct.
+#'         If standardization is applied, these values are modified according to the selected method.
+#'
+#' @export
+#'
+#' @examples
+#'
+#' ph_index(example.wimp)
+#' ph_index(example.wimp, std = TRUE)
+#' ph_index(example.wimp, method = "wnorm", std = FALSE)
+#'
+
 
 ph_index <- function(wimp, method = "wnorm", std = 'none'){
 
-  # P-H calculation--------------
   # Connectivity of constructs
   c.io <- degree_index(wimp, method = method)
 
@@ -52,7 +248,7 @@ ph_index <- function(wimp, method = "wnorm", std = 'none'){
   ph.mat <- in.out %*% t(coef.matrix)
   colnames(ph.mat) <- c("p", "h")
 
-  # Standardization--------------
+  # Standardization
   if (std == 'vertices'){
     vertices <- length(wimp$constructs$constructs)
 
@@ -103,182 +299,32 @@ ph_index <- function(wimp, method = "wnorm", std = 'none'){
   return(ph.mat)
 }
 
-
-# Mahalanobis Indices ------------------------------------------------------------
-
-#' Calculate Mahalanobis Indices for Constructs
-#'
-#' This function calculates the Mahalanobis distance for each construct
-#' in a given PH matrix obtained from a `wimp` object. It also determines
-#' whether each construct is considered "hub" based on a chi-square
-#' cutoff, which is calculated using a specified significance level.
-#'
-#' @param wimp An object of class 'wimp', which contains an implication grid
-#'   and associated constructs.
-#' @param method A character string specifying the method used to calculate
-#'   the degree indices. Accepted values are "wnorm", "direct", and possibly others,
-#'   depending on the implementation of 'degree_index' function. Default is "wnorm".
-#' @param std A character string indicating the type of standardization to apply.
-#'   Options are 'none' (no standardization), 'vertices' (standardize by the maximum total degree
-#'   of the constructs), 'edges' (standardize by the total number of edges), 'max_edges'
-#'   (standardize by the maximum number of edges from any node), and 'density'
-#'   (scale by the density of the network). Default is 'none'.
-#' @param sign.level Signification level associated with the cut-off point of the Chi-square distribution
-#'   to determine the "hub" constructs.
-#'
-#' @return A matrix with columns 'p' and 'h' representing the presence and hierarchy indices
-#'   for each construct. Indices are standardized according to the specified method if applicable.
-#'
-#' @export
-#'
-#' @examples
-#' result <- mahalanobis_index(wimp, method = "weight", std = FALSE)
-#' head(result)
-#'
-
-mahalanobis_index <- function(wimp, method = "wnorm", std = 'none', sign.level = 0.2){
-
-  # Obtain PH matrix associated to the wimp object
-  ph.mat <- ph_index(wimp = wimp, method = method, std = std)
-
-  # Greater weight is given to a positive hierarchy value
-  #ph.mat[,"h"] <- ifelse(ph.mat[,"h"] >0, ph.mat[,"h"]^2, ph.mat[,"h"])
-
-  # Mahalanobis distance--------
-
-  # Covariance matrix
-  cov.matrix <- cov(ph.mat)
-  # Means vector
-  means.vect <- colMeans(ph.mat)
-  # Calculate the Mahalanobis distance for each observation in the dataframe
-  ph.mat.df <- as.data.frame(ph.mat)
-  m.dist <- mahalanobis(ph.mat.df, center = means.vect, cov = cov.matrix)
-
-  # Add column to the results matrix
-  phm.mat <- cbind(ph.mat, m.dist)
-
-  # Determine the chi-square cutoff for the given significance level--------------
-  # Degrees of freedom
-  df <- ncol(ph.mat)
-  # Chi-Square Cutoff
-  chi.square.cutoff <- qchisq(1 - sign.level, df)
-
-  # Annotate observations as "hub" constructs based on the chi-square cutoff
-  # and being "non-superficial" constructs on the P axis
-  #----------------------
-  # Mean and standard deviation of the distribution
-  mean.p <- mean(ph.mat.df$p)
-  sd.p <- sd(ph.mat.df$p)
-
-  # Cutoff point - Defined with respect to distribution
-  p.cut <- qnorm(0.15, mean = mean.p, sd = sd.p)
-
-  # Filter out P values that are less than the cutoff point
-  hub <- ifelse(phm.mat[,"m.dist"] > chi.square.cutoff & phm.mat[,"p"] > p.cut, TRUE, FALSE)
-  #----------------------
-
-  # Add column to the results matrix
-  phmc.mat <- cbind(phm.mat, hub)
-  return(phmc.mat)
-}
-
-# PCA Indices ------------------------------------------------------------
-
-#' Calculate centrality scores based on Principal Component Analysis (PCA)
-#'
-#' This function computes centrality scores for constructs in a WIMP object using
-#' PCA on a specified matrix (direct, weights, or implications). It returns the centrality scores
-#' based on the loadings of the specified number of principal components.
-#'
-#' @param wimp A list object representing the WIMP structure, which must include
-#'   a scores list with matrices: direct, weights, and implications.
-#' @param matrix A character string specifying which wimp matrix to use for PCA.
-#'   Valid options are "direct", "weights", or "implications".
-#' @param pr.comp Integer indicating the number of principal components to use
-#'   for calculating centrality scores. Defaults to 2.
-#'
-#' @return A dataframe with construct names and their centrality scores.
-#'
-#' @examples
-#' pca_index(my_wimp, matrix = "weights", pr.comp = 2)
-#'
-#' @export
-#'
-#' @throws Error if method is not one of the allowed values. Also throws an error if pr.comp
-#'   exceeds the available number of principal components.
-#'
-
-pca_index <- function(wimp, matrix = "implications", pr.comp = 2){
-  # Validate the specified method and its presence in wimp$scores
-  if (!matrix %in% c("direct", "weights", "implications")) {
-    stop("El método especificado debe ser 'direct', 'weights' o 'implications'.")
-  }
-
-  # Access the matrix based on the specified method
-  adj.matrix <- wimp$scores[[matrix]]
-
-  pca.result <- NULL
-  # Attempt to perform PCA. Catch potential calc exceptions
-  pca.result <- tryCatch({
-    prcomp(adj.matrix, center = TRUE, scale = TRUE)
-  }, warning = function(w) {
-    message("Advertencia: ", w$message)
-  }, error = function(e) {
-    message("Error en el cálculo del PCA: ", e$message)
-  })
-
-  # Check if PCA was successful
-  if (is.null(pca.result)) {
-    # PCA failed, assign NA to all centrality values
-    centrality <- rep(NA, length(wimp$constructs$constructs))
-  } else {
-    # PCA succeeded, calculate variance explained and loadings
-    explained.variance <- pca.result$sdev^2 / sum(pca.result$sdev^2)
-
-    # Validate if pr.comp is within the allowable range
-    if (pr.comp > length(explained.variance)) {
-      stop("pr.comp excede el número de componentes principales disponibles.")
-    }
-
-    # Calculate loadings for the specified number of principal components
-    loadings.pca <- pca.result$rotation
-    loadings.add <- rowSums((loadings.pca[, 1:pr.comp]^2) * explained.variance[1:pr.comp])
-    centrality <- abs(loadings.add)
-  }
-
-  # Create a dataframe with construct names and centrality scores from the sum of loadings in principal components
-  pca.df <- data.frame(
-    constructs = wimp$constructs$constructs,
-    leftpoles = wimp$constructs$left.poles,
-    rightpoles = wimp$constructs$right.poles,
-    centrality = centrality
-  )
-
-  return(pca.df)
-}
-
-
 # Eigen Indices ------------------------------------------------------------
 
-#' Calculate Centrality Using Eigenvalue Decomposition
+#' Eigenvalue Centrality index -- eigen_index()
 #'
-#' This function calculates centrality scores for constructs within a `wimp` object,
-#' based on the eigenvalue decomposition of a specified adjacency matrix from the WIMP scores.
-#' It supports analyzing centrality using the 'direct', 'weights', or 'implications' matrices.
-#' The centrality calculation is performed over the specified number of eigenvectors.
+#' @description This function calculates centrality scores for constructs within a `wimp` object,
+#'              based on the eigenvalue decomposition of a specified adjacency matrix from the WIMP scores.
+#'              It supports analyzing centrality using the 'direct', 'weights', or 'implications' matrices.
+#'              The centrality calculation is performed over the specified number of eigenvectors.
 #'
 #' @param wimp wimp An object of class 'wimp' (weighted implications grid)
 #' @param matrix A character string specifying which matrix to use for the centrality analysis. Accepted values are
 #'        'direct', 'weights', or 'implications'. Default is 'implications'.
 #' @param num.vectors An integer specifying the number of eigenvectors to use for computing centrality scores.
+#'
+#' @author Carlos Hurtado
+#'
 #' @return A dataframe containing the constructs' names and their respective centrality scores.
 #'
 #' @export
 #'
-#' @throws Error if method is not one of the allowed values. Also throws an error if num.vectors
-#'   exceeds the available number of eigenvectors
+#' @examples
+#'
+#' eigen_index(example.wimp)
+#'
 
-eigen_index <- function(wimp, matrix = "implications", num.vectors = 2) {
+eigen_index <- function(wimp, matrix = "weights", num.vectors = 2) {
   # Validate the specified method
   if (!matrix %in% c("direct", "weights", "implications")) {
     stop("method debe ser 'direct', 'weights' o 'implications'.")
@@ -292,7 +338,7 @@ eigen_index <- function(wimp, matrix = "implications", num.vectors = 2) {
 
   # Ensure the number of requested eigenvectors does not exceed available components
   if (num.vectors > length(results$values)) {
-    stop("num.vectors excede el número de vectores propios disponibles.")
+    stop("num.vectors exceeds the number of available eigenvectors.")
   }
 
   # Calculate centrality using the specified number of eigenvectors. This calculation takes the absolute value
@@ -304,59 +350,44 @@ eigen_index <- function(wimp, matrix = "implications", num.vectors = 2) {
 
   # Create a dataframe with the centrality results
   df.centrality <- data.frame(
-    constructs = wimp$constructs$constructs,
-    leftpoles = wimp$constructs$left.poles,
-    rightpoles = wimp$constructs$right.poles,
-    centrality = abs(centralidad)
+    Constructs = wimp$constructs$constructs,
+    Eigenvalues = abs(centralidad)
   )
 
   return(df.centrality)
 }
 
-# Graphically represent constructs ------------------------------------------------
+# PH Plot ------------------------------------------------
 
-#' Scatter Plot of Constructs in P-H Space
+#' Scatter Plot of Constructs in PH Space -- ph_plot()
 #'
-#' This function generates a scatter plot of constructs in the P-H space,
+#' @description This function generates a scatter plot of constructs in the P-H space,
 #' where P represents Presence (frequency of the construct) and H represents Hierarchy
 #' (influence of the construct).
 #'
 #' @param wimp An object of class 'wimp', which contains an implication grid
-#'   and associated constructs.
+#'        and associated constructs.
 #'
-#' @param method A character string specifying the method used to calculate
-#'   the degree indices. Accepted values are "wnorm", "direct", and possibly others,
-#'   depending on the implementation of 'degree_index' function. Default is "wnorm".
+#' @param text.size Size of the text labels. Default is 1.
 #'
-#' @param std A character string indicating the type of standardization to apply.
-#'   Options are 'none' (no standardization), 'vertices' (standardize by the maximum total degree
-#'   of the constructs), 'edges' (standardize by the total number of edges), 'max_edges'
-#'   (standardize by the maximum number of edges from any node), and 'density'
-#'   (scale by the density of the network). Default is 'none'.
+#' @param ... Additional arguments are passed from \code{\link{ph_index}} function.
 #'
-#' @param sign.level Signification level associated with the cut-off point of the Chi-square distribution
-#'   to determine the "hub" constructs.
-#'
-#' @param mark.nva Boolean value that specifies if non-viable areas are to be marked in the
-#'        graphic. Non-viable areas are parts of the P-H space where constructs cannot logically exist.
-#'
-#' @param mark.hub Boolean value that specifies if hub constructs have to be highlighted.
-#'        Hub constructs are depicted with a distinct color and symbol to differentiate them from
-#'        peripheral constructs.
-#'
-#' @param show.points Boolean value that specifies whether points should be displayed or not
+#' @author Carlos Hurtado and Alejandro Sanfeliciano
 #'
 #' @return A Plotly object representing the generated scatter plot.
 #'
+#' @import plotly
 #' @export
 #'
 #' @examples
-#' graph_ph(phm.mat, mark.nva = TRUE, mark.hub = TRUE)
+#'
+#' ph_plot(example.wimp)
+#'
 
-graph_ph <- function(..., mark.nva = TRUE, mark.hub = TRUE, show.points = TRUE) {
+ph_plot <- function(wimp, text.size = 1, ...) {
 
   # Extract the Mahalobis distance matrix for the given wimp
-  phm.mat <- mahalanobis_index(...)
+  phm.mat <- ph_index(wimp)
   # Convert the matrix to a dataframe
   phm.mat.df <- as.data.frame(phm.mat)
   # Assign the names of constructs from the row names of the matrix
@@ -370,198 +401,44 @@ graph_ph <- function(..., mark.nva = TRUE, mark.hub = TRUE, show.points = TRUE) 
   phm.mat.df$p <- round(phm.mat.df$p, 3)
   phm.mat.df$h <- round(phm.mat.df$h, 3)
 
-  # Add a new column for label color
-  if (mark.hub)
-    phm.mat.df$label.color <- ifelse(phm.mat.df$hub == 1, 'red', 'black')
-  else
-    phm.mat.df$label.color <- 'black'
+
+  phm.mat.df$color <- .construct.colors(wimp = wimp, mode = "red/green")[,"color"]
 
   # Shapes for non-viable area if requested
-  shapes <- if (mark.nva) {
+  shapes <-
     list(
       list(type = "path", path = paste("M 0,0 L", limit, ",", limit, " L0,", limit, " Z"),
-           fillcolor = "palegreen", opacity = 0.2, line = list(color = "palegreen")),
+           fillcolor = "#FFD97D", opacity = 0.2, line = list(color = "#FA9D13")),
       list(type = "path", path = paste("M 0,0 L", limit, ",", -limit, " L0,", -limit, " Z"),
-           fillcolor = "palegreen", opacity = 0.2, line = list(color = "palegreen")),
+           fillcolor = "#FFD97D", opacity = 0.2, line = list(color = "#FA9D13")),
       list(type = "line", x0 = 0, y0 = 0, x1 = limit, y1 = limit,
-           xref = "x", yref = "y", line = list(color = "darkgreen", width = 1, dash = "dash")),
+           xref = "x", yref = "y", line = list(color = "#FFD97D", width = 1, dash = "dash")),
       list(type = "line", x0 = 0, y0 = 0, x1 = limit, y1 = -limit,
-           xref = "x", yref = "y", line = list(color = "darkgreen", width = 1, dash = "dash"))
+           xref = "x", yref = "y", line = list(color = "#FFD97D", width = 1, dash = "dash"))
     )
-  } else {
-    list()  # No shapes if mark.nva is FALSE
-  }
 
   # Initialize Plotly graph
   p <- plot_ly()
 
   # Set the layout of the graph
   p <- p %>%
-    layout(title = 'Gráfica de Dispersión de Constructos en el Espacio P - H',
-           xaxis = list(title = 'P - Presencialidad (frecuencia del constructo)'),
-           yaxis = list(title = 'H - Jerarquía (influencia del constructo)'),
+    layout(title = '',
+           xaxis = list(title = 'PRESENCE'),
+           yaxis = list(title = 'HIERARCHY'),
            plot_bgcolor = "white",
            font = list(family = "Arial"),
            showlegend = FALSE,
            shapes = shapes)
-
-  # Add points or not based on show.points parameter
-  if (show.points) {
-    # Construct category colors
-    phm.mat.df$color <- NA
-
-    colors.mat <- construct_colors(wimp = wimp, mode = "red/green")
-    phm.mat.df$color <- colors.mat[,"color"]
-
-    if (mark.hub) {
-      p <- p %>%
-        add_markers(data = phm.mat.df, x = ~p, y = ~h,
-                    marker = list(color = ~color, size = 10,
-                                  symbol = ifelse(phm.mat.df$hub == 1, "star", "circle"),
-                                  line = list(color = 'black', width = ifelse(phm.mat.df$hub == 1, 2, 1))),
-                    text = ~paste('P:', p, '; H:', h), hoverinfo = 'text')
-    } else {
-      p <- p %>%
-        add_markers(data = phm.mat.df, x = ~p, y = ~h,
-                    #marker = list(color = colors, size = 10, line = list(color = 'black', width = 1)),
-                    marker = list(color = phm.mat.df$color, size = 10, line = list(color = 'black', width = 1)),
-                    text = ~paste('P:', p, '; H:', h), hoverinfo = 'text')
-    }
-  }
-
-  # Add construct labels (annotations)
-  if (mark.hub & !show.points) { # Labels are highlighted if centers are checked and no points are displayed
-    p <- p %>%
-      add_annotations(data = phm.mat.df[phm.mat.df$hub == 0, ], x = ~p, y = ~h, text = ~self.constr,
-                      hovertext = ~paste('Constructo:', constructo, '\nP:', p, 'H:', h), hoverinfo = 'text',
-                      font = list(size = 12, color = 'black'),
-                      showarrow = FALSE, xanchor = 'center', yanchor = 'bottom',
-                      yshift = 5)
-
-    p <- p %>%
-      add_annotations(data = phm.mat.df[phm.mat.df$hub == 1, ], x = ~p, y = ~h, text = ~self.constr,
-                      hovertext = ~paste('Constructo:', constructo, '\nP:', p, 'H:', h), hoverinfo = 'text',
-                      font = list(size = 12, color = 'darkgreen', family = "Arial Black, sans-serif",
-                                  style = "normal"),
-                      showarrow = FALSE, xanchor = 'center', yanchor = 'bottom',
-                      yshift = 5)
-
-  } else { # Labels are normal whether no centers are marked or points are displayed.
-    p <- p %>%
+  p <- p %>%
       add_annotations(data = phm.mat.df, x = ~p, y = ~h, text = ~self.constr,
                       hovertext = ~paste('Constructo:', constructo, '\nP:', p, 'H:', h), hoverinfo = 'text',
-                      font = list(size = 12, color = 'black'),
+                      font = list(size = 12 * text.size, color = 'black'),
                       showarrow = FALSE, xanchor = 'center', yanchor = 'bottom',
                       yshift = 5)
-  }
+  p <- p %>%
+    add_markers(data = phm.mat.df, x = ~p, y = ~h,
+                marker = list(color = phm.mat.df$color, size = 7, line = list(color = 'black', width = 1)),
+                text = ~paste('P:', p, '; H:', h), hoverinfo = 'text')
 
   return(p)
 }
-
-
-# Construct colors ------------------------------------------------------------
-
-#' Construc color matrix based on its category
-#'
-#' This function assigns colors to constructs within an implication grid based on their category.
-#' The categories include congruent, discrepant, dilemmatic, and undefined constructs.
-#' The color assignment helps in visually differentiating between these categories.
-#' The colors used are determined by a hidden function based on the specified color mode.
-#'
-#' @param wimp An object of class 'wimp', which contains an implication grid
-#'   and associated constructs.
-#' @param mode Color mode for .color.selection (i.e, "red/green")
-#'
-#' @return A matrix containing construct colors based on its category and .color.selection.
-#'
-#' @export
-#'
-#' @examples
-#'
-
-construct_colors <- function(wimp, mode){
-  # Construct category colors
-  col.sel <- .color.selection(mode)
-  color.mat <- matrix(data = 0, nrow = length(wimp$constructs$constructs), ncol = 1)
-  rownames(color.mat) <- wimp$constructs$constructs
-  colnames(color.mat) <- c("color")
-
-  color.mat[wimp$constructs$discrepants,"color"] <- col.sel[1]
-  color.mat[wimp$constructs$congruents,"color"] <- col.sel[2]
-  color.mat[wimp$constructs$undefined,"color"] <- col.sel[3]
-  color.mat[wimp$constructs$dilemmatic,"color"] <- col.sel[4]
-
-  return(color.mat)
-}
-
-# Test optimal numbers of clusters ------------------------------------------------------------
-
-#' Public test function for .optimal.num.clusters hide function
-#'
-#' This function computes the presence (P, frequency of occurrence) and
-#'
-#' @param
-#'
-#' @param
-#'
-#' @return
-#'
-#' @export
-#'
-#' @examples
-#'
-
-test_optimal_num_clusters <- function(...){
-  # Invoke the hidden function
-  return(.optimal.num.clusters(...))
-}
-
-
-# Dendrogram of constructs of a Wimp ------------------------------------------------------------
-
-#' Constructs Dendrogram
-#'
-#' This function generates a dendrogram of constructs based on the Mahalanobis
-#' distances in the P-H vector space. It automatically calculates the optimal
-#' number of clusters for grouping the constructs using the hidden function .optimal.num.clusters().
-#' The dendrogram visually represents the hierarchical clustering of constructs, highlighting the optimal
-#' clustering of constructs.
-#'
-#' @param wimp A `wimp` object containing the constructs and the corresponding
-#' scores in the P-H vector space. This object should have been generated using
-#' the GridFCM.practicum package.
-#'
-#' @return A dendrogram visualizing the hierarchical clustering of constructs
-#' based on their distances in the P-H space. The dendrogram highlights the
-#' optimal clustering of constructs.
-#'
-#' @importFrom GridFCM.practicum ph_index
-#'
-#' @importFrom factoextra fviz_dend hcut
-#'
-#' @export
-#'
-
-constructs_dendrogram <- function(wimp){
-
-  # Matrix of Euclidean distances between constructs in the vector space P-H
-  ph.mat <- GridFCM.practicum::ph_index(wimp = wimp, method = "wnorm", std = FALSE)
-  rownames(ph.mat) <- wimp$constructs$self.poles
-
-  # Optimal number of clusters
-  k<- .optimal.num.clusters(wimp)
-
-  # Colors palette
-  greens.palette <- c("#003300","#008000", "#3CB371")
-
-  #Dendrogram
-  dist.mat <- .mahalanobis.dist.matrix(ph.mat)
-  hclust.model <- hcut(dist.mat, k = k, method = "ward.D2", stand = TRUE, hc_func = "agnes")
-  plot<- fviz_dend(hclust.model, rect = TRUE, cex = 0.7,
-                   k_colors = greens.palette,horiz = TRUE,
-                   main = 'Dendrograma de constructos por distancia en P-H')
-
-
-  return(plot)
-}
-
