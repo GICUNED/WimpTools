@@ -1,0 +1,512 @@
+View(wimp)
+library(GridFCM.practicum)
+library(GridFCM.practicum)
+scn<- scenariomatrix(example.wimp,infer = "adjustment evolution"
+)
+library(GridFCM.practicum)
+scn<- scenariomatrix(example.wimp,infer = "adjustment evolution")
+library(GridFCM.practicum)
+scn<- scenariomatrix(example.wimp,infer = "adjustment evolution")
+library(GridFCM.practicum)
+scn<- scenariomatrix(example.wimp,infer = "adjustment evolution")
+scn
+library(GridFCM.practicum)
+scn<- scenariomatrix(example.wimp,infer = "adjustment evolution")
+scn
+pcsd(scn)
+digraph(example.wimp)
+scn<- scenariomatrix(wimp,infer = "adjustment evolution")
+pcsd(scn)
+library(GridFCM.practicum)
+pcsd(scn)
+scn<- scenariomatrix(wimp,infer = "adjustment evolution")
+pcsd(scn)
+scn<- scenariomatrix(wimp,infer = "adjustment evolution")
+scn<- scenariomatrix(example.wimp,infer = "adjustment evolution")
+pcsd(scn)
+library(GridFCM.practicum)
+scn<- scenariomatrix(example.wimp,infer = "adjustment evolution")
+pcsd(scn)
+digraph
+digraph(example.wimp)
+trans.matrix <- t(example.wimp$scores$weights)
+trans.matrix
+example.wimp$constructs$constructs
+example.wimp$constructs$constructs %*% rep(1,5)
+trans.matrix %*% rep(1,5)
+t(trans.matrix) %*% rep(1,5)
+library(GridFCM.practicum)
+scn<- scenariomatrix(example.wimp,infer = "adjustment evolution")
+pcsd(scn)
+scn<- scenariomatrix(wimp,infer = "adjustment evolution")
+pcsd(scn)
+library(GridFCM.practicum)
+scn<- scenariomatrix(wimp,infer = "adjustment evolution")
+pcsd(scn)
+scn
+scn<- scenariomatrix(wimp,infer = "adjustment evolution", max.iter = 5)
+pcsd(scn)
+library(GridFCM.practicum)
+scn<- scenariomatrix(wimp,infer = "adjustment evolution", max.iter = 5)
+pcsd(scn)
+library(GridFCM.practicum)
+scn<- scenariomatrix(wimp,infer = "adjustment evolution", max.iter = 5)
+pcsd(scn)
+scn<- scenariomatrix(example.wimp,c(-1,0,0,0,0))
+pcsd(scn)
+scn<- scenariomatrix(wimp,infer = "adjustment evolution", max.iter = 5)
+library(GridFCM.practicum)
+View(scn)
+View(scn)
+library(GridFCM.practicum)
+scn<- scenariomatrix(example.wimp,infer = "adjustment evolution", max.iter = 10)
+library(GridFCM.practicum)
+scn<- scenariomatrix(example.wimp,infer = "adjustment evolution", max.iter = 10)
+library(GridFCM.practicum)
+scn<- scenariomatrix(example.wimp,infer = "adjustment evolution", max.iter = 10)
+pcsd(scn)
+library(GridFCM.practicum)
+library(GridFCM.practicum)
+scn<- scenariomatrix(example.wimp,infer = "adjustment evolution", max.iter = 10)
+pcsd(scn)
+scn<- scenariomatrix(wimp,infer = "adjustment evolution", max.iter = 5)
+pcsd(scn)
+scn<- scenariomatrix(wimp,infer = "linear transformation", max.iter = 5)
+scn<- scenariomatrix(example.wimp,infer = "adjustment evolution", max.iter = 10)
+pcsd(scn)
+trans.matrix[-NA]
+trans.matrix[-0]
+trans.matrix[-NaN]
+trans.matrix[-NULL]
+trans.matrix[-]
+trans.matrix[-0]
+trans.matrix[-1]
+trans.matrix[,-0]
+trans.matrix[,-null]
+trans.matrix[,-NA]
+trans.matrix[-NA,]
+source("~/Asanfe/Ph D/GridFCM/GridFCM.practicum/R/HideFunctions.R")
+library(GridFCM.practicum)
+library(GridFCM.practicum)
+scn<- scenariomatrix(example.wimp,infer = "adjustment evolution", max.iter = 10)
+library(GridFCM.practicum)
+scn<- scenariomatrix(example.wimp,infer = "adjustment evolution", max.iter = 10)
+pcsd(scn)
+scn<- scenariomatrix(wimp,infer = "adjustment evolution", max.iter = 10)
+pcsd(scn)
+scn <- scenariomatrix(example.wimp, act.vector =c(1,1,1,1,1), infer = "linear transform", max.iter = 10)
+pcsd(scn)
+install.packages("rfas")
+install.packages("Rfast")
+install.packages("RcppGSL")
+install.packages("Rfast")
+install.packages("RcppGSL")
+install.packages("Rfast")
+install.packages("Rfast")
+library(GridFCM.practicum)
+install.packages("Rfast")
+matrix <- t(example.wimp$scores$weights)
+rank(matrix)
+?rank
+qr(matrix)&rank
+qr(matrix)$rank
+wimp <- importwimp
+wimp <- importwimp(file.choose)
+wimp <- importwimp(file.choose())
+matrix.2 <- t(wimp$scores$weights)
+qr(matrix.2)$rank
+qr(matrix.2)$rank/dim(matrix.2)[1]
+qr(matrix)$rank/dim(matrix)[1]
+det(matrix)
+det(matrix.2)
+qr(matrix)
+wimp.null <- importwimp(file.choose(),opr = FALSE)
+View(wimp.null)
+View(wimp.null)
+wimp.null$openrepgrid
+is.null(wimp.null$openrepgrid)
+library(GridFCM.practicum)
+wimp.null
+wimp
+wimp.null
+library(GridFCM.practicum)
+wimp.null
+library(GridFCM.practicum)
+library(GridFCM.practicum)
+?print.wimp
+library(GridFCM.practicum)
+library(GridFCM.practicum)
+?print.wimp
+library(GridFCM.practicum)
+library(GridFCM.practicum)
+?print.wimp
+print(example.wimp, bertin=FALSE)
+print(example.wimp)
+?print.wimp
+library(GridFCM.practicum)
+library(GridFCM.practicum)
+scenariomatrix(example.wimp, infer = "adjustment dynamics)")
+scenariomatrix(example.wimp, infer = "adjustment dynamics")
+scn <- scenariomatrix(example.wimp, infer = "adjustment dynamics")
+pcsd(scn)
+library(GridFCM.practicum)
+scn <- scenariomatrix(example.wimp, infer = "adjustment dynamics")
+pcsd(scn)
+scn <- scenariomatrix(wimp, infer = "adjustment dynamics")
+pcsd(scn)
+scn <- scenariomatrix(wimp, infer = "adjustment dynamics", max.iter = 5)
+pcsd(scn)
+max(scn$values)
+scn
+library(GridFCM.practicum)
+pcsd(scn)
+library(GridFCM.practicum)
+pcsd(scn)
+library(GridFCM.practicum)
+library(GridFCM.practicum)
+pcsd(scn)
+scn <- scenariomatrix(example.wimp, infer = "adjustment dynamics", max.iter = 5)
+pcsd(scn)
+scn
+(max(scn)) + 0.05 * (max(scn))
+df <- scn$values
+(max(df)) + 0.05 * (max(df))
+(max(abs(df))) + 0.05 * (max(abs(df)))
+library(GridFCM.practicum)
+pcsd(scn)
+scn <- scenariomatrix(wimp, infer = "adjustment dynamics", max.iter = 5)
+pcsd(scn)
+scn <- scenariomatrix(example.wimp, infer = "adjustment dynamics", max.iter = 5)
+pcsd(scn)
+max.value.drf <- (max(abs(df))) + 0.05 * (max(abs(df)))
+max.value.df <- (max(abs(df))) + 0.05 * (max(abs(df)))
+c(-max.value.df,max.value.df)
+library(GridFCM.practicum)
+max.value.df <- (max(abs(df))) + 0.05 * (max(abs(df)))
+pcsd(scn)
+pcsd(scn)
+library(GridFCM.practicum)
+library(GridFCM.practicum)
+pcsd(scn)
+library(GridFCM.practicum)
+pcsd(scn)
+pcsd(scn)
+library(GridFCM.practicum)
+scn <- scenariomatrix(wimp, infer = "adjustment dynamics", max.iter = 5)
+scn
+pcsd(scn)
+library(GridFCM.practicum)
+cyr_index(wimp)
+library(GridFCM.practicum)
+pcsd(scn)
+scn <- scenariomatrix(example.wimp, c(1,1,1,1,1), max.iter = 5)
+pcsd(scn)
+simdigraph(scn)
+simdigraph(scn, niter = 0)
+simdigraph(scn, niter = 1)
+simdigraph(scn, niter = 2)
+simdigraph(scn, niter = 3)
+simdigraph(scn, niter = 4)
+simdigraph(scn, niter = 10)
+simdigraph(scn, niter = 5)
+pcsd(scn)
+wimp
+scn <- scenariomatrix(wimp, c(1,rep(0,20)), max.iter = 5)
+pcsd(scn)
+scn <- scenariomatrix(wimp, c(1,rep(0,20)), max.iter = 10)
+pcsd(scn)
+scn <- scenariomatrix(wimp, c(1,rep(0,20)), max.iter = 30)
+pcsd(scn)
+scn <- scenariomatrix(wimp, c(1,rep(0,20)), max.iter = 5)
+pcsd(scn)
+scn <- scenariomatrix(wimp, c(0,0,1,rep(0,18)), max.iter = 5)
+pcsd(scn)
+scn <- scenariomatrix(wimp, c(0,0,1,rep(0,18)), max.iter = 3)
+pcsd(scn)
+scn <- scenariomatrix(wimp, c(0,0,1,rep(0,18)), max.iter = 5)
+pcsd(scn)
+scn.self <- scenariomatrix(wimp, c(0,0,1,rep(0,18)), max.iter = 5)
+scn.adjustment <- scenariomatrix(wimp, max.iter = 5)
+scn.adjustment <- scenariomatrix(wimp,infer="adjustment dynamics" max.iter = 5)
+scn.adjustment <- scenariomatrix(wimp,infer="adjustment dynamics", max.iter = 5)
+pcsd(scn.adjustment)
+rm(df)
+rm(matrix)
+rm(matrix.2)
+remove(scn)
+remove(wimp.null)
+rm(max.value.drf)
+rm(max.value.df)
+pcsd(scn.adjustment)
+pcsd(scn.self)
+library(GridFCM.practicum)
+scn.self <- scenariomatrix(wimp, c(0,0,1,rep(0,18)), max.iter = 5)
+pcsd(scn.self)
+sat(2)
+tanh(5)
+?tanh
+tanh(100000)
+scn.self <- scenariomatrix(wimp, c(0,0,1,rep(0,18)), max.iter = 5)
+pcsd(scn.self)
+library(GridFCM.practicum)
+scn.self <- scenariomatrix(wimp, c(0,0,1,rep(0,18)), max.iter = 5)
+pcsd(scn.self)
+scn.self <- scenariomatrix(wimp, c(0,0,1,rep(0,18)), max.iter = 5, thr= "tanh")
+pcsd(scn.self)
+scn.self <- scenariomatrix(wimp, c(0,0,1,rep(0,18)), max.iter = 5, thr= "saturation")
+pcsd(scn.self)
+library(GridFCM.practicum)
+library(GridFCM.practicum)
+library(GridFCM.practicum)
+library(GridFCM.practicum)
+library(GridFCM.practicum)
+scn.self <- scenariomatrix(wimp, c(0,0,1,rep(0,18)), max.iter = 5, thr= "none")
+pcsd(scn.self)
+scn.self <- scenariomatrix(wimp, c(0,0,1,rep(0,18)), max.iter = 60, thr= "none")
+pcsd(scn.self)
+scn.self <- scenariomatrix(wimp, c(0,0,1,rep(0,18)), max.iter = 60, thr= "saturation")
+pcsd(scn.self)
+scn.self <- scenariomatrix(wimp, c(0,0,1,rep(0,18)), max.iter = 10, thr= "saturation")
+pcsd(scn.self)
+scn.self <- scenariomatrix(wimp, c(0,0,1,rep(0,18)), max.iter = 6, thr= "saturation")
+pcsd(scn.self)
+cyr_index(wimp)
+ph_index(wimp)
+pcsd(scn.adjustment)
+pcsd(scn.self)
+cyr_index(example.wimp)
+cyr_index(wimp)
+pcsd(scn.adjustment)
+pcsd(scn.self)
+pcsd(scn.adjustment)
+wimp
+pcsd(scn.adjustment)
+example.wimp
+digraph(example.wimp)
+scn.self <- scenariomatrix(example.wimp, infer="adjustment dynamics")
+pcsd(scn.self)
+scn.self <- scenariomatrix(wimp, c(0,0,1,rep(0,18)), max.iter = 6, thr= "saturation")
+pcsd(scn.self)
+library(GridFCM.practicum)
+wimp1 <- importwimp(file.choose())
+cq.fb_index(wimp1)
+wimp1
+.align.wimp <- function(wimp, exclude.dilemmatics = TRUE){
+ideal <- wimp$ideal[[2]]
+swap.indeces <- which(ideal < 0)
+dil.indeces <- which(ideal == 0)
+# Scale transformation
+wimp$scale[1] <- -1
+wimp$scale[2] <- 1
+# Constructs transformation
+old.left.poles <- wimp$constructs$left.poles
+old.right.poles <- wimp$constructs$right.poles
+left.poles <- old.left.poles
+left.poles[swap.indeces] <- old.right.poles[swap.indeces]
+right.poles <- old.right.poles
+right.poles[swap.indeces] <- old.left.poles[swap.indeces]
+if(exclude.dilemmatics){
+left.poles <- left.poles[-dil.indeces]
+right.poles <- right.poles[-dil.indeces]
+}
+constructs <- paste(left.poles,"—",right.poles,sep = "")
+wimp$constructs$left.poles <- left.poles
+wimp$constructs$right.poles <- right.poles
+wimp$constructs$constructs <- constructs
+# Self transformation
+self <- wimp$self$standarized
+self[swap.indeces] <- self[swap.indeces] * -1
+if(exclude.dilemmatics){
+self <- self[-dil.indeces]
+}
+wimp$self$direct <- self
+wimp$self$standarized <- self
+# Ideal transformation
+ideal <- wimp$ideal$standarized
+ideal[swap.indeces] <- ideal[swap.indeces] * -1
+if(exclude.dilemmatics){
+ideal <- ideal[-dil.indeces]
+}
+wimp$ideal$direct <- ideal
+wimp$ideal$standarized <- ideal
+# Hypothetical transformation
+hypothetical <- wimp$hypothetical$standarized
+hypothetical[swap.indeces] <- hypothetical[swap.indeces] * -1
+if(exclude.dilemmatics){
+hypothetical <- hypothetical[-dil.indeces]
+}
+wimp$hypothetical$direct <- hypothetical
+wimp$hypothetical$standarized <- hypothetical
+# Scores transformation
+implications <- wimp$scores$implications
+weights <- wimp$scores$weights
+implications[swap.indeces,] <- implications[swap.indeces,] * -1
+implications[,swap.indeces] <- implications[,swap.indeces] * -1
+weights[swap.indeces,] <- weights[swap.indeces,] * -1
+weights[,swap.indeces] <- weights[,swap.indeces] * -1
+if(exclude.dilemmatics){
+implications <- implications[-dil.indeces,]
+implications <- implications[,-dil.indeces]
+weights <- weights[-dil.indeces,]
+weights <- weights[,-dil.indeces]
+}
+wimp$scores$direct <- implications
+wimp$scores$implications <- implications
+wimp$scores$weights <- weights
+# OpenRepGrid transformation
+# Return
+return(wimp)
+}
+.align.wimp(wimp1)
+rm(wimp)
+rm(df)
+rm(matrix)
+rm(matrix.2)
+rm(scn)
+rm(wimp.null
+)
+rm(max.value.df)
+rm(max.value.drf)
+X <- .align.wimp(wimp1)
+X
+View(X)
+View(X)
+X <- .align.wimp(wimp1, exclude.dilemmatics = FALSE)
+View(X)
+View(X)
+View(wimp1)
+View(wimp1)
+wimp <- wimp1
+ideal <- wimp$ideal[[2]]
+dil.indeces <- which(ideal == 0)
+left.poles <- left.poles[-dil.indeces]
+is.null(dil.indices)
+is.null(dil.indeces)
+is.na(dil.indeces)
+dil.indeces
+is.empty.model(dil.indeces)
+dil.indeces == 0
+dil.indeces == 1
+dil.indeces == empty
+dil.indeces
+integer(0)
+dil.indeces == integer(o)
+dil.indeces == integer(0)
+is.numeric(dil.indeces)
+X <- c(1,2)
+length(dil.indeces)
+length(dil.indeces) > 0
+library(GridFCM.practicum)
+cq.fb_index(wimp1)
+wimp2 <- importwimp(file.choose())
+digraph(wimp2)
+idealdigraph(wimp2)
+cq.fb_index(example.wimp)
+library(GridFCM.practicum)
+example.wimp$self$direct
+integer(0)
+example.wimp$self$standarized
+library(GridFCM.practicum)
+source("~/Descargas/Extraccioìn rejillas-PEC 20-21 TR Mixta PRUEBA mail.R")
+source("~/Descargas/Extraccioìn rejillas-PEC 20-21 TR Mixta PRUEBA mail.R")
+source("~/Descargas/Extraccioìn rejillas-PEC 20-21 TR Mixta PRUEBA mail.R")
+source("~/Descargas/Extraccioìn rejillas-PEC 20-21 TR Mixta PRUEBA mail.R")
+source("~/Asanfe/vicente/GridsRetest.R")
+library(GridFCM)
+example.wimp$self$standarized
+pre <- example.wimp$self$standarized
+post <- example.wimp$self$standarized
+post <- c(1,1,1,1,1)
+example.wimp$constructs$right.poles
+names(pre) <- example.wimp$constructs$right.poles
+pre
+names(post) <- example.wimp$constructs$right.poles
+monitoring_plot(pre,post)
+library(readxl)
+datosluis <- read_excel("~/Documentos/datosluis.xlsx",
+sheet = "Hoja1")
+View(datosluis)
+pre <- datosluis[1,]
+pre <- datosluis[2,]
+pre <- datosluis[1,]
+post <- datosluis[2,]
+pre
+as.numeric(pre)
+pre <- as.numeric(pre)
+post <- as.numeric(post)
+names(pre) <- colnames(datosluis)
+pre
+names(post) <- colnames(datosluis)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+monitoring_plot(pre,post)
+library(GridFCM)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+library(GridFCM)
+monitoring_plot(pre,post)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+monitoring_plot(pre,post)
+library(GridFCM)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+library(GridFCM)
+monitoring_plot(pre,post)

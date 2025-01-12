@@ -1,0 +1,512 @@
+library(GridFCM)
+library(GridFCM)
+monitoring_plot(pre,post)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+monitoring_plot(pre,post)
+library(GridFCM)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+library(GridFCM)
+monitoring_plot(pre,post)
+library(GridFCM)
+adjustment_plot(wimp)
+adjustment_plot(su.wimp)
+adjustment_plot(su.wimp)
+library(GridFCM)
+library(GridFCM)
+adjustment_plot(su.wimp)
+self_index(wimp)
+self_index(su.wimp)
+wimp_biplot(wimp)
+wimp_biplot(su.wimp)
+adjustment_plot(su.wimp)
+scn <- scenariomatrix(wimp,c(0,0,1,rep(0,18))
+)
+scn <- scenariomatrix(su.wimp,c(0,0,1,rep(0,18)))
+pcsd(scn)
+scn <- scenariomatrix(su.wimp, infer = "impact dynamics")
+pcsd(scn)
+pcsd(example.wimp)
+scn <- scenariomatrix(example.wimp, infer = "impact dynamics")
+pcsd(scn)
+wimp2 <- importwimp(file.choose())
+monitoring_plot(su.wimp,wimp2)
+scn <- scenariomatrix(su.wimp,c(0,0,1,rep(0,18)))
+pcsd(scn)
+pcsdindices(wimp)
+pcsdindices(su.wimp)
+pcsdindices(example.wimp)
+library(GridFCM)
+pcsdindices(scn)
+scn <- scenariomatrix(su.wimp, act.vector = c(0,0,1,rep(0,18)))
+pcsdindices(scn)
+su.wimp$constructs$constructs == su.wimp$constructs$constructs
+su.con<- su.wimp$constructs$constructs
+merge(s.con,su.con)
+merge(su.con,su.con)
+merge(su.con,su.con, by =1)
+su.con[1:5] <- "adios"
+su.con<- su.wimp$constructs$constructs
+su.con.2<- su.wimp$constructs$constructs
+su.con.2[1:5] <- "adios"
+merge(su.con,su.con.2)
+merge(su.con,su.con.2, by =1)
+?merge
+merge(su.con,su.con.2, by =1, sort = FALSE)
+.merge.wimp <- function(wimp1,wimp2){
+c1 <- wimp1$constructs$constructs
+c2 <- wimp2$constructs$constructs
+df1 <- data.frame(c1,1:length(c1))
+names(df1) <- c("Construct", "wimp1 index")
+df2 <- data.frame(c2,1:length(c2))
+names(df1) <- c("Construct", "wimp2 index")
+result <- merge(df1,df2, by=1, sort=FALSE)
+}
+.merge.wimp(su.wimp,su.wimp)
+.merge.wimp <- function(wimp1,wimp2){
+c1 <- wimp1$constructs$constructs
+c2 <- wimp2$constructs$constructs
+df1 <- data.frame(c1,1:length(c1))
+names(df1) <- c("Construct", "wimp1 index")
+df2 <- data.frame(c2,1:length(c2))
+names(df1) <- c("Construct", "wimp2 index")
+result <- merge(df1,df2, by=1, sort=FALSE)
+return(result)
+}
+.merge.wimp(su.wimp,su.wimp)
+.merge.wimp <- function(wimp1,wimp2){
+c1 <- wimp1$constructs$constructs
+c2 <- wimp2$constructs$constructs
+df1 <- data.frame(c1,1:length(c1))
+names(df1) <- c("Construct", "wimp1 index")
+df2 <- data.frame(c2,1:length(c2))
+names(df2) <- c("Construct", "wimp2 index")
+result <- merge(df1,df2, by=1, sort=FALSE)
+return(result)
+}
+.merge.wimp(su.wimp,su.wimp)
+.merge.wimp <- function(wimp1,wimp2){
+c1 <- wimp1$constructs$constructs
+c2 <- wimp2$constructs$constructs
+df1 <- data.frame(c1,1:length(c1))
+names(df1) <- c("Construct", "index1")
+df2 <- data.frame(c2,1:length(c2))
+names(df2) <- c("Construct", "index2")
+result <- merge(df1,df2, by=1, sort=FALSE)
+return(result)
+}
+library(GridFCM)
+.merge.wimp(su.wimp,su.wimp)
+result <- merge(df1,df2, by=1, sort=TRUE)
+library(GridFCM)
+library(GridFCM)
+.merge.wimp <- function(wimp1,wimp2){
+c1 <- wimp1$constructs$constructs
+c2 <- wimp2$constructs$constructs
+df1 <- data.frame(c1,1:length(c1))
+names(df1) <- c("Construct", "index1")
+df2 <- data.frame(c2,1:length(c2))
+names(df2) <- c("Construct", "index2")
+result <- merge(df1,df2, by=1, sort=TRUE)
+return(result)
+}
+.merge.wimp <- function(wimp1,wimp2){
+c1 <- wimp1$constructs$constructs
+c2 <- wimp2$constructs$constructs
+df1 <- data.frame(c1,1:length(c1))
+names(df1) <- c("Construct", "index1")
+df2 <- data.frame(c2,1:length(c2))
+names(df2) <- c("Construct", "index2")
+result <- merge(df1,df2, by=1, sort=TRUE)
+return(resu
+))
+nrow(data.frame())
+.compatibility.merge.wimp <- function(wimp1,wimp2){
+merge <- nrow(.merge.wimp(wimp1,wimp2))
+if(merge == length(wimp1) && merge == length(wimp2)){
+result <- "Full Compatible"
+}
+if(merge != length(wimp1) | merge != length(wimp2)){
+result <- "Partial Compatible"
+}
+if(merge == 0){
+result <- "Incompatible"
+}
+}
+.compatibility.merge.wimp(su.wimp,su.wimp)
+library(GridFCM)
+.compatibility.merge.wimp <- function(wimp1,wimp2){
+merge <- nrow(.merge.wimp(wimp1,wimp2))
+if(merge == length(wimp1) && merge == length(wimp2)){
+result <- "Full Compatible"
+}
+if(merge != length(wimp1) | merge != length(wimp2)){
+result <- "Partial Compatible"
+}
+if(merge == 0){
+result <- "Incompatible"
+}
+return(result)
+}
+.compatibility.merge.wimp(su.wimp,su.wimp)
+.compatibility.merge.wimp <- function(wimp1,wimp2){
+merge <- nrow(.merge.wimp(wimp1,wimp2))
+if(merge == length(wimp1) && merge == length(wimp2)){
+result <- "Full Compatible"
+}
+if(merge != length(wimp1) || merge != length(wimp2)){
+result <- "Partial Compatible"
+}
+if(merge == 0){
+result <- "Incompatible"
+}
+return(result)
+}
+.compatibility.merge.wimp(su.wimp,su.wimp)
+.compatibility.merge.wimp <- function(wimp1,wimp2){
+merge <- nrow(.merge.wimp(wimp1,wimp2))
+if(merge == length(wimp1) && merge == length(wimp2)){
+result <- "Full Compatible"
+}
+if(merge != length(wimp1$constructs$constructs) || merge != length(wimp2$constructs$constructs)){
+result <- "Partial Compatible"
+}
+if(merge == 0){
+result <- "Incompatible"
+}
+return(result)
+}
+.compatibility.merge.wimp(su.wimp,su.wimp)
+.compatibility.merge.wimp(su.wimp,su.wimp)
+.compatibility.merge.wimp <- function(wimp1,wimp2){
+merge <- nrow(.merge.wimp(wimp1,wimp2))
+if(merge == length(wimp1$constructs$constructs) && merge == length(wimp2$constructs$constructs)){
+result <- "Full Compatible"
+}
+if(merge != length(wimp1$constructs$constructs) || merge != length(wimp2$constructs$constructs)){
+result <- "Partial Compatible"
+}
+if(merge == 0){
+result <- "Incompatible"
+}
+return(result)
+}
+.compatibility.merge.wimp(su.wimp,su.wimp)
+.compatibility.merge.wimp(su.wimp,example.wimp)
+example.wimp
+su.wimp
+example.wimp
+su.wimp
+wimp <- su.wimp
+wimp$constructs$constructs[1:5] <- ""
+.compatibility.merge.wimp(su.wimp,wimp)
+.merge.wimp(su.wimp,wimp)
+example.wimp
+library(GridFCM)
+.merge.wimp <- function(wimp1,wimp2){
+df1 <- data.frame(wimp1$constructs$constructs, wimp1$constructs$l.poles, wimp1$constructs$r.poles, length(c1))
+names(df1) <- c("Construct", "lpoles", "rpoles", "index1")
+df2 <- data.frame(wimp2$constructs$constructs, wimp2$constructs$l.poles, wimp2$constructs$r.poles, length(c2))
+names(df2) <- c("Construct", "lpoles", "rpoles", "index2")
+result <- merge(df1,df2, by=1, sort=TRUE)
+return(result)
+}
+merge.wimp(su.wimp,wimp)
+.merge.wimp(su.wimp,wimp)
+.merge.wimp(su.wimp,wimp)
+.merge.wimp <- function(wimp1,wimp2){
+df1 <- data.frame(wimp1$constructs$constructs, wimp1$constructs$l.poles, wimp1$constructs$r.poles, length(wimp1$constructs$constructs))
+names(df1) <- c("Construct", "lpoles", "rpoles", "index1")
+df2 <- data.frame(wimp2$constructs$constructs, wimp2$constructs$l.poles, wimp2$constructs$r.poles, length(wimp2$constructs$constructs))
+names(df2) <- c("Construct", "lpoles", "rpoles", "index2")
+result <- merge(df1,df2, by=1, sort=TRUE)
+return(result)
+}
+library(GridFCM)
+.merge.wimp(su.wimp,wimp)
+View(wimp)
+View(wimp)
+.merge.wimp <- function(wimp1,wimp2){
+df1 <- data.frame(wimp1$constructs$constructs, wimp1$constructs$left.poles, wimp1$constructs$right.poles, length(wimp1$constructs$constructs))
+names(df1) <- c("Construct", "lpoles", "rpoles", "index1")
+df2 <- data.frame(wimp2$constructs$constructs, wimp2$constructs$left.poles, wimp2$constructs$right.poles, length(wimp2$constructs$constructs))
+names(df2) <- c("Construct", "lpoles", "rpoles", "index2")
+result <- merge(df1,df2, by=1, sort=TRUE)
+return(result)
+}
+.merge.wimp(su.wimp,wimp)
+source("~/Asanfe/Ph D/GridFCM/GridFCM (0.3.0)/R/HideFunctions.R")
+.merge.wimp <- function(wimp1,wimp2){
+df1 <- data.frame(wimp1$constructs$constructs, wimp1$constructs$left.poles, wimp1$constructs$right.poles, length(wimp1$constructs$constructs))
+names(df1) <- c("Construct", "lpoles", "rpoles", "index1")
+df2 <- data.frame(wimp2$constructs$constructs, wimp2$constructs$left.poles, wimp2$constructs$right.poles, length(wimp2$constructs$constructs))
+names(df2) <- c("Construct", "lpoles", "rpoles", "index2")
+result <- merge(df1,df2, by=1:3, sort=TRUE)
+return(result)
+}
+.merge.wimp(su.wimp,wimp)
+.merge.wimp <- function(wimp1,wimp2){
+df1 <- data.frame(wimp1$constructs$constructs, wimp1$constructs$left.poles, wimp1$constructs$right.poles, 1:length(wimp1$constructs$constructs))
+names(df1) <- c("Construct", "lpoles", "rpoles", "index1")
+df2 <- data.frame(wimp2$constructs$constructs, wimp2$constructs$left.poles, wimp2$constructs$right.poles, 1:length(wimp2$constructs$constructs))
+names(df2) <- c("Construct", "lpoles", "rpoles", "index2")
+result <- merge(df1,df2, by=1:3, sort=TRUE)
+return(result)
+}
+.merge.wimp(su.wimp,wimp)
+.merge.wimp <- function(wimp1,wimp2){
+df1 <- data.frame(wimp1$constructs$constructs, wimp1$constructs$left.poles, wimp1$constructs$right.poles, 1:length(wimp1$constructs$constructs))
+names(df1) <- c("Construct", "lpoles", "rpoles", "index1")
+df2 <- data.frame(wimp2$constructs$constructs, wimp2$constructs$left.poles, wimp2$constructs$right.poles, 1:length(wimp2$constructs$constructs))
+names(df2) <- c("Construct", "lpoles", "rpoles", "index2")
+result <- merge(df1,df2, by=1:3, sort=FALSE)
+return(result)
+}
+.merge.wimp(su.wimp,wimp)
+compatibility.merge.wimp(su.wimp,wimp)
+.compatibility.merge.wimp(su.wimp,wimp)
+library(GridFCM)
+library(GridFCM)
+monitoring_plot(wimp,su.wimp)
+monitoring_plot(su.wimp,su.wimp)
+wimp
+.compatibility.merge.wimp(su.wimp,wimp)
+monitoring_plot(wimp,su.wimp)
+library(GridFCM)
+monitoring_plot(wimp,su.wimp)
+library(GridFCM)
+monitoring_plot(wimp,su.wimp)
+monitoring_plot(wimp,su.wimp)
+library(GridFCM)
+.merge.wimp <- function(wimp1,wimp2){
+df1 <- data.frame(wimp1$constructs$constructs, wimp1$constructs$left.poles, wimp1$constructs$right.poles, 1:length(wimp1$constructs$constructs))
+names(df1) <- c("Construct", "lpoles", "rpoles", "index1")
+df2 <- data.frame(wimp2$constructs$constructs, wimp2$constructs$left.poles, wimp2$constructs$right.poles, 1:length(wimp2$constructs$constructs))
+names(df2) <- c("Construct", "lpoles", "rpoles", "index2")
+result <- merge(df1,df2, by=1:3, sort=FALSE)
+return(result)
+}
+.merge.wimp(su.wimp,wimp)
+wimp <- importwimp(file.choose())
+.merge.wimp(su.wimp,wimp)
+monitoring_plot(wimp,su.wimp)
+wimp
+wimp <- importwimp(file.choose())
+monitoring_plot(wimp,su.wimp)
+.merge.wimp(su.wimp,wimp)
+monitoring_plot(wimp,su.wimp)
+.merge.wimp <- function(wimp1,wimp2){
+df1 <- data.frame(wimp1$constructs$constructs, wimp1$constructs$left.poles, wimp1$constructs$right.poles, 1:length(wimp1$constructs$constructs))
+names(df1) <- c("Construct", "lpoles", "rpoles", "index1")
+df2 <- data.frame(wimp2$constructs$constructs, wimp2$constructs$left.poles, wimp2$constructs$right.poles, 1:length(wimp2$constructs$constructs))
+names(df2) <- c("Construct", "lpoles", "rpoles", "index2")
+result <- merge(df1,df2, by=1:3, sort=FALSE)
+return(result)
+}
+.merge.wimp(su.wimp,wimp)
+.compatibility.merge.wimp(su.wimp,wimp)
+.compatibility.merge.wimp(wimp,su.wimp)
+monitoring_plot(wimp,su.wimp)
+monitoring_plot(wimp,su.wimp)
+monitoring_plot(wimp,su.wimp)
+library(GridFCM)
+monitoring_plot(wimp,example.wimp)
+library(GridFCM)
+monitoring_plot(wimp,example.wimp)
+library(GridFCM)
+library(GridFCM)
+library(GridFCM)
+monitoring_plot(wimp,example.wimp)
+monitoring_plot(wimp,su.wimp)
+monitoring_plot(su.wimp)
+adjustment_plot(su.wimp)
+library(GridFCM)
+scenariomatrix(su.wimp, c(0,0,-1,rep(0,18)))
+scn <- scenariomatrix(su.wimp, c(0,0,-1,rep(0,18)))
+pcsd(scn)
+wimp
+usethis::use_testthat()
+library(GridFCM)
+?importExcel
+library(GridFCM)
+?importwimp
+library(GridFCM)
+Rprof()
+wimp_biplot(su.wimp)
+self_index(su.wimp)
+?indexDilemma
+library(GridFCM)
+?if_index
+library(GridFCM)
+?if_index
+library(GridFCM)
+?if_index
+?if_index
+?if_index
+?if_index
+library(GridFCM)
+?if_index
+if_plot(su.wimp)
+library(GridFCM)
+library(GridFCM)
+library(GridFCM)
+library(GridFCM)
+library(GridFCM)
+?cor
+library(GridFCM)
+self_index(su.wimp)
+self_index(su.wimp)
+library(GridFCM)
+library(GridFCM)
+self_index(su.wimp)
+self_index(su.wimp, method="spearman")
+self_index(su.wimp, method="spearman", rc=FALSE)
+self_index(su.wimp)
+?self_index
+library(GridFCM)
+?self_index
+library(GridFCM)
+library(GridFCM)
+library(GridFCM)
+?self_index
+digraph(example.wimp,vertex.vector = rep(100,5))
+library(GridFCM)
+digraph(example.wimp,vertex.vector = rep(100,5))
+library(GridFCM)
+digraph(example.wimp,vertex.vector = rep(100,5))
+digraph(example.wimp,vertex.vector = rep(100,5))
+library(GridFCM)
+example.wimp
+library(GridFCM)
+auc_index(scn)
+pcsd(scn)
+library(GridFCM)
+auc_index(scn)
+library(GridFCM)
+auc_index(scn)
+library(GridFCM)
+auc_index(scn)
+scn
+View(scn)
+View(scn)
+library(GridFCM)
+auc_index(scn)
+library(GridFCM)
+auc_index(scn)
+library(GridFCM)
+library(GridFCM)
+auc_index(scn)
+auc_index(scn, std = FALSE)
+library(GridFCM)
+stability_index(scn, std = FALSE)
+stability_index(scn)
+library(GridFCM)
+stability_index(scn)
+stability_index(scn)
+library(GridFCM)
+stability_index(scn)
+library(GridFCM)
+pcsd_summary(scn)
+scn
+mean(scn)
+colMeans(scn)
+scn
+colMeans(scn$values)
+library(GridFCM)
+pcsd_summary(scn)
+?indexSelfConstruction
+?elementCor
+library(GridFCM)
+self_index(su.wimp)
+library(GridFCM)
+self_index(su.wimp)
+library(GridFCM)
+library(GridFCM)
+library(GridFCM)
+library(GridFCM)
+idealdigraph(su.wimp, inc=TRUE )
+?simdigraph
+library(GridFCM)
+?digraph
+webshot::install_phantomjs()
+digraph(su.wimp)
+library(GridFCM)
+library(GridFCM)
+library(GridFCM)
+library(GridFCM)
+eigen_index(wimp)
+ph_index(su.wimp)
+ph_index(su.wimp, std= "vertices")
+ph_plot(wimp)
+ph_plot(su.wimp)
+ph_plot(su.wimp)
+IF_plot(su.wimp)
+if_plot(su.wimp)
+ph_plot(example.wimp)
+scenariomatrix(example.wimp, rep(1,5))
+scnscenariomatrix(example.wimp, rep(1,5))
+scn <-
+scnscenariomatrix(example.wimp, rep(1,5))
+scn <- scenariomatrix(example.wimp, rep(1,5))
+pcsd(scn)
+library(GridFCM)
+monitoring_plot(wimp,wimp)
+self_index(su.wimp)
+adjustment_plot(su.wimp)
+sqm_index(example.wimp)
+sqm_barchart(su.wimp)
+sqm_barchart(example.wimp)
+sqm_index(example.wimp)
+sqm_index(example.wimp)
+sqm_index(example.wimp)
+sqm_barchart(example.wimp)
+source("~/Asanfe/Ph D/GridFCM/GridFCM (0.3.0)/R/ComplexityFunctions.R")
+sqm_barchart(example.wimp)
+ph_plot(example.wimp)
+ph_plot(su.wimp)
+sqm_index(su.wimp)
+getwd()
+digraph(su.wimp)
+digraph(su.wimp)
+digraph(su.wimp)
+digraph(su.wimp)
+source("~/Asanfe/Ph D/GridFCM/GridFCM (0.3.0)/R/GraphFunctions.R")
+digraph(su.wimp)
+digraph(su.wimp)
+digraph(su.wimp)
+digraph(su.wimp)
+digraph(su.wimp)
+digraph(su.wimp)
+digraph(su.wimp)
+digraph(su.wimp)

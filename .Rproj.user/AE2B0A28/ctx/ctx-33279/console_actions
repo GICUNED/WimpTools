@@ -1,0 +1,22 @@
+{
+    "type": [
+        2,
+        2,
+        0,
+        1,
+        2,
+        3,
+        3,
+        2
+    ],
+    "data": [
+        "\nR version 4.2.2 Patched (2022-11-10 r83330) -- \"Innocent and Trusting\"\nCopyright (C) 2022 The R Foundation for Statistical Computing\nPlatform: x86_64-pc-linux-gnu (64-bit)\n\nR es un software libre y viene sin GARANTIA ALGUNA.\nUsted puede redistribuirlo bajo ciertas circunstancias.\nEscriba 'license()' o 'licence()' para detalles de distribucion.\n\nR es un proyecto colaborativo con muchos contribuyentes.\nEscriba 'contributors()' para obtener más información y\n'citation()' para saber cómo citar R o paquetes ",
+        "de R en publicaciones.\n\nEscriba 'demo()' para demostraciones, 'help()' para el sistema on-line de ayuda,\no 'help.start()' para abrir el sistema de ayuda HTML con su navegador.\nEscriba 'q()' para salir de R.\n\n[Workspace loaded from ~/Asanfe/Ph D/GridFCM/GridFCM (0.3.0)/.RData]\n\n",
+        "> ",
+        "source(\"~/Asanfe/Ph D/GridFCM/GridFCM (0.3.0)/R/HideFunctions.R\")",
+        "\nRestarting R session...\n\n",
+        "Loading required package: OpenRepGrid\n------------------------------------------------\n OpenRepGrid v0.1.15\n Tools for the analysis of repertory grid data\n See: https://docs.openrepgrid.org/\n------------------------------------------------\nLoading required package: plotly\nLoading required package: ggplot2\n\nAttaching package: ‘plotly’\n\nThe following object is masked from ‘package:ggplot2’:\n\n    last_plot\n\nThe following object is masked from ‘package:stats’:\n\n    filter\n\nThe following object is ma",
+        "sked from ‘package:graphics’:\n\n    layout\n\n",
+        "\nRestarting R session...\n\n"
+    ]
+}

@@ -1,0 +1,16 @@
+{
+    "type": [
+        2,
+        2,
+        3,
+        3,
+        2
+    ],
+    "data": [
+        "\nR version 4.3.1 (2023-06-16) -- \"Beagle Scouts\"\nCopyright (C) 2023 The R Foundation for Statistical Computing\nPlatform: x86_64-pc-linux-gnu (64-bit)\n\nR es un software libre y viene sin GARANTIA ALGUNA.\nUsted puede redistribuirlo bajo ciertas circunstancias.\nEscriba 'license()' o 'licence()' para detalles de distribucion.\n\nR es un proyecto colaborativo con muchos contribuyentes.\nEscriba 'contributors()' para obtener más información y\n'citation()' para saber cómo citar R o paquetes de R en publicaciones.\n\n",
+        "Escriba 'demo()' para demostraciones, 'help()' para el sistema on-line de ayuda,\no 'help.start()' para abrir el sistema de ayuda HTML con su navegador.\nEscriba 'q()' para salir de R.\n\n[Workspace loaded from ~/Asanfe/Ph D/GridFCM/GridFCM (0.3.0)/.RData]\n\n",
+        "Attempting to load the environment ‘package:GridFCM’\n",
+        "------------------------------------------------\n OpenRepGrid Version 0.1.14\n Tools for the analysis of repertory grid data\n For an introduction visit: www.openrepgrid.org\n CAUTION: The package is in alpha phase.\n          Design changes may still occur.\n------------------------------------------------\n",
+        "\nRestarting R session...\n\n"
+    ]
+}

@@ -1,0 +1,512 @@
+yaxis = list(visible = FALSE)
+)
+# Cargar librerías
+library(plotly)
+# Definir valores para alpha y beta sin restricciones
+alpha_values <- seq(0, 1, by = 0.1)
+beta_values <- seq(0, 1, by = 0.1)
+# Inicializar x e y (Ejemplo de valores)
+x <- su.wimp$self$standarized
+y <- su.wimp$ideal$standarized
+# Calcular sim_index para cada combinación de alpha y beta
+sim_matrix <- outer(alpha_values, beta_values, Vectorize(function(alpha, beta) {
+sim_index(x, y, alpha = alpha, beta = beta)
+}))
+# Crear el mapa de calor
+plot_ly(
+x = alpha_values,
+y = beta_values,
+z = sim_matrix,
+type = "heatmap",
+colorscale = list(c(0, "#F52722"), c(0.5, "white"), c(1, "#A5D610")),
+zmin = 0,  # Fija el límite inferior
+zmax = 1   # Fija el límite superior
+) %>%
+layout(
+title = "Mapa de calor de Sim Index en función de Alpha y Beta",
+xaxis = list(title = "Alpha"),
+yaxis = list(title = "Beta")
+)
+# Cargar librerías
+library(plotly)
+# Definir valores para alpha y beta sin restricciones
+alpha_values <- seq(0, 1, by = 0.1)
+beta_values <- seq(0, 1, by = 0.1)
+# Inicializar x e y (Ejemplo de valores)
+x <- example.wimp$self$standarized
+y <- example.wimp$ideal$standarized
+# Calcular sim_index para cada combinación de alpha y beta
+sim_matrix <- outer(alpha_values, beta_values, Vectorize(function(alpha, beta) {
+sim_index(x, y, alpha = alpha, beta = beta)
+}))
+# Crear el mapa de calor
+plot_ly(
+x = alpha_values,
+y = beta_values,
+z = sim_matrix,
+type = "heatmap",
+colorscale = list(c(0, "#F52722"), c(0.5, "white"), c(1, "#A5D610")),
+zmin = 0,  # Fija el límite inferior
+zmax = 1   # Fija el límite superior
+) %>%
+layout(
+title = "Mapa de calor de Sim Index en función de Alpha y Beta",
+xaxis = list(title = "Alpha"),
+yaxis = list(title = "Beta")
+)
+# Cargar librerías
+library(plotly)
+# Definir valores para alpha y beta sin restricciones
+alpha_values <- seq(0, 1, by = 0.01)
+beta_values <- seq(0, 1, by = 0.01)
+# Inicializar x e y (Ejemplo de valores)
+x <- example.wimp$self$standarized
+y <- example.wimp$ideal$standarized
+# Calcular sim_index para cada combinación de alpha y beta
+sim_matrix <- outer(alpha_values, beta_values, Vectorize(function(alpha, beta) {
+sim_index(x, y, alpha = alpha, beta = beta)
+}))
+# Crear el mapa de calor
+plot_ly(
+x = alpha_values,
+y = beta_values,
+z = sim_matrix,
+type = "heatmap",
+colorscale = list(c(0, "#F52722"), c(0.5, "white"), c(1, "#A5D610")),
+zmin = 0,  # Fija el límite inferior
+zmax = 1   # Fija el límite superior
+) %>%
+layout(
+title = "Mapa de calor de Sim Index en función de Alpha y Beta",
+xaxis = list(title = "Alpha"),
+yaxis = list(title = "Beta")
+)
+# Cargar librerías
+library(plotly)
+# Definir valores para alpha y beta sin restricciones
+alpha_values <- seq(0, 1, by = 0.01)
+beta_values <- seq(0, 1, by = 0.01)
+# Inicializar x e y (Ejemplo de valores)
+x <- su.wimp$self$standarized
+y <- su.wimp$ideal$standarized
+# Calcular sim_index para cada combinación de alpha y beta
+sim_matrix <- outer(alpha_values, beta_values, Vectorize(function(alpha, beta) {
+sim_index(x, y, alpha = alpha, beta = beta)
+}))
+# Crear el mapa de calor
+plot_ly(
+x = alpha_values,
+y = beta_values,
+z = sim_matrix,
+type = "heatmap",
+colorscale = list(c(0, "#F52722"), c(0.5, "white"), c(1, "#A5D610")),
+zmin = 0,  # Fija el límite inferior
+zmax = 1   # Fija el límite superior
+) %>%
+layout(
+title = "Mapa de calor de Sim Index en función de Alpha y Beta",
+xaxis = list(title = "Alpha"),
+yaxis = list(title = "Beta")
+)
+# Cargar librerías
+library(plotly)
+# Definir valores para alpha y beta sin restricciones
+alpha_values <- seq(0, 1, by = 0.01)
+beta_values <- seq(0, 1, by = 0.01)
+# Inicializar x e y (Ejemplo de valores)
+x <- su.wimp$self$standarized
+y <- su.wimp$ideal$standarized
+# Calcular sim_index para cada combinación de alpha y beta
+sim_matrix <- outer(alpha_values, beta_values, Vectorize(function(alpha, beta) {
+sim_index(x, y, alpha = alpha, beta = beta)
+}))
+# Crear el mapa de calor y añadir marcador en (0.5, 0.5)
+plot_ly(
+x = alpha_values,
+y = beta_values,
+z = sim_matrix,
+type = "heatmap",
+colorscale = list(c(0, "#F52722"), c(0.5, "white"), c(1, "#A5D610")),
+zmin = 0,  # Fija el límite inferior
+zmax = 1   # Fija el límite superior
+) %>%
+add_trace(
+x = c(0.5), y = c(0.5),
+mode = "markers",
+marker = list(size = 10, color = "black", symbol = "cross"),
+showlegend = FALSE
+) %>%
+layout(
+title = "Mapa de calor de Sim Index en función de Alpha y Beta",
+xaxis = list(title = "Alpha"),
+yaxis = list(title = "Beta")
+)
+# Cargar librerías
+library(plotly)
+# Definir valores para alpha y beta sin restricciones
+alpha_values <- seq(0, 1, by = 0.01)
+beta_values <- seq(0, 1, by = 0.01)
+# Inicializar x e y (Ejemplo de valores)
+x <- su.wimp$self$standarized
+y <- su.wimp$ideal$standarized
+# Calcular sim_index para cada combinación de alpha y beta
+sim_matrix <- outer(alpha_values, beta_values, Vectorize(function(alpha, beta) {
+sim_index(x, y, alpha = alpha, beta = beta)
+}))
+# Crear el mapa de calor y añadir marcador en (0.5, 0.5)
+plot_ly(
+x = alpha_values,
+y = beta_values,
+z = sim_matrix,
+type = "heatmap",
+colorscale = list(c(0, "#F52722"), c(0.5, "white"), c(1, "#A5D610")),
+zmin = 0,  # Fija el límite inferior
+zmax = 1   # Fija el límite superior
+) %>%
+add_markers(
+x = c(0.5), y = c(0.5),
+marker = list(size = 10, color = "black", symbol = "cross"),
+showlegend = FALSE
+) %>%
+layout(
+title = "Mapa de calor de Sim Index en función de Alpha y Beta",
+xaxis = list(title = "Alpha"),
+yaxis = list(title = "Beta")
+)
+# Cargar librerías
+library(plotly)
+# Definir valores para alpha y beta sin restricciones
+alpha_values <- seq(0, 1, by = 0.01)
+beta_values <- seq(0, 1, by = 0.01)
+# Inicializar x e y (Ejemplo de valores)
+x <- su.wimp$self$standarized
+y <- su.wimp$ideal$standarized
+# Calcular sim_index para cada combinación de alpha y beta
+sim_matrix <- outer(alpha_values, beta_values, Vectorize(function(alpha, beta) {
+sim_index(x, y, alpha = alpha, beta = beta)
+}))
+# Crear el mapa de calor
+heatmap_plot <- plot_ly(
+x = alpha_values,
+y = beta_values,
+z = sim_matrix,
+type = "heatmap",
+colorscale = list(c(0, "#F52722"), c(0.5, "white"), c(1, "#A5D610")),
+zmin = 0,  # Fija el límite inferior
+zmax = 1   # Fija el límite superior
+)
+# Agregar el marcador en (0.5, 0.5)
+heatmap_plot <- heatmap_plot %>%
+add_trace(
+type = "scatter",
+mode = "markers",
+x = c(0.5),
+y = c(0.5),
+marker = list(size = 10, color = "black", symbol = "cross"),
+showlegend = FALSE
+) %>%
+layout(
+title = "Mapa de calor de Sim Index en función de Alpha y Beta",
+xaxis = list(title = "Alpha"),
+yaxis = list(title = "Beta")
+)
+# Cargar librerías
+library(plotly)
+# Definir valores para alpha y beta sin restricciones
+alpha_values <- seq(0, 1, by = 0.01)
+beta_values <- seq(0, 1, by = 0.01)
+# Inicializar x e y (Ejemplo de valores)
+x <- su.wimp$self$standarized
+y <- su.wimp$ideal$standarized
+# Calcular sim_index para cada combinación de alpha y beta
+sim_matrix <- outer(alpha_values, beta_values, Vectorize(function(alpha, beta) {
+sim_index(x, y, alpha = alpha, beta = beta)
+}))
+# Crear el mapa de calor
+heatmap_plot <- plot_ly(
+x = alpha_values,
+y = beta_values,
+z = sim_matrix,
+type = "heatmap",
+colorscale = list(c(0, "#F52722"), c(0.5, "white"), c(1, "#A5D610")),
+zmin = 0,  # Fija el límite inferior
+zmax = 1   # Fija el límite superior
+)
+# Agregar el marcador en (0.5, 0.5)
+heatmap_plot <- heatmap_plot %>%
+add_trace(
+type = "scatter",
+mode = "markers",
+x = c(0.5),
+y = c(0.5),
+marker = list(size = 10, color = "black", symbol = "cross"),
+showlegend = FALSE
+) %>%
+layout(
+title = "Mapa de calor de Sim Index en función de Alpha y Beta",
+xaxis = list(title = "Alpha"),
+yaxis = list(title = "Beta")
+)
+# Cargar librerías
+library(plotly)
+# Definir valores para alpha y beta sin restricciones
+alpha_values <- seq(0, 1, by = 0.01)
+beta_values <- seq(0, 1, by = 0.01)
+# Inicializar x e y (Ejemplo de valores)
+x <- su.wimp$self$standarized
+y <- su.wimp$ideal$standarized
+# Calcular sim_index para cada combinación de alpha y beta
+sim_matrix <- outer(alpha_values, beta_values, Vectorize(function(alpha, beta) {
+sim_index(x, y, alpha = alpha, beta = beta)
+}))
+# Crear el mapa de calor
+heatmap_plot <- plot_ly(
+x = alpha_values,
+y = beta_values,
+z = sim_matrix,
+type = "heatmap",
+colorscale = list(c(0, "#F52722"), c(0.5, "white"), c(1, "#A5D610")),
+zmin = 0,  # Fija el límite inferior
+zmax = 1   # Fija el límite superior
+) %>%
+layout(
+title = "Mapa de calor de Sim Index en función de Alpha y Beta",
+xaxis = list(title = "Alpha"),
+yaxis = list(title = "Beta"),
+annotations = list(
+list(
+x = 0.5,
+y = 0.5,
+xref = "x",
+yref = "y",
+text = "✚",
+showarrow = FALSE,
+font = list(color = "black", size = 20)
+)
+)
+)
+heatmap_plot
+# Cargar librerías
+library(plotly)
+# Definir valores para alpha y beta sin restricciones
+alpha_values <- seq(0, 1, by = 0.01)
+beta_values <- seq(0, 1, by = 0.01)
+# Inicializar x e y (Ejemplo de valores)
+x <- su.wimp$self$standarized
+y <- su.wimp$ideal$standarized
+# Calcular sim_index para cada combinación de alpha y beta
+sim_matrix <- outer(alpha_values, beta_values, Vectorize(function(alpha, beta) {
+sim_index(x, y, alpha = alpha, beta = beta)
+}))
+# Crear el mapa de calor
+heatmap_plot <- plot_ly(
+x = alpha_values,
+y = beta_values,
+z = sim_matrix,
+type = "heatmap",
+colorscale = list(c(0, "#F52722"), c(0.5, "white"), c(1, "#A5D610")),
+zmin = 0,  # Fija el límite inferior
+zmax = 1   # Fija el límite superior
+) %>%
+layout(
+title = "Mapa de calor de Sim Index en función de Alpha y Beta",
+xaxis = list(title = "Attention to Self discrepancies"),
+yaxis = list(title = "Attention to Ideal discrepancies"),
+annotations = list(
+list(
+x = 0.5,
+y = 0.5,
+xref = "x",
+yref = "y",
+text = "✚",
+showarrow = FALSE,
+font = list(color = "black", size = 20)
+)
+)
+)
+heatmap_plot
+# Cargar librerías
+library(plotly)
+# Definir valores para alpha y beta sin restricciones
+alpha_values <- seq(0, 1, by = 0.01)
+beta_values <- seq(0, 1, by = 0.01)
+# Inicializar x e y (Ejemplo de valores)
+x <- su.wimp$self$standarized
+y <- su.wimp$ideal$standarized
+# Calcular sim_index para cada combinación de alpha y beta
+sim_matrix <- outer(alpha_values, beta_values, Vectorize(function(alpha, beta) {
+sim_index(x, y, alpha = alpha, beta = beta)
+}))
+# Crear el mapa de calor
+heatmap_plot <- plot_ly(
+x = alpha_values,
+y = beta_values,
+z = sim_matrix,
+type = "heatmap",
+colorscale = list(c(0, "#F52722"), c(0.5, "white"), c(1, "#A5D610")),
+zmin = 0,  # Fija el límite inferior
+zmax = 1   # Fija el límite superior
+) %>%
+layout(
+title = "Mapa de calor de Sim Index en función de Alpha y Beta",
+xaxis = list(title = "Alpha"),
+yaxis = list(title = "Beta"),
+plot_bgcolor = "white",      # Fondo blanco para el gráfico
+paper_bgcolor = "black",     # Fondo negro alrededor del gráfico
+margin = list(l = 10, r = 10, t = 40, b = 40),  # Márgenes para crear un borde
+annotations = list(
+list(
+x = 0.5,
+y = 0.5,
+xref = "x",
+yref = "y",
+text = "✚",
+showarrow = FALSE,
+font = list(color = "black", size = 20)
+)
+)
+)
+heatmap_plot
+# Cargar librerías
+library(plotly)
+# Definir valores para alpha y beta sin restricciones
+alpha_values <- seq(0, 1, by = 0.01)
+beta_values <- seq(0, 1, by = 0.01)
+# Inicializar x e y (Ejemplo de valores)
+x <- su.wimp$self$standarized
+y <- su.wimp$ideal$standarized
+# Calcular sim_index para cada combinación de alpha y beta
+sim_matrix <- outer(alpha_values, beta_values, Vectorize(function(alpha, beta) {
+sim_index(x, y, alpha = alpha, beta = beta)
+}))
+# Crear el mapa de calor
+heatmap_plot <- plot_ly(
+x = alpha_values,
+y = beta_values,
+z = sim_matrix,
+type = "heatmap",
+colorscale = list(c(0, "#F52722"), c(0.5, "white"), c(1, "#A5D610")),
+zmin = 0,  # Fija el límite inferior
+zmax = 1   # Fija el límite superior
+) %>%
+layout(
+title = "Mapa de calor de Sim Index en función de Alpha y Beta",
+xaxis = list(title = "Alpha"),
+yaxis = list(title = "Beta"),
+shapes = list(
+list(
+type = "rect",
+x0 = min(alpha_values),
+x1 = max(alpha_values),
+y0 = min(beta_values),
+y1 = max(beta_values),
+line = list(color = "black", width = 2)
+)
+),
+annotations = list(
+list(
+x = 0.5,
+y = 0.5,
+xref = "x",
+yref = "y",
+text = "✚",
+showarrow = FALSE,
+font = list(color = "black", size = 20)
+)
+)
+)
+heatmap_plot
+adj_heatmap(wimp)
+adj_heatmap(su.wimp)
+adj_heatmap(su.wimp)
+adj_heatmap(su.wimp)
+adj_heatmap(su.wimp)
+adj_heatmap(wimp)
+adj_heatmap(example.wimp)
+source("~/Asanfe/Ph D/GridFCM/GridFCM (0.3.0)/R/AdjustmentFunctions.R")
+adj_heatmap(example.wimp)
+adj_heatmap(example.wimp)
+adj_heatmap(example.wimp)
+adj_heatmap(example.wimp)
+adj_heatmap(example.wimp)
+adj_heatmap(example.wimp)
+adj_heatmap(example.wimp)
+adj_heatmap(su.wimp)
+adj_heatmap(su.wimp)
+adj_heatmap(su.wimp)
+adj_heatmap(example.wimp)
+adj_heatmap(example.wimp)
+adj_heatmap(su.wimp)
+adj_heatmap(su.wimp)
+adj_heatmap(su.wimp)
+adj_heatmap(su.wimp)
+adj_heatmap(su.wimp)
+adj_heatmap(su.wimp)
+adj_heatmap(su.wimp)
+adj_heatmap(su.wimp)
+wimp <- importwimp(file.choose())
+adj_heatmap(wimp)
+adj_heatmap(wimp)
+adj_heatmap(wimp)
+adj_heatmap(su.wimp)
+adj_heatmap(example.wimp)
+adj_heatmap(wimp)
+adj_heatmap(su.wimp)
+wimp2 <- importwimp(file.choose())
+adj_heatmap(wimp2)
+adj_heatmap(su.wimp)
+adj_heatmap(example.wimp)
+adj_heatmap(su.wimp)
+adj_heatmap(wimp)
+adj_heatmap(wimp)
+adj_heatmap(su.wimp)
+adj_heatmap(example.wimp)
+adj_heatmap(su.wimp)
+View(wimp2)
+wimp <- importwimp(file.choose())
+View(wimp)
+adj_heatmap(wimp)
+self_index(wimp)
+wimp2 <- importwimp(file.choose())
+adj_heatmap(wimp2)
+digraph(wimp2)
+wimp2 <- importwimp(file.choose())
+wimp3 <- importwimp(file.choose())
+adj_heatmap(wimp3)
+digraph(wimp3)
+rm(wimp3)
+wimp3 <- importwimp(file.choose())
+digraph(wimp3)
+adj_heatmap(wimp3)
+adj_heatmap(wimp2)
+adj_heatmap(wimp1)
+adj_heatmap(wimp)
+adj_heatmap(wimp3)
+adj_heatmap(wimp1)
+adj_heatmap(wimp)
+adj_heatmap(wimp2)
+adj_heatmap(wimp3)
+self_index(su.wimp)
+digraph(wimp)
+self_index(su.wimp)
+adj_heatmap(su.wimp)
+adj_heatmap(wimp2)
+adj_heatmap(su.wimp)
+adj_heatmap(wimp2)
+adj_heatmap(wimp)
+adj_heatmap(wimp3)
+adj_heatmap(su.wimp)
+adj_heatmap(example.wimp)
+adj_heatmap(su.wimp)
+adj_heatmap(example.wimp)
+monitoring_heatmap(su.wimp,wimp)
+monitoring_heatmap(su.wimp,wimp)
+monitoring_heatmap(su.wimp,wimp)
+monitoring_heatmap(su.wimp,wimp)
+monitoring_heatmap(su.wimp,wimp)
+monitoring_heatmap(su.wimp,wimp)
+monitoring_heatmap(su.wimp,wimp)
+monitoring_heatmap(su.wimp,wimp)
+monitoring_heatmap(su.wimp,wimp)
+monitoring_heatmap(su.wimp,wimp)
+monitoring_heatmap(su.wimp,wimp)
