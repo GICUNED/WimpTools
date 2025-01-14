@@ -18,8 +18,7 @@ Interactive plot created with plotly.
 }
 \description{
 Interactive line plot of personal constructs system dinamics.
-Show \code{\link{scenariomatrix}} values expressed in terms of distance to
-Ideal-Self for each personal construct across the mathematical iterations.
+Show \code{\link{scenariomatrix}} values across the mathematical iterations.
 }
 \examples{
 

@@ -139,8 +139,7 @@ scenariomatrix <- function(wimp, act.vector = NA, infer = "self dynamics",
 #' Personal Constructs System Dynamics plot -- pcsd()
 #'
 #' @description Interactive line plot of personal constructs system dinamics.
-#' Show \code{\link{scenariomatrix}} values expressed in terms of distance to
-#' Ideal-Self for each personal construct across the mathematical iterations.
+#' Show \code{\link{scenariomatrix}} values across the mathematical iterations.
 #'
 #' @param scn A "scn" S3 class object, the result of the \code{\link{scenariomatrix}} function.
 #'            This object contains the scenario matrix and relevant metadata.
