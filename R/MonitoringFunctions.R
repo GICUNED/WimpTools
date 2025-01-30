@@ -1,3 +1,5 @@
+utils::globalVariables("h")
+
 # Monitoring Adjustment Radar Plot ---------------------------------------------------
 
 #' Monitoring Self Adjustment -- monitoring_adj()
@@ -107,7 +109,7 @@ monitoring_adj <- function(wimp.t0, wimp.t1, legend = TRUE){
       line = list(width = 1, color = "#FA9D13"),
       text = ~paste('<B>',construct.t0,'</B>', '\nSelf:', round(self.t0, 2), '\nIdeal:', round(ideal.t0,2)),
       hoverinfo = 'text',
-      hoverlabel=list(bgcolor = colors)
+      hoverlabel=list(bgcolor = colors.t0)
     )
 
   fig <- fig %>%
@@ -120,7 +122,7 @@ monitoring_adj <- function(wimp.t0, wimp.t1, legend = TRUE){
       line = list(width = 1, color = "#AB81E5"),
       text = ~paste('<B>',construct.t1,'</B>', '\nSelf:', round(self.t1, 2), '\nIdeal:', round(ideal.t1,2)),
       hoverinfo = 'text',
-      hoverlabel=list(bgcolor = colors)
+      hoverlabel=list(bgcolor = colors.t1)
     )
   fig <- fig %>%
     layout(

@@ -1,14 +1,13 @@
 Package: WimpTools
 Type: Package
-Title: Tools for the analysis of Weigthed Implication Grid
+Title: Tools for the Analysis of Weighted Implication Grid
 Version: 1.0.0
-Author: person("Alejandro", "Sanfeliciano", email = "Sanfeliciano.Alejandro@gmail.com",
-                  role = c("aut", "cre")),
-        person("Carlos", "Hurtado",
-                  role = c("ctb"))
-Maintainer: Alejandro Sanfeliciano <Sanfeliciano.Alejandro@gmail.com>
-Description: WimpTools is an R package that allows us to analyse Weigthed Implication Grids. With this software you will be able to 
-  analyse the structure and dynamics of the personal meaning system of individuals.
+Authors@R: person(given = "Alejandro",
+                      family = "Sanfeliciano",
+                      role = c("aut", "cre"),
+                      email = "sanfeliciano.alejandro@gmail.com")
+Maintainer: Alejandro Sanfeliciano <sanfeliciano.alejandro@gmail.com>
+Description: Implements a graph-theoretical approach to model psychological change based on the Personal Construct Psychology (Kelly,1955). The method is derived from the Implication Grid proposed by Hinkle (1965) and extends traditional repertory grids by analyzing the hierarchical and structural relationships between personal constructs. This approach provides a quantitative framework to examine cognitive organization and change. 
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true

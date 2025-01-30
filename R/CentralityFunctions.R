@@ -160,7 +160,7 @@ close_index <- function(wimp, norm = TRUE){
 #'
 #' @param wimp  Subject's Weigthed ImpGrid. It must be a "wimp" S3 object
 #'        imported by the \code{\link{importwimp}} function.
-#' @param norm If TRUE, the values will be standardized. Default is TRUE.
+#' @param norm If TRUE, the values will be normalized. Default is TRUE.
 #'
 #' @author Alejandro Sanfeliciano
 #'

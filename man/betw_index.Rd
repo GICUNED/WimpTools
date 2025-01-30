@@ -10,7 +10,7 @@ betw_index(wimp, norm = TRUE)
 \item{wimp}{Subject's Weigthed ImpGrid. It must be a "wimp" S3 object
 imported by the \code{\link{importwimp}} function.}
 
-\item{norm}{If TRUE, the values will be standardized. Default is TRUE.}
+\item{norm}{If TRUE, the values will be normalized. Default is TRUE.}
 }
 \value{
 Returns a vector with the betweeness index for each of the
