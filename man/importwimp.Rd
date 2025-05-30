@@ -9,7 +9,7 @@ importwimp(path, sheet = 1)
 \arguments{
 \item{path}{Path to the excel file on your computer. The file suffix has to be .xlsx.}
 
-\item{sheet}{Number of the Excel sheet that contains the WimpGrid data.}
+\item{sheet}{Number or name of the Excel sheet that contains the WimpGrid data.}
 }
 \value{
 A wimp S3 object.
@@ -17,4 +17,15 @@ A wimp S3 object.
 \description{
 Function to transform the data of a WimpGrid contained in an
 Excel file into an S3 object of class wimp.
+}
+\examples{
+# Load sample Excel file
+file <- system.file("extdata/example.wimp.xlsx", package = "WimpTools")
+wimp <- importwimp(file)
+
+\dontrun{
+# Show Excel file
+browseURL(file) # may not work on all systems
+}
+
 }
