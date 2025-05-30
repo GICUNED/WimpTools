@@ -8,14 +8,22 @@
 #' Excel file into an S3 object of class wimp.
 #'
 #' @param path Path to the excel file on your computer. The file suffix has to be .xlsx.
-#' @param sheet Number of the Excel sheet that contains the WimpGrid data.
+#' @param sheet Number or name of the Excel sheet that contains the WimpGrid data.
 #'
 #' @return A wimp S3 object.
 #'
 #' @export
-#'
 #' @import readxl
-
+#' @examples
+#' # Load sample Excel file
+#' file <- system.file("extdata/example.wimp.xlsx", package = "WimpTools")
+#' wimp <- importwimp(file)
+#'
+#' \dontrun{
+#' # Show Excel file
+#' browseURL(file) # may not work on all systems
+#' }
+#'
 
 importwimp <- function(path, sheet = 1){
 
