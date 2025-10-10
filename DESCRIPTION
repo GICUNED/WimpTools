@@ -23,5 +23,7 @@ Imports:
     MESS (>= 0.5.9),
     readxl (>= 1.4.3),
     useful (>= 1.2.6.1),
-    visNetwork (>= 2.1.2)
+    visNetwork (>= 2.1.2),
+    htmlwidgets (>= 1.6.0),
+    jsonlite (>= 1.8.0)
 
