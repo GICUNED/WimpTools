@@ -1,0 +1,53 @@
+name: Git Repository Maintenance
+
+on:
+  schedule:
+    # Run weekly on Sundays at 3 AM UTC
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run mode (true = no deletions, only report)'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      maintenance_days:
+        description: 'Days of inactivity before considering a branch stale'
+        required: false
+        default: '90'
+      protected_branches:
+        description: 'Comma-separated list of branches to protect'
+        required: false
+        default: 'main,master,develop'
+
+permissions:
+  contents: write
+
+jobs:
+  maintain-branches:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          pip install -r scripts/requirements.txt
+
+      - name: Run maintenance script
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'true' }}
+          MAINTENANCE_DAYS: ${{ github.event.inputs.maintenance_days || '90' }}
+          PROTECTED_BRANCHES: ${{ github.event.inputs.protected_branches || 'main,master,develop' }}
+        run: |
+          python scripts/maintain_repo.py
