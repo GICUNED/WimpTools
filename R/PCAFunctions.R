@@ -103,7 +103,7 @@ wimp_biplot <- function(wimp, text.size = 1){
       data = dfv,
       x = 0, xend = ~v1,
       y = 0, yend = ~v2,
-      line = list(color = '#FA9D13', dash = "dot", width = 0.75),
+      line = list(color = '#6F6BFF', dash = "dot", width = 0.75),
       hoverinfo = 'none',
       inherit = FALSE,
       showlegend = FALSE
@@ -114,7 +114,7 @@ wimp_biplot <- function(wimp, text.size = 1){
       y = ~v2,
       text = ~vnames,
       hoverinfo = 'none',
-      font = list(size = 12 * text.size, color = "#FA9D13"),
+      font = list(size = 12 * text.size, color = "#6F6BFF"),
       showarrow = FALSE,
       xanchor = 'center',
       yanchor = 'bottom'
@@ -122,22 +122,22 @@ wimp_biplot <- function(wimp, text.size = 1){
     layout(
       xaxis = list(title = paste("<B>PC1</B> [", s.pc1, "%]", sep = ""),
                    range = c(-range, range),
-                   gridcolor = "white",
-                   gridwidth = 3,
+                   #gridcolor = "white",
+                   #gridwidth = 3,
                    zeroline = TRUE,
                    zerolinecolor = "black",
                    zerolinewidth = 2,
                    showline = FALSE),
       yaxis = list(title = paste("<B>PC2</B> [", s.pc2, "%]", sep = ""),
                    range = c(-range, range),
-                   gridcolor = "white",
-                   gridwidth = 3,
+                   #gridcolor = "white",
+                   #gridwidth = 3,
                    zeroline = TRUE,
                    zerolinecolor = "black",
                    zerolinewidth = 2,
                    showline = FALSE),
-      showlegend = FALSE,
-      plot_bgcolor = "#FFFAED"
+      showlegend = FALSE
+      #plot_bgcolor = "#FFFAED"
     )
 
   return(fig)

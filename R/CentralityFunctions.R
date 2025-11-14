@@ -29,11 +29,11 @@
 
 degree_index <- function(wimp, method="weight"){
 
-  lpoles <- wimp$constructs[[1]]
-  rpoles <- wimp$constructs[[2]]
-  poles <- wimp$constructs[[3]]
+  lpoles <- .wimp_get_left_poles(wimp)
+  rpoles <- .wimp_get_right_poles(wimp)
+  poles <- .wimp_get_construct_names(wimp)
 
-  wmat <- wimp$scores[[3]]
+  wmat <- .wimp_get_weights_matrix(wimp)
   N <- dim(wmat)[1]
 
   if(method == "simple" | method == "norm" | method == "ego"){
@@ -91,8 +91,8 @@ degree_index <- function(wimp, method="weight"){
 
 dismatrix <- function(wimp,mode="out"){
 
-  poles <- wimp$constructs[[3]]
-  wmat <- wimp$scores[[3]]
+  poles <- .wimp_get_construct_names(wimp)
+  wmat <- .wimp_get_weights_matrix(wimp)
 
   G <- igraph::graph.adjacency(wmat,mode = "directed",weighted = T)
 
@@ -130,9 +130,9 @@ dismatrix <- function(wimp,mode="out"){
 
 close_index <- function(wimp, norm = TRUE){
 
-  lpoles <- wimp$constructs[[1]]
-  rpoles <- wimp$constructs[[2]]
-  poles <- wimp$constructs[[3]]
+  lpoles <- .wimp_get_left_poles(wimp)
+  rpoles <- .wimp_get_right_poles(wimp)
+  poles <- .wimp_get_construct_names(wimp)
 
   dist <- dismatrix(wimp)
   N <- dim(dist)[1]
@@ -177,12 +177,12 @@ close_index <- function(wimp, norm = TRUE){
 
 betw_index <- function(wimp,norm=TRUE){
 
-  lpoles <- wimp$constructs[[1]]
-  rpoles <- wimp$constructs[[2]]
-  poles <- wimp$constructs[[3]]
+  lpoles <- .wimp_get_left_poles(wimp)
+  rpoles <- .wimp_get_right_poles(wimp)
+  poles <- .wimp_get_construct_names(wimp)
 
 
-  wmat <- wimp$scores[[3]]
+  wmat <- .wimp_get_weights_matrix(wimp)
 
   G <- igraph::graph.adjacency(wmat,mode = "directed",weighted = T)
 
@@ -250,7 +250,7 @@ ph_index <- function(wimp, method = "wnorm", std = 'none'){
 
   # Standardization
   if (std == 'vertices'){
-    vertices <- length(wimp$constructs$constructs)
+    vertices <- .wimp_n_constructs(wimp)
 
     coef.max.p <- 2*coef*(vertices-1)
     coef.max.h <- coef*(vertices-1)
@@ -281,7 +281,7 @@ ph_index <- function(wimp, method = "wnorm", std = 'none'){
 
 
   }else if (std == "density"){
-    vertices <- length(wimp$constructs$constructs)
+    vertices <- if(!is.null(wimp$vertices) && is.data.frame(wimp$vertices)) nrow(wimp$vertices) else .wimp_n_constructs(wimp)
 
     max.edges <- vertices * (vertices -1) # Maximum theoretical number of edges
 
@@ -331,7 +331,8 @@ eigen_index <- function(wimp, matrix = "weights", num.vectors = 2) {
   }
 
   # Access the matrix based on the specified method
-  adj.matrix <- wimp$scores[[matrix]]
+  if(matrix != "weights") warning("Only 'weights' matrix is available in new wimp format; using weights.")
+  adj.matrix <- .wimp_get_weights_matrix(wimp)
 
   # Compute eigenvectors and eigenvalues
   results <- eigen(adj.matrix)
@@ -350,7 +351,7 @@ eigen_index <- function(wimp, matrix = "weights", num.vectors = 2) {
 
   # Create a dataframe with the centrality results
   df.centrality <- data.frame(
-    Constructs = wimp$constructs$constructs,
+    Constructs = .wimp_get_construct_names(wimp),
     Eigenvalues = abs(centralidad)
   )
 
@@ -393,7 +394,7 @@ ph_plot <- function(wimp, text.size = 1, ...) {
   # Assign the names of constructs from the row names of the matrix
   phm.mat.df$constructo <- rownames(phm.mat)
   # Assign the names of constructs in "Self"
-  phm.mat.df$self.constr <- wimp$constructs$self.poles
+  phm.mat.df$self.constr <- if("self_pole" %in% names(wimp$vertices)) wimp$vertices$self_pole else paste(wimp$vertices$lpole, "-", wimp$vertices$rpole)
   # Limits for the graph by the largest value of P or H dimensions. We add a small margin
   limit <- max(abs(phm.mat.df$p), abs(phm.mat.df$h)) * 1.1
 
@@ -408,13 +409,13 @@ ph_plot <- function(wimp, text.size = 1, ...) {
   shapes <-
     list(
       list(type = "path", path = paste("M 0,0 L", limit, ",", limit, " L0,", limit, " Z"),
-           fillcolor = "#FFD97D", opacity = 0.2, line = list(color = "#FA9D13")),
+           fillcolor = "#CCCBF8", opacity = 0.2, line = list(color = "#CCCBF8")),
       list(type = "path", path = paste("M 0,0 L", limit, ",", -limit, " L0,", -limit, " Z"),
-           fillcolor = "#FFD97D", opacity = 0.2, line = list(color = "#FA9D13")),
+           fillcolor = "#CCCBF8", opacity = 0.2, line = list(color = "#CCCBF8")),
       list(type = "line", x0 = 0, y0 = 0, x1 = limit, y1 = limit,
-           xref = "x", yref = "y", line = list(color = "#FFD97D", width = 1, dash = "dash")),
+           xref = "x", yref = "y", line = list(color = "#6F6BFF", width = 1, dash = "dash")),
       list(type = "line", x0 = 0, y0 = 0, x1 = limit, y1 = -limit,
-           xref = "x", yref = "y", line = list(color = "#FFD97D", width = 1, dash = "dash"))
+           xref = "x", yref = "y", line = list(color = "#6F6BFF", width = 1, dash = "dash"))
     )
 
   # Initialize Plotly graph
@@ -423,8 +424,8 @@ ph_plot <- function(wimp, text.size = 1, ...) {
   # Set the layout of the graph
   p <- p %>%
     layout(title = '',
-           xaxis = list(title = 'PRESENCE'),
-           yaxis = list(title = 'HIERARCHY'),
+           xaxis = list(title = list(text='PRESENCE', font = list(size = 20), standoff = 25)),
+           yaxis = list(title = list(text='IMPLICATION BALANCE', font = list(size = 20), standoff = 25)),
            plot_bgcolor = "white",
            font = list(family = "Arial"),
            showlegend = FALSE,

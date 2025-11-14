@@ -29,36 +29,36 @@ monitoring_adj <- function(wimp.t0, wimp.t1, legend = TRUE){
   merge <- .merge.wimp(wimp.t0,wimp.t1)
   if(.compatibility.merge.wimp(wimp.t0,wimp.t1) == "Incompatibility"){stop("WimpGrids have no constructs in common. Monitoring not possible.")}
 
-  self.t0 <- wimp.t0$self$standarized[merge$index1]
+  self.t0 <- wimp.t0$vertices$self[merge$index1]
   self.t0 <- c(self.t0,self.t0[1])
 
-  ideal.t0 <- wimp.t0$ideal$standarized[merge$index1]
+  ideal.t0 <- wimp.t0$vertices$ideal[merge$index1]
   ideal.t0 <- c(ideal.t0,ideal.t0[1])
 
-  r.poles.t0 <- wimp.t0$constructs$right.poles[merge$index1]
-  l.poles.t0 <- wimp.t0$constructs$left.poles[merge$index1]
+  r.poles.t0 <- wimp.t0$vertices$rpole[merge$index1]
+  l.poles.t0 <- wimp.t0$vertices$lpole[merge$index1]
   poles.t0 <- paste(r.poles.t0," (",l.poles.t0,")", sep="")
   poles.t0 <- c(poles.t0,poles.t0[1])
 
-  construct.t0 <- wimp.t0$constructs$constructs[merge$index1]
+  construct.t0 <- paste(wimp.t0$vertices$lpole[merge$index1], " - ", wimp.t0$vertices$rpole[merge$index1], sep = "")
   construct.t0 <- c(construct.t0,construct.t0[1])
 
   colors.t0 <- .construct.colors(wimp.t0, mode = "red/green")[merge$index1,1]
   colors.t0 <- c(colors.t0,colors.t0[1])
 
 
-  self.t1 <- wimp.t1$self$standarized[merge$index2]
+  self.t1 <- wimp.t1$vertices$self[merge$index2]
   self.t1 <- c(self.t1,self.t1[1])
 
-  ideal.t1 <- wimp.t1$ideal$standarized[merge$index2]
+  ideal.t1 <- wimp.t1$vertices$ideal[merge$index2]
   ideal.t1 <- c(ideal.t1,ideal.t1[1])
 
-  r.poles.t1 <- wimp.t1$constructs$right.poles[merge$index2]
-  l.poles.t1 <- wimp.t1$constructs$left.poles[merge$index2]
+  r.poles.t1 <- wimp.t1$vertices$rpole[merge$index2]
+  l.poles.t1 <- wimp.t1$vertices$lpole[merge$index2]
   poles.t1 <- paste(r.poles.t1," (",l.poles.t1,")", sep="")
   poles.t1 <- c(poles.t1,poles.t1[1])
 
-  construct.t1 <- wimp.t1$constructs$constructs[merge$index2]
+  construct.t1 <- paste(wimp.t1$vertices$lpole[merge$index2], " - ", wimp.t1$vertices$rpole[merge$index2], sep = "")
   construct.t1 <- c(construct.t1,construct.t1[1])
 
   colors.t1 <- .construct.colors(wimp.t1, mode = "red/green")[merge$index2,1]
@@ -130,7 +130,7 @@ monitoring_adj <- function(wimp.t0, wimp.t1, legend = TRUE){
       polar = list(
         radialaxis = list(
           visible = T,
-          range = c(-1,1)
+          range = if(!is.null(wimp.t0$global$scale)) sort(wimp.t0$global$scale) else c(-1,1)
         )
       )
     )
@@ -164,8 +164,8 @@ monitoring_adj <- function(wimp.t0, wimp.t1, legend = TRUE){
 monitoring_ssi <- function(wimp.t0, wimp.t1){
 
   create_heatmap <- function(wimp, show_y_axis_title = TRUE, show_legend = FALSE, hide_y_ticks = FALSE) {
-    x <- wimp$self$standarized
-    y <- wimp$ideal$standarized
+    x <- .wimp_get_self(wimp)
+    y <- .wimp_get_ideal(wimp)
 
     alpha.values <- seq(0, 1, by = 0.01)
     beta.values <- seq(0, 1, by = 0.01)
@@ -179,7 +179,7 @@ monitoring_ssi <- function(wimp.t0, wimp.t1){
       y = beta.values,
       z = sim_matrix,
       type = "heatmap",
-      colorscale = list(c(0, "#F52722"), c(0.5, "yellow"), c(1, "#A5D610")),
+      colorscale = list(c(0, "#F52722"), c(0.5, "white"), c(1, "#A5D610")),
       zmin = 0,
       zmax = 1,
       hovertemplate = '<b>Alpha:</b> %{x}<br><b>Beta:</b> %{y}<br><b>Adjustment:</b> %{z}<extra></extra>',
@@ -276,13 +276,13 @@ monitoring_ph <- function(wimp.t0, wimp.t1, show.centroid = TRUE, text.size = 1
   phm.matII <- ph_index(wimp = wimp.t1, ...)[merge$index2,]
   phm.matII.df <- as.data.frame(phm.matII)
   phm.matII.df$constructo <- rownames(phm.matII)
-  phm.matII.df$self.constr <- wimp.t1$constructs$self.poles[merge$index2]
+  phm.matII.df$self.constr <- if(!is.null(wimp.t1$vertices$self_pole)) wimp.t1$vertices$self_pole[merge$index2] else paste(wimp.t1$vertices$lpole[merge$index2], "/", wimp.t1$vertices$rpole[merge$index2])
 
   # Calculate the Mahalanobis distance matrix for wimp.t0
   phm.matI <- ph_index(wimp = wimp.t0, ...)[merge$index1,]
   phm.matI.df <- as.data.frame(phm.matI)
   phm.matI.df$constructo <- rownames(phm.matI)
-  phm.matI.df$self.constr <- wimp.t0$constructs$self.poles[merge$index1]
+  phm.matI.df$self.constr <- if(!is.null(wimp.t0$vertices$self_pole)) wimp.t0$vertices$self_pole[merge$index1] else paste(wimp.t0$vertices$lpole[merge$index1], "/", wimp.t0$vertices$rpole[merge$index1])
 
   # Define the boundaries of the regions according to wimp.graphII
   limit <- max(abs(phm.matII.df$p), abs(phm.matII.df$h)) * 1.1

@@ -19,7 +19,7 @@
 
 density_index <- function(wimp) {
 
-  wmat <- wimp$scores[[3]]
+  wmat <- .wimp_get_weights_matrix(wimp)
   n <- ncol(wmat)
 
   result <- sum(degree_index(wimp)[,1]) / (n * (n - 1))

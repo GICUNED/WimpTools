@@ -167,72 +167,89 @@ scenariomatrix <- function(wimp, act.vector = NA, infer = "self dynamics",
 #'
 
 
-pcsd <- function(scn, vline = NA){
-
+pcsd <- function(scn, vline = NA) {
+  # Extract constructs and configuration
   poles <- scn$constructs$constructs
   dim <- length(poles)
   infer <- scn$method$infer
   iter <- nrow(scn$values)
 
-
+  # Prepare self matrix and result values
   self.vector <- scn$self[[1]]
-  self.matrix <- matrix(self.vector, ncol = length(self.vector),
-                        nrow = iter, byrow = TRUE)
-
+  self.matrix <- matrix(self.vector, ncol = length(self.vector), nrow = iter, byrow = TRUE)
   res <- scn$values
 
-
-  x <- c(0:(iter -1))
-  y <- c(0:length(poles))
-  y <- as.character(y)
-
-  if(infer == "self dynamics"){
-    df <- data.frame(x, (res - self.matrix))
+  # Create dataframe based on inference type
+  x <- 0:(iter - 1)
+  if (infer == "self dynamics") {
+    df <- data.frame(x, res - self.matrix)
   }
-  if(infer == "impact dynamics"){
-    df <- data.frame(x, (res/dim))
+  if (infer == "impact dynamics") {
+    df <- data.frame(x, res / dim)
   }
 
-  max.value.df <- max(abs(df[,-1])) + 0.05 * max(abs(df[,-1]))
+  # Rename columns for easier reshaping
+  colnames(df) <- c("x", poles)
 
-  colnames(df) <- y
+  # Convert to long format for Plotly
+  df_long <- tidyr::pivot_longer(df, cols = -x, names_to = "construct", values_to = "value")
 
-  fig <- plotly::plot_ly(df, x = ~x, y = df[,2], name = poles[1],
-                         type = 'scatter',
-                         mode = 'lines+markers',line = list(shape = "spline"))  # Build PCSD with plotly.
+  # Define dynamic Y axis range
+  maxv <- max(abs(df_long$value)) * 1.05
 
-  for (n in 3:(length(poles)+1)) {
-    fig <- fig %>% plotly::add_trace(y = df[,n], name = poles[n-1],
-                                     mode = 'lines+markers',
-                                     line = list(shape = "spline"))
-  }
-  fig <- fig %>% plotly::layout(
-    xaxis = list(
-      title = "ITERATIONS"
-    ),
-    yaxis = list(
-      title = .label.y(infer),
-      range = c(-max.value.df,max.value.df)
+  # Plot using automatic color and symbol mapping
+  fig <- plot_ly(
+    data = df_long,
+    x = ~x,
+    y = ~value,
+    color = ~construct,
+    symbol = ~construct,
+    symbols = c("circle", "square", "diamond", "cross", "x", "triangle-up",
+                "triangle-down", "triangle-left", "triangle-right", "star"),
+    type = 'scatter',
+    mode = 'lines+markers',
+    marker = list(size = 10),
+    line = list(shape = "spline")
+  ) %>%
+    layout(
+      xaxis = list(
+        title = list(
+          text = "ITERATIONS",
+          font = list(size = 20)
+        ),
+        tickfont = list(size = 20)
+      ),
+      yaxis = list(
+        title = list(
+          text = "SELF DIFFERENTIAL",
+          font = list(size = 20)
+        ),
+        tickfont = list(size = 20),
+        range = c(-maxv, maxv)
+      ),
+      legend = list(
+        title = list(
+          text = '<b>PERSONAL CONSTRUCTS</b>',
+          font = list(size = 15)
+        ),
+        font = list(size = 20)
+      )
     )
-  )
-  fig <- fig %>% plotly::layout(legend=list(
-    title=list(text='<b>PERSONAL CONSTRUCTS</b>')
-  )
-  )
 
-  fig <- fig %>% add_lines(
-    x = vline,
-    y = c(-max.value.df,max.value.df),
-    line = list(
-      color = "grey",
-      dash = "dot"
-    ),
-    inherit = FALSE,
-    showlegend = FALSE
-  )
+  # Add vertical reference line if specified
+  if (!is.na(vline)) {
+    fig <- fig %>% add_lines(
+      x = vline,
+      y = c(-maxv, maxv),
+      line = list(color = "grey", dash = "dot"),
+      inherit = FALSE,
+      showlegend = FALSE
+    )
+  }
 
-  fig
+  return(fig)
 }
+
 
 # AUC Index ---------------------------------------------------------------
 

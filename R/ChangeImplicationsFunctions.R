@@ -386,19 +386,11 @@ if_barchart <- function(wimp, show = "all",...){
   fig <- subplot(
       fig1, fig2, margin = 0.005
   ) %>% layout(
-      xaxis = list(title = "IMPACT",
-                   gridcolor = "white",
-                   gridwidth = 3),
-      yaxis = list(title = "",
-                   gridcolor = "white",
-                   gridwidth = 3),
-      xaxis2 = list(title = "FEEDBACK",
-                   gridcolor = "white",
-                   gridwidth = 3),
-      yaxis2 = list(title = "", showticklabels = TRUE, side = "right", overlaying = "y",
-                   gridcolor = "white",
-                   gridwidth = 3),
-      plot_bgcolor = "#FFFAED"
+      xaxis = list(title = "IMPACT"),
+      yaxis = list(title = ""),
+      xaxis2 = list(title = "FEEDBACK"),
+      yaxis2 = list(title = "", showticklabels = TRUE, side = "right", overlaying = "y")
+     # plot_bgcolor = "#FFFAED"
   )
 
   # Return function

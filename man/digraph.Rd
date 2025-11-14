@@ -13,7 +13,11 @@ digraph(
   color = "red/green",
   layout = "graphopt",
   show = TRUE,
-  hide.direct = FALSE
+  hide.direct = FALSE,
+  areas = FALSE,
+  area.color = NA,
+  pad.side = 50,
+  rounding = 10
 )
 }
 \arguments{
@@ -38,15 +42,31 @@ are: "circle", "rtcircle", "tree", "graphopt", "mds" and "grid". Default is "gra
 \item{show}{Logical vector defining which constructs to display. By default all constructs are shown.}
 
 \item{hide.direct}{If TRUE, hide direct relationship between nodes of the graph. Default is FALSE.}
+
+\item{areas}{Logical; if TRUE, draw coloured areas that group nodes by category. Default is FALSE.}
+
+\item{rounding}{Numeric; radius used to round the area corners (0 for sharp corners). Default is 10.}
+
+\item{pad_side}{Numeric; padding in pixels used for the areas drawn around the nodes. Default is 50.}
 }
 \value{
+A digraph made with visNetwork
+
 A digraph made with visNetwork
 }
 \description{
 A digraph that represents the self of the person being assessed
              on the basis of its constructs and the relationships between them.
+
+A digraph that represents the self of the person being assessed
+             on the basis of its constructs and the relationships between them.
 }
 \examples{
+
+ digraph(su.wimp)
+
+Selfdigraph -- digraph()
+
 
  digraph(su.wimp)
 
