@@ -1,169 +1,195 @@
 ## ADJUSTMENT FUNCTIONS ##
 
-# Construct proportions index  ---------------------------------------------------
+# Construct proportions index -------------------------------------------------
 
-#' Frencuency and proportions of constructs -- construct_index()
+#' Construct Congruence Analysis -- construct_index()
 #'
-#' @description This function calculates frequency and proportion of
-#'              congruents, discrepants, dilemmatics and undefined constructs.
+#' @description Calculates frequency and proportion of construct types
+#'              (congruent, discrepant, dilemmatic and undefined) based on
+#'              self-ideal relationship analysis.
 #'
 #' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
 #'        imported by the \code{\link{importwimp}} function.
 #'
-#' @author Alejandro Sanfeliciano
+#' @return A matrix with frequency and proportion values for each construct
+#'         type: Congruents, Discrepants, Dilemmatics, and Undefined.
 #'
-#' @return A matrix with the frequency and proportion of congruents, discrepants
-#'        , dilemmatics and undefined constructs.
+#' @author Alejandro Sanfeliciano
 #'
 #' @export
 #'
 #' @examples
+#' construct_index(example_wimp)
 #'
-#' construct_index(example.wimp)
-#'
 
-construct_index <- function(wimp){
+construct_index <- function(wimp) {
 
-indices <- .wimp_get_construct_indices(wimp)
-n.congruents <- length(indices$congruents)
-n.discrepants <- length(indices$discrepants)
-n.dilemmatics <- length(indices$dilemmatics)
-n.undefined <- length(indices$undefined)
+  self_vec <- wimp$vertices$self
+  ideal_vec <- wimp$vertices$ideal
+  congruents <- which(sign(self_vec) == sign(ideal_vec) &
+                        self_vec != 0 & ideal_vec != 0)
+  discrepants <- which(sign(self_vec) != sign(ideal_vec) &
+                         self_vec != 0 & ideal_vec != 0)
+  dilemmatics <- which(ideal_vec == 0)
+  undefined <- which(self_vec == 0)
+  n_congruents <- length(congruents)
+  n_discrepants <- length(discrepants)
+  n_dilemmatics <- length(dilemmatics)
+  n_undefined <- length(undefined)
 
-n <- .wimp_n_constructs(wimp)
+  n <- nrow(wimp$vertices)
 
-congruents <- c(n.congruents, n.congruents / n)
-discrepants <- c(n.discrepants, n.discrepants / n)
-dilemmatics <- c(n.dilemmatics, n.dilemmatics / n)
-undefined <- c(n.undefined, n.undefined / n)
+  congruents <- c(n_congruents, n_congruents / n)
+  discrepants <- c(n_discrepants, n_discrepants / n)
+  dilemmatics <- c(n_dilemmatics, n_dilemmatics / n)
+  undefined <- c(n_undefined, n_undefined / n)
 
-result <- rbind(congruents,discrepants,dilemmatics,undefined)
+  result <- rbind(congruents, discrepants, dilemmatics, undefined)
 
-rownames(result) <- c("Congruents","Discrepants","Dilemmatics","Undefined")
-colnames(result) <- c("Frequency","Proportion")
+  rownames(result) <- c("Congruents", "Discrepants", "Dilemmatics", "Undefined")
+  colnames(result) <- c("Frequency", "Proportion")
 
-return(result)
+  result
 }
 
 
-# Self Correlations ---------------------------------------------------
+# Self Analysis ----------------------------------------------------------------
 
-#' Correlations between Self and Hypothetical scenarios -- self_index()
+#' Self-Ideal Analysis -- self_index()
 #'
-#' @description this function Calculates the global and specific adjustment
-#'              indices of the self for each hypothetical scenario in the WimpGrid.
+#' @description Calculates global and construct-specific adjustment indices
+#'              between self and hypothetical scenarios. Uses SSI Index or
+#'              standard correlation methods.
 #'
 #' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
 #'        imported by the \code{\link{importwimp}} function.
-#' @param method The correlation method to use. All methods of the \code{\link{cor}} function
-#'        are allowed and "ssi" for SSI Index. Default is "ssi".
-#' @param rc Use Cohen's rc which is invariant to construct reflection. Default is TRUE.
-#' @param alpha Alpha value for SSI calculation. Default is .5.
-#' @param beta Beta value for SSI calculation. Default is .5.
+#' @param method Correlation method: "ssi" (SSI Index), "pearson", "kendall",
+#'        or "spearman". Default is "ssi".
+#' @param rc Use Cohen's rc (reflection invariant). Default is TRUE.
+#' @param alpha Discrepancy salience for SSI (0-1). Default is 0.5.
+#' @param beta Aspiration salience for SSI (0-1). Default is 0.5.
+#'
+#' @return List with \code{global} indices (Self/Ideal, Self/Hypo, Ideal/Hypo)
+#'         and \code{construct} data frame with congruence classifications
+#'         and similarity measures.
 #'
 #' @author Alejandro Sanfeliciano
-#'
-#' @return A list with global adjustment self indices and specific indices for each construct.
 #'
 #' @export
 #'
 #' @examples
+#' self_index(example_wimp)
 #'
-#' self_index(example.wimp)
+#' # Using different methods
+#' self_index(example_wimp, method = "pearson")
+#' self_index(example_wimp, method = "kendall", rc = FALSE)
 #'
 
-self_index <- function(wimp, method = "ssi", rc = TRUE, alpha = .5, beta = .5){
+self_index <- function(wimp, method = "ssi", rc = TRUE, alpha = .5, beta = .5) {
 
   result <- list()
 
-  indices <- .wimp_get_construct_indices(wimp)
-  congruence <- rep("Undefined", .wimp_n_constructs(wimp))
-  congruence[indices$congruents] <- "Discrepant"
-  congruence[indices$undefined] <- "Congruent"
-  congruence[indices$discrepants] <- "Congruent"
-  congruence[indices$dilemmatics] <- "Undefined"
-
-  hypo.matrix <- .hypo.matrix(wimp)
-  ncol <- ncol(hypo.matrix)
-  hypo.names <- colnames(hypo.matrix)[-c(1,ncol)]
-  hypo.names <- paste("Totally", hypo.names, sep = " ")
-
-  rc.text <- "no rc"
-  if(rc){
-    hypo.matrix <- rbind(hypo.matrix, -hypo.matrix)
-    rc.text <- "rc"
+  congruence <- character(nrow(wimp$vertices))
+  for (i in seq_len(nrow(wimp$vertices))) {
+    self_val <- wimp$vertices$self[i]
+    ideal_val <- wimp$vertices$ideal[i]
+    hypo_val <- .calc.hypo(self_val, ideal_val)
+    if (is.na(ideal_val) || ideal_val == 0) {
+      congruence[i] <- "Dilemmatic"
+    } else if (is.na(hypo_val)) {
+      congruence[i] <- "Undefined"
+    } else if (sign(ideal_val) == sign(hypo_val)) {
+      congruence[i] <- "Congruent"
+    } else {
+      congruence[i] <- "Discrepant"
     }
-
-  if(method == "ssi"){
-
-    self.vector <- hypo.matrix[,1]
-    ideal.vector <- hypo.matrix[,ncol]
-
-    discrepants <- indices$discrepants
-    congruents <- indices$congruents
-
-    self.cor <- apply(hypo.matrix[,-c(1, ncol(hypo.matrix))], 2, function(col) .sim_index(self.vector, col, alpha = alpha, beta = beta))
-    ideal.cor <- apply(hypo.matrix[,-c(1, ncol(hypo.matrix))], 2, function(col) .sim_index(ideal.vector, col, alpha = alpha, beta = beta))
-
-    self.ideal.cor <- .sim_index(self.vector,ideal.vector, alpha = alpha, beta = beta)
-    self.hypo.cor <- mean(self.cor)
-    ideal.hypo.cor <- mean(ideal.cor)
-
-    ideal.hypo.congruents.cor <- mean(ideal.cor[congruents])
-    ideal.hypo.discrepants.cor <- mean(ideal.cor[discrepants])
-
-  }
-  if(!( method == "ssi" | method == "cos" )){
-    self.vector <- hypo.matrix[,1]
-    ideal.vector <- hypo.matrix[,ncol]
-
-    discrepants <- wimp$constructs$discrepants
-    congruents <- wimp$constructs$congruents
-
-    self.cor <- cor(self.vector,hypo.matrix[,-c(1,ncol)], method = method)
-    ideal.cor <- cor(ideal.vector,hypo.matrix[,-c(1,ncol)], method = method)
-
-    self.ideal.cor <- cor(self.vector,ideal.vector, method = method)
-    self.hypo.cor <- mean(self.cor)
-    ideal.hypo.cor <- mean(ideal.cor)
-
-    ideal.hypo.congruents.cor <- mean(ideal.cor[congruents])
-    ideal.hypo.discrepants.cor <- mean(ideal.cor[discrepants])
   }
 
-  global <- mean(cor(ideal.vector,hypo.matrix[,-ncol]))
+  hypo_matrix <- wimp$global$hypo_matrix
+  self_vector <- wimp$vertices$self
+  ideal_vector <- wimp$vertices$ideal
+  hypo_matrix_full <- cbind(self_vector, hypo_matrix, ideal_vector)
+  colnames(hypo_matrix_full)[c(1, ncol(hypo_matrix_full))] <- c("SELF", "IDEAL")
+  ncol_matrix <- ncol(hypo_matrix_full)
+  hypo_names <- colnames(hypo_matrix_full)[-c(1, ncol_matrix)]
 
-  df.global <- data.frame(self.ideal.cor,self.hypo.cor,ideal.hypo.cor,ideal.hypo.congruents.cor,ideal.hypo.discrepants.cor)
-  names(df.global) <- c("Self/Ideal", "Self/Hypo", "Ideal/Hypo", "Ideal/Discrepant", "Ideal/Congruent")
+  rc_text <- "no rc"
+  if (rc) {
+    hypo_matrix_full <- rbind(hypo_matrix_full, -hypo_matrix_full)
+    rc_text <- "rc"
+  }
 
-  df.construct <- data.frame(
-    Hypothetical_Scenario = hypo.names,
+  if (method == "ssi") {
+    self_vector <- hypo_matrix_full[, 1]
+    ideal_vector <- hypo_matrix_full[, ncol_matrix]
+
+    self_cor <- apply(hypo_matrix_full[, -c(1, ncol(hypo_matrix_full))], 2,
+                      function(col) {
+                        .sim_index(self_vector, col,
+                                   alpha = alpha, beta = beta)
+                      })
+    ideal_cor <- apply(hypo_matrix_full[, -c(1, ncol(hypo_matrix_full))], 2,
+                       function(col) {
+                         .sim_index(ideal_vector, col,
+                                    alpha = alpha, beta = beta)
+                       })
+
+    self_ideal_cor <- .sim_index(self_vector, ideal_vector,
+                                 alpha = alpha, beta = beta)
+    self_hypo_cor <- mean(self_cor)
+    ideal_hypo_cor <- mean(ideal_cor)
+
+  } else {
+    self_vector <- hypo_matrix_full[, 1]
+    ideal_vector <- hypo_matrix_full[, ncol_matrix]
+
+    self_cor <- cor(self_vector, hypo_matrix_full[, -c(1, ncol_matrix)],
+                    method = method)
+    ideal_cor <- cor(ideal_vector, hypo_matrix_full[, -c(1, ncol_matrix)],
+                     method = method)
+
+    self_ideal_cor <- cor(self_vector, ideal_vector, method = method)
+    self_hypo_cor <- mean(self_cor)
+    ideal_hypo_cor <- mean(ideal_cor)
+  }
+
+  df_global <- data.frame(
+    self_ideal_cor, self_hypo_cor, ideal_hypo_cor
+  )
+  names(df_global) <- c("Self/Ideal", "Self/Hypo", "Ideal/Hypo")
+
+  df_construct <- data.frame(
+    Hypothetical_Scenario = hypo_names,
     Congruence_Scenario = congruence,
-    Self_Similarity = round(as.numeric(self.cor), 4),
-    Ideal_Similarity = round(as.numeric(ideal.cor), 4),
+    Self_Similarity = round(as.numeric(self_cor), 4),
+    Ideal_Similarity = round(as.numeric(ideal_cor), 4),
     stringsAsFactors = FALSE
   )
 
-  names(df.construct) <- c("Hypothetical Scenario","Congruence Scenario","Self Similarity", "Ideal Similarity")
+  names(df_construct) <- c("Hypothetical Scenario", "Congruence Scenario",
+                           "SHS", "SHI")
 
-  result$global <- df.global
-  result$construct <- df.construct
-  result$method <- c(method, rc.text)
+  result$global <- df_global
+  result$construct <- df_construct
+  result$method <- c(method, rc_text)
+  result$wimp <- wimp
+  class(result) <- "self_index"
 
   return(result)
 }
 
-# Adjustment Radar Chart ---------------------------------------------------
+# Self Radar Chart ---------------------------------------------------
 
-#' Adjustment Radar Chart -- adj_plot()
+#' Self-Ideal Radar Chart -- self_plot()
 #'
-#' @description This function creates a radar chart showing the value of the
-#'              self for each construct and its adjustment with respect to the ideal.
+#' @description Creates a radar chart displaying self and ideal ratings
+#'              for each construct, showing congruence patterns visually.
 #'
 #' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
-#'        imported by  the \code{\link{importwimp}} function.
+#'        imported by the \code{\link{importwimp}} function.
 #'
-#' @return A Plotly radar polar plot.
+#' @return Interactive Plotly radar chart with self (blue) and ideal (green)
+#'         traces, including SSI Index in the legend.
 #'
 #' @author Alejandro Sanfeliciano
 #'
@@ -171,34 +197,34 @@ self_index <- function(wimp, method = "ssi", rc = TRUE, alpha = .5, beta = .5){
 #' @export
 #'
 #' @examples
-#'
-#' adj_plot(example.wimp)
+#' self_plot(example_wimp)
 #'
 
-adj_plot <- function(wimp){
+self_plot <- function(wimp) {
 
   wimp <- .align.wimp(wimp, exclude.dilemmatics = FALSE)
 
-  self <- .wimp_get_self(wimp)
-  self <- c(self,self[1])
+  self <- wimp$vertices$self
+  self <- c(self, self[1])
 
-  ideal <- .wimp_get_ideal(wimp)
-  ideal <- c(ideal,ideal[1])
+  ideal <- wimp$vertices$ideal
+  ideal <- c(ideal, ideal[1])
 
-  r.poles <- .wimp_get_right_poles(wimp)
-  l.poles <- .wimp_get_left_poles(wimp)
-  poles <- paste(r.poles," (",l.poles,")", sep="")
-  poles <- c(poles,poles[1])
+  r_poles <- wimp$vertices$rpole
+  l_poles <- wimp$vertices$lpole
+  poles <- paste(r_poles, " (", l_poles, ")", sep = "")
+  poles <- c(poles, poles[1])
 
-  construct<- .wimp_get_construct_names(wimp)
-  construct <- c(construct,construct[1])
+  construct <- paste(wimp$vertices$lpole, "-", wimp$vertices$rpole, sep = " ")
+  construct <- c(construct, construct[1])
 
-  colors <- .construct.colors(wimp, mode = "red/green")[,1]
-  colors <- c(colors,colors[1])
+  colors <- .construct.colors(wimp, mode = "red/green")[, 1]
+  colors <- c(colors, colors[1])
 
   plot <- plot_ly(
-    type = 'scatterpolar',
-    fill = 'toself'
+    type = "scatterpolar",
+    mode = "lines+markers",
+    fill = "toself"
   )
   plot <- plot %>%
     add_trace(
@@ -206,9 +232,10 @@ adj_plot <- function(wimp){
       r = 0,
       theta = poles,
       fill = "none",
-      line = list(color = "#444444", width = 1.5, shape = 'spline', smoothing = 1),
-      name = 'Pole Threshold',
-      hoverinfo = 'none'
+      line = list(color = "#444444", width = 1.5,
+                  shape = "spline", smoothing = 1),
+      name = "Pole Threshold",
+      hoverinfo = "none"
     )
   plot <- plot %>%
     add_trace(
@@ -216,47 +243,49 @@ adj_plot <- function(wimp){
       r = ideal,
       theta = poles,
       fill = "none",
-      line = list(color = "darkgreen", width = 3, shape = 'line'),
-      name = 'Ideal',
-      hoverinfo = 'none'
+      line = list(color = "darkgreen", width = 3, shape = "line"),
+      name = "Ideal",
+      hoverinfo = "none"
     )
   plot <- plot %>%
     add_trace(
+      mode = "lines+markers",
       r = self,
       theta = poles,
-      name = paste("SSI Index:",round(self_index(wimp)$global[1],2)),
-      marker = list(color = colors, size = 7, line = list(color = '#6F6BFF', width = 1.5)),
-      fillcolor = 'rgba(204, 203, 248, 0.5)',
+      name = paste("SSI Index:", round(self_index(wimp)$global[1], 2)),
+      marker = list(color = colors, size = 7,
+                    line = list(color = "#6F6BFF", width = 1.5)),
+      fillcolor = "rgba(204, 203, 248, 0.5)",
       line = list(width = 1, color = "#6F6BFF"),
-      text = ~paste('<B>',construct,'</B>', '\nSelf:', round(self, 2), '\nIdeal:', round(ideal,2)),
-      hoverinfo = 'text',
-      hoverlabel=list(bgcolor = colors)
+      text = ~paste("<B>", construct, "</B>", "\nSelf:", round(self, 2),
+                    "\nIdeal:", round(ideal, 2)),
+      hoverinfo = "text",
+      hoverlabel = list(bgcolor = colors)
     )
   plot <- plot %>%
     layout(
       showlegend = FALSE,
       polar = list(
         radialaxis = list(
-          visible = T,
-          range = c(-1,1)
+          visible = TRUE,
+          range = c(-1, 1)
         )
       )
     )
 
-  return(plot)
-
+  plot
 }
 
 # SSI Heatmap -----------------------------------------------------------
 #'
 #' SSI Heatmap -- ssi_heatmap()
 #'
-#' @description A heat map representing the fit between I-actual and I-ideal as
-#'              a function of the person's different cognitive states. It uses
-#'              SSI Index in its calculations.
+#' @description Creates a heatmap showing SSI values across different
+#'              alpha (discrepancy salience) and beta (aspiration salience)
+#'              parameter combinations.
 #'
 #' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
-#'        imported by  the \code{\link{importwimp}} function.
+#'        imported by the \code{\link{importwimp}} function.
 #'
 #' @return A plotly heatmap.
 #'
@@ -266,33 +295,34 @@ adj_plot <- function(wimp){
 #' @export
 #'
 #' @examples
+#' ssi_heatmap(example_wimp)
 #'
-#' ssi_heatmap(example.wimp)
-#'
 
-ssi_heatmap <- function(wimp){
+ssi_heatmap <- function(wimp) {
 
-  x <- .wimp_get_self(wimp)
-  y <- .wimp_get_ideal(wimp)
+  x <- wimp$vertices$self
+  y <- wimp$vertices$ideal
 
-  alpha.values <- seq(0, 1, by = 0.01)
-  beta.values <- seq(0, 1, by = 0.01)
+  alpha_values <- seq(0, 1, by = 0.01)
+  beta_values <- seq(0, 1, by = 0.01)
 
-  sim_matrix <- outer(alpha.values, beta.values, Vectorize(function(alpha, beta) {
-    .sim_index(x, y, alpha = alpha, beta = beta)
-  }))
+  sim_matrix <- outer(alpha_values, beta_values,
+                      Vectorize(function(alpha, beta) {
+                        .sim_index(x, y, alpha = alpha, beta = beta)
+                      }))
 
   plot <- plot_ly(
-    x = alpha.values,
-    y = beta.values,
+    x = alpha_values,
+    y = beta_values,
     z = t(sim_matrix),
     type = "heatmap",
     colorscale = list(c(0, "#F52722"), c(0.5, "white"), c(1, "#A5D610")),
     zmin = 0,
     zmax = 1,
-    hovertemplate = '<b>Alpha:</b> %{x}<br><b>Beta:</b> %{y}<br><b>Similarity:</b> %{z}<extra></extra>',
+    hovertemplate = paste("<b>Alpha:</b> %{x}<br><b>Beta:</b> %{y}",
+                          "<br><b>Similarity:</b> %{z}<extra></extra>"),
     colorbar = list(
-      title = '<b>SSI</b>',
+      title = "<b>SSI</b>",
       tickfont = list(size = 16),
       ticklen = 10
     )
@@ -305,13 +335,14 @@ ssi_heatmap <- function(wimp){
           font = list(size = 25)
         ),
         tickfont = list(size = 18)
-        ),
+      ),
       yaxis = list(
         title = list(
           text = "<b>Aspiration Salience (Beta)</b>",
           font = list(size = 25)
         ),
-        tickfont = list(size = 18)),
+        tickfont = list(size = 18)
+      ),
       shapes = list(
         list(
           type = "rect",
@@ -319,7 +350,8 @@ ssi_heatmap <- function(wimp){
           x1 = 1.005,
           y0 = -0.005,
           y1 = 1.005,
-          line = list(color = "black", width = 2)),
+          line = list(color = "black", width = 2)
+        ),
         list(
           type = "line",
           x0 = 0,
@@ -347,30 +379,31 @@ ssi_heatmap <- function(wimp){
     ) %>%
     style(
       hoverlabel = list(
-        bgcolor = 'rgba(255, 255, 255, 0.8)',
-        bordercolor = 'black',
+        bgcolor = "rgba(255, 255, 255, 0.8)",
+        bordercolor = "black",
         font = list(size = 12)
       )
     )
 
-  return(plot)
+  plot
 }
 
 #' Hypothetical Scenarios Plot  -- hypo_plot()
 #'
-#' @description This function creates a scatter plot to show the results of the
-#'              \code{\link{self_index}} function.
+#' @description Creates a scatter plot showing self-hypothetical similarity
+#'              (SHS) vs self-ideal hypothetical similarity (SHI) for each
+#'              construct, with congruence color coding.
 #'
 #' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
 #'        imported by the \code{\link{importwimp}} function.
 #' @param text.size Scalar that modifies the text size. Default is 1.
-#' @param center Establishes the centre of the frame. Use "data" to set the data
-#'        to be framed and "origin" to set the origin to be in the centre. the default
-#'        is "data".
-#' @param ... additional arguments are passed from \code{\link{self_index}}
-#'        function.
+#' @param show.labels Logical. Whether to show construct labels on the plot
+#'        Default is TRUE. Set to FALSE to reduce visual clutter with many
+#'        constructs.
+#' @param ... Additional arguments passed to \code{\link{self_index}} function.
 #'
-#' @author Maite Benitez Santos, Guillermo Calleja Garate and Alejandro Sanfeliciano
+#'
+#' @author  Alejandro Sanfeliciano
 #'
 #' @return returns a interactive scatter plot made with Plotly.
 #'
@@ -379,36 +412,49 @@ ssi_heatmap <- function(wimp){
 #' @import plotly
 #'
 #' @examples
+#' hypo_plot(example_wimp)
 #'
-#' hypo_plot (example.wimp)
+#' # Without labels for cleaner view
+#' hypo_plot(example_wimp, show.labels = FALSE)
 
-hypo_plot <- function(wimp, text.size = 1, ...) {
+hypo_plot <- function(wimp, text.size = 1, show.labels = TRUE, ...) { 
 
-  hypo.matrix <- .hypo.matrix(wimp)
-  ncol <- ncol(hypo.matrix)
-  hypo.names <- colnames(hypo.matrix)[-c(1,ncol)]
+  hypo_matrix <- wimp$global$hypo_matrix
+  self_vector <- wimp$vertices$self
+  ideal_vector <- wimp$vertices$ideal
+  hypo_matrix_full <- cbind(self_vector, hypo_matrix, ideal_vector)
+  colnames(hypo_matrix_full)[c(1, ncol(hypo_matrix_full))] <- c("SELF", "IDEAL")
 
   self_index_data <- self_index(wimp, ...)
 
-
   congruence <- self_index_data$construct[[2]]
 
-  construct.color <- ifelse(
+  construct_color <- ifelse(
     congruence == "Congruent", "#A5D610",
     ifelse(congruence == "Discrepant", "#F52722",
-           ifelse(congruence == "Undefined", "yellow", "#000000"))
+           ifelse(congruence == "Undefined", "yellow",
+                  ifelse(congruence == "Dilemmatic", "yellow", "#000000")))
   )
 
-  # Set up data.frame
-  df <- self_index_data$construct[c(4,3)]
-  df <- data.frame (df, construct.color, hypo.names)
-
-
-  # Row and col names for data.frame
+  pole_names <- character(nrow(wimp$vertices))
+  for (i in seq_len(nrow(wimp$vertices))) {
+    self_val <- wimp$vertices$self[i]
+    ideal_val <- wimp$vertices$ideal[i]
+    hypo_val <- .calc.hypo(self_val, ideal_val)
+    if (is.na(hypo_val)) {
+      pole_names[i] <- paste(wimp$vertices$lpole[i], "-",
+                             wimp$vertices$rpole[i])
+    } else if (hypo_val > 0) {
+      pole_names[i] <- wimp$vertices$rpole[i]
+    } else {
+      pole_names[i] <- wimp$vertices$lpole[i]
+    }
+  }
+  df <- self_index_data$construct[c(4, 3)]
+  df <- data.frame(df, construct_color, pole_names)
   names(df) <- c("ideal", "self", "color", "construct")
-  rownames(df) <- hypo.names
+  rownames(df) <- pole_names
 
-  # Plotting
   y_ref <- self_index_data[[1]][[1]]
 
   fig <- plot_ly(
@@ -416,51 +462,71 @@ hypo_plot <- function(wimp, text.size = 1, ...) {
     x = ~self,
     y = ~ideal
   ) %>%
-    add_annotations(
-      data = df,
-      x = ~self,
-      y = ~ideal,
-      text = ~construct,
-      hoverinfo = 'text',
-      font = list(size = 15 * text.size),
-      showarrow = FALSE,
-
-
-      xanchor = ~ifelse(self < 0.15, 'left', ifelse(self > 0.85, 'right', 'center')),
-      xshift = ~ifelse(self < 0.15, 5, ifelse(self > 0.85, -5, 0)),
-      yanchor = ~ifelse(ideal > 0.9, 'top', 'bottom'),
-      yshift = ~ifelse(ideal > 0.9, -5, 5)
-
-    ) %>%
     add_markers(
       data = df,
       x = ~self,
       y = ~ideal,
-      marker = list(color = ~color, size = 7, line = list(color = 'black', width = 1)),
-      text = ~paste('<b>', construct, '</b>', '\nIdeal Similarity:', ideal, '\nSelf Similarity:', self),
-      hoverinfo = 'text'
-    ) %>%
+      marker = list(color = ~color, size = 8,
+                    line = list(color = "black", width = 1)),
+      text = ~paste("<b>", construct, "</b>",
+                    "<br>Ideal Similarity:", round(ideal, 3),
+                    "<br>Self Similarity:", round(self, 3)),
+      hoverinfo = "text",
+      showlegend = FALSE
+    )
+
+  # Add labels only if requested
+  if (show.labels) {
+    # Use smart label positioning to avoid overlaps
+    label_positions <- .smart_label_positions(
+      x_coords = df$self,
+      y_coords = df$ideal,
+      labels = df$construct,
+      distance = 8,
+      text_size = 11 * text.size
+    )
+
+    df$xanchor <- label_positions$xanchor
+    df$yanchor <- label_positions$yanchor
+    df$xshift <- label_positions$xshift
+    df$yshift <- label_positions$yshift
+
+    fig <- fig %>%
+      add_annotations(
+        data = df,
+        x = ~self,
+        y = ~ideal,
+        text = ~construct,
+        hoverinfo = "skip",
+        font = list(size = 11 * text.size, color = "black"),
+        showarrow = FALSE,
+        xanchor = ~xanchor,
+        xshift = ~xshift,
+        yanchor = ~yanchor,
+        yshift = ~yshift
+      )
+  }
+
+  fig <- fig %>%
     layout(
       xaxis = list(
-        title = "SELF SIMILARITY",
-        range = c(0,1),
+        title = "SELF SIMILARITY (SHS)",
+        range = c(0, 1),
         gridwidth = 0.5,
         zeroline = TRUE,
         zerolinecolor = "black",
         zerolinewidth = 2
       ),
       yaxis = list(
-        title = "IDEAL SIMILARITY",
-        range = c(0,1),
+        title = "IDEAL SIMILARITY (SHI)",
+        range = c(0, 1),
         gridwidth = 0.5,
         zeroline = TRUE,
         zerolinecolor = "black",
         zerolinewidth = 2
       ),
       showlegend = FALSE,
-
       shapes = list(
-        # Área verde (por encima)
         list(
           type = "rect",
           x0 = 0, x1 = 1,
@@ -469,7 +535,6 @@ hypo_plot <- function(wimp, text.size = 1, ...) {
           fillcolor = "rgba(0, 255, 0, 0.1)",
           line = list(width = 0)
         ),
-        # Área roja (por debajo)
         list(
           type = "rect",
           x0 = 0, x1 = 1,
@@ -478,7 +543,6 @@ hypo_plot <- function(wimp, text.size = 1, ...) {
           fillcolor = "rgba(255, 0, 0, 0.1)",
           line = list(width = 0)
         ),
-        # Línea horizontal negra
         list(
           type = "line",
           x0 = 0, x1 = 1,
@@ -490,5 +554,4 @@ hypo_plot <- function(wimp, text.size = 1, ...) {
     )
 
   return(fig)
-
 }
