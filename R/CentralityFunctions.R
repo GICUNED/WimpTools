@@ -1,19 +1,17 @@
 ## CENTRALITY FUNCTIONS ##
 
-# Degree Index Centrality -------------------------------------------------
+# Degree Index Centrality ------------------------------------------------------
 
-#' Degree Index -- degree_index()
+#' Degree Centrality Index -- degree_index()
 #'
-#' @description Function to calculate the centrality of the constructs.
-#'              In this case, centrality is understood as the degree of connection that each
-#'              construct maintains with the rest, i.e. the number of links for each vertex.
+#' @description Calculates centrality based on construct connections. Centrality
+#'              represents the degree of connection each construct maintains
+#'              with others (number of links per vertex).
 #'
-#' @param wimp Subject's Weigthed ImpGrid. It must be a "wimp" S3 object
-#'        imported by  the \code{\link{importwimp}} function.
-#' @param method Method for calculating centrality. You can use the simple
-#'        method with "simple", normalized with "norm", weighted with "weigth",
-#'        normalized weighted with "wnorm" and the ego density method with "ego".
-#'        Default is Weigthed Method.
+#' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
+#'        imported by the \code{\link{importwimp}} function.
+#' @param method Centrality calculation method: "simple", "norm", "weight",
+#'        "wnorm", or "ego". Default is "weight".
 #'
 #' @author Alejandro Sanfeliciano
 #'
@@ -24,62 +22,61 @@
 #'
 #' @examples
 #'
-#' degree_index(example.wimp)
+#' degree_index(example_wimp)
 #'
 
-degree_index <- function(wimp, method="weight"){
+degree_index <- function(wimp, method = "weight") {
 
-  lpoles <- .wimp_get_left_poles(wimp)
-  rpoles <- .wimp_get_right_poles(wimp)
-  poles <- .wimp_get_construct_names(wimp)
+  poles <- .construct_names(wimp)
+  wmat <- wimp$global$weight_matrix
 
-  wmat <- .wimp_get_weights_matrix(wimp)
-  N <- dim(wmat)[1]
-
-  if(method == "simple" | method == "norm" | method == "ego"){
-    wmat.1 <- wmat/wmat
-    wmat.1[is.nan(wmat.1)] <- 0
-    Cout <- rowSums(wmat.1)
-    Cin <- colSums(wmat.1)
+  if (is.null(wmat)) {
+    stop("No weights matrix found in wimp object")
   }
 
-  if(method == "weight" | method == "wnorm"){
-    Cout <- rowSums(abs(wmat))
-    Cin <- colSums(abs(wmat))
+  n <- nrow(wmat)
+
+  if (method %in% c("simple", "norm", "ego")) {
+    wmat_binary <- wmat / wmat
+    wmat_binary[is.nan(wmat_binary)] <- 0
+    k_out <- rowSums(wmat_binary)
+    k_in <- colSums(wmat_binary)
   }
 
-  if(method == "norm" | method == "wnorm"){
-    Cout <- Cout/(N-1)
-    Cin <- Cin/(N-1)
+  if (method %in% c("weight", "wnorm")) {
+    k_out <- rowSums(abs(wmat))
+    k_in <- colSums(abs(wmat))
   }
 
-  if(method == "ego"){
-    Cout <- Cout/(N*(N-1))
-    Cin <- Cin/(N*(N-1))
+  if (method %in% c("norm", "wnorm")) {
+    k_out <- k_out / (n - 1)
+    k_in <- k_in / (n - 1)
   }
 
-  names(Cout) <- poles
-  names(Cin) <- poles
+  if (method == "ego") {
+    k_out <- k_out / (n * (n - 1))
+    k_in <- k_in / (n * (n - 1))
+  }
 
-  result <- cbind(Cout, Cin , Cout + Cin)
+  result <- cbind(k_out, k_in, k_out + k_in)
   rownames(result) <- poles
-  colnames(result) <- c("Out","In", "All")
+  colnames(result) <- c("Out", "In", "All")
+
   return(result)
 }
 
-# Distance Matrix ---------------------------------------------------------
+# Distance Matrix --------------------------------------------------------------
 
-#' Distance Matrix -- dismatrix()
+#' Shortest Distance Matrix -- dismatrix()
 #'
-#' @description Function that calculates the shortest distance between each of
-#'              the pairs of digraph constructions.
+#' @description Calculates shortest distances between construct pairs in the
+#'              implication digraph.
 #'
-#' @param wimp  Subject's Weigthed ImpGrid. It must be a "wimp" S3 object
+#' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
 #'        imported by the \code{\link{importwimp}} function.
-#' @param mode Method to calculate the distances depending on the direction of
-#'        the edges. With "out" we calculate them respecting the direction of the edges,
-#'        "in" through the inverse of the direction of the edges and "all" without
-#'        taking into account the direction. Default is "out"
+#' @param mode Distance calculation mode: "out" (respecting edge direction),
+#'        "in" (inverse direction), "all" (ignoring direction). Default is
+#'        "out".
 #'
 #' @author Alejandro Sanfeliciano
 #'
@@ -89,14 +86,17 @@ degree_index <- function(wimp, method="weight"){
 #' @export
 #'
 
-dismatrix <- function(wimp,mode="out"){
+dismatrix <- function(wimp, mode = "out") {
 
-  poles <- .wimp_get_construct_names(wimp)
-  wmat <- .wimp_get_weights_matrix(wimp)
+  poles <- .construct_names(wimp)
+  wmat <- wimp$global$weight_matrix
 
-  G <- igraph::graph.adjacency(wmat,mode = "directed",weighted = T)
+  if (is.null(wmat)) {
+    stop("No weights matrix found in wimp object")
+  }
 
-  result <- igraph::shortest.paths(G, weights = NA,mode = mode)
+  g <- igraph::graph.adjacency(wmat, mode = "directed", weighted = TRUE)
+  result <- igraph::shortest.paths(g, weights = NA, mode = mode)
 
   rownames(result) <- poles
   colnames(result) <- poles
@@ -104,16 +104,16 @@ dismatrix <- function(wimp,mode="out"){
   return(result)
 }
 
-# Closeness Centrality Index ----------------------------------------------
+# Closeness Centrality Index ---------------------------------------------------
 
-#' Closeness index -- close_index()
+#' Closeness Centrality Index -- close_index()
 #'
-#' @description Function to calculate the closeness of a construct to the rest
-#'              of the constructs within the digraph.
+#' @description Calculates closeness centrality of constructs within the
+#'              implication digraph (inverse of average shortest distance).
 #'
-#' @param wimp Subject's Weigthed ImpGrid. It must be a "wimp" S3 object
+#' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
 #'        imported by the \code{\link{importwimp}} function.
-#' @param norm If TRUE, the values will be standardized. Default is TRUE.
+#' @param norm If TRUE, values will be normalized. Default is TRUE.
 #'
 #' @author Alejandro Sanfeliciano
 #'
@@ -124,23 +124,20 @@ dismatrix <- function(wimp,mode="out"){
 #'
 #' @examples
 #'
-#' close_index(example.wimp)
-#' close_index(example.wimp, norm = FALSE)
+#' close_index(example_wimp)
+#' close_index(example_wimp, norm = FALSE)
 #'
 
-close_index <- function(wimp, norm = TRUE){
+close_index <- function(wimp, norm = TRUE) {
 
-  lpoles <- .wimp_get_left_poles(wimp)
-  rpoles <- .wimp_get_right_poles(wimp)
-  poles <- .wimp_get_construct_names(wimp)
-
+  poles <- .construct_names(wimp)
   dist <- dismatrix(wimp)
-  N <- dim(dist)[1]
+  n <- nrow(dist)
 
-  result <- 1/(rowSums(dist))
-
-  if(norm){
-    result <- (N-1)/(rowSums(dist))
+  if (norm) {
+    result <- (n - 1) / rowSums(dist)
+  } else {
+    result <- 1 / rowSums(dist)
   }
 
   result <- matrix(result)
@@ -150,17 +147,16 @@ close_index <- function(wimp, norm = TRUE){
   return(result)
 }
 
-# Betweeness Centrality Index ---------------------------------------------
+# Betweenness Centrality Index -------------------------------------------------
 
-#' Betweeness index -- betw_index()
+#' Betweenness Centrality Index -- betw_index()
 #'
-#' @description Function that calculates the betweenness of each of the
-#'              constructs. This is the number of times a geodesic path (shortest path)
-#'              between two other constructs passes through that construct in the digraph.
+#' @description Calculates betweenness centrality (number of shortest paths
+#'              passing through each construct).
 #'
-#' @param wimp  Subject's Weigthed ImpGrid. It must be a "wimp" S3 object
+#' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
 #'        imported by the \code{\link{importwimp}} function.
-#' @param norm If TRUE, the values will be normalized. Default is TRUE.
+#' @param norm If TRUE, values will be normalized. Default is TRUE.
 #'
 #' @author Alejandro Sanfeliciano
 #'
@@ -171,22 +167,21 @@ close_index <- function(wimp, norm = TRUE){
 #'
 #' @examples
 #'
-#' betw_index(example.wimp)
-#' betw_index(example.wimp, norm = FALSE)
+#' betw_index(example_wimp)
+#' betw_index(example_wimp, norm = FALSE)
 #'
 
-betw_index <- function(wimp,norm=TRUE){
+betw_index <- function(wimp, norm = TRUE) {
 
-  lpoles <- .wimp_get_left_poles(wimp)
-  rpoles <- .wimp_get_right_poles(wimp)
-  poles <- .wimp_get_construct_names(wimp)
+  poles <- .construct_names(wimp)
+  wmat <- wimp$global$weight_matrix
 
+  if (is.null(wmat)) {
+    stop("No weights matrix found in wimp object")
+  }
 
-  wmat <- .wimp_get_weights_matrix(wimp)
-
-  G <- igraph::graph.adjacency(wmat,mode = "directed",weighted = T)
-
-  result <- igraph::betweenness(G,normalized = norm,weights = NA )
+  g <- igraph::graph.adjacency(wmat, mode = "directed", weighted = TRUE)
+  result <- igraph::betweenness(g, normalized = norm, weights = NA)
 
   result <- matrix(result)
   rownames(result) <- poles
@@ -195,183 +190,163 @@ betw_index <- function(wimp,norm=TRUE){
   return(result)
 }
 
-# PH Centrality Index ------------------------------------------------------------
+# PB Centrality Index ----------------------------------------------------------
 
-#' Presence and Hierarchy Indices -- ph_index()
+#' Presence and Balance Indices -- pb_index()
 #'
-#' @description This function computes the presence (P) and hierarchy (H) indices for constructs within an weigthed implication grid.
-#'              These indices represent the frequency of occurrence and influence on other constructs, respectively.
-#'              The function allows for different methods of standardization based on the context of the constructs.
+#' @description Computes presence (P) and balance (B) indices for constructs.
+#'              P represents frequency of occurrence, B represents influence
+#'              balance.
 #'
-#' @param wimp A WIMP object containing an implication grid and associated constructs.
-#' @param method A character string specifying the method used to calculate the degree indices.
-#'        Default is "wnorm". Acceptable values include "wnorm", "simple", "weight", or any other method
-#'        implemented in the 'degree_index' function.
-#' @param std A character string indicating how to standardize the P and H indices. Available options are:
-#'        - 'none': No standardization (default).
-#'        - 'vertices': Standardizes by the maximum total degree, which is calculated based on the number of vertices.
-#'        - 'edges': Standardizes by the total number of edges.
-#'        - 'max_edges': Standardizes by the maximum number of outgoing edges from any single vertex.
-#'        - 'density': Adjusts P and H by the density of the grid, which considers the total edges possible versus actual.
+#' @param wimp A wimp object containing implication grid and constructs.
+#' @param method Method for calculating degree indices. Default is "wnorm".
+#'        Options: "wnorm", "simple", "weight", etc.
+#' @param std Standardization method for P and B indices. Options:
+#'        \itemize{
+#'          \item 'none': No standardization (default)
+#'          \item 'vertices': Standardize by max total degree
+#'          \item 'edges': Standardize by total number of edges
+#'          \item 'max_edges': Standardize by max outgoing edges
+#'          \item 'density': Adjust by grid density
+#'        }
 #'
 #' @author Carlos Hurtado and Alejandro Sanfeliciano
 #'
-#' @return A matrix with two columns, 'p' for presence and 'h' for hierarchy, containing the indices for each construct.
-#'         If standardization is applied, these values are modified according to the selected method.
+#' @return A matrix with two columns, 'p' for presence and 'b' for balance,
+#'         containing the indices for each construct. If standardization is
+#'         applied, these values are modified according to the selected method.
 #'
 #' @export
 #'
 #' @examples
 #'
-#' ph_index(example.wimp)
-#' ph_index(example.wimp, std = TRUE)
-#' ph_index(example.wimp, method = "wnorm", std = FALSE)
+#' pb_index(example_wimp)
+#' pb_index(example_wimp, std = "vertices")
+#' pb_index(example_wimp, method = "wnorm", std = "none")
 #'
 
+pb_index <- function(wimp, method = "wnorm", std = "none") {
 
-ph_index <- function(wimp, method = "wnorm", std = 'none'){
+  c_io <- degree_index(wimp, method = method)
+  c_io <- c_io[, c(2, 1, 3)]  # Rearrange In-Out columns
+  in_out <- c_io[, 1:2]
 
-  # Connectivity of constructs
-  c.io <- degree_index(wimp, method = method)
-
-  # Rearrange In - Out columns
-  c.io <- c.io[, c(2,1,3)]
-
-  # Extract In and Out columns
-  in.out <- c.io[, 1:2]
-
-  # Linear Transformation matrix
+  # Linear transformation matrix
   coef <- 1 / sqrt(2)
-  coef.matrix <- matrix(c(coef, -coef, coef, coef), nrow = 2)
+  coef_matrix <- matrix(c(coef, -coef, coef, coef), nrow = 2)
 
-  # Calculate P - H matrix
-  ph.mat <- in.out %*% t(coef.matrix)
-  colnames(ph.mat) <- c("p", "h")
+  # Calculate P-B matrix
+  pb_mat <- in_out %*% t(coef_matrix)
+  colnames(pb_mat) <- c("p", "b")
 
   # Standardization
-  if (std == 'vertices'){
-    vertices <- .wimp_n_constructs(wimp)
+  if (std == "vertices") {
+    vertices <- nrow(wimp$vertices)
+    coef_max_p <- 2 * coef * (vertices - 1)
+    coef_max_b <- coef * (vertices - 1)
+    pb_mat[, "p"] <- pb_mat[, "p"] / coef_max_p
+    pb_mat[, "b"] <- pb_mat[, "b"] / coef_max_b
 
-    coef.max.p <- 2*coef*(vertices-1)
-    coef.max.h <- coef*(vertices-1)
+  } else if (std == "edges") {
+    c_direct_io <- degree_index(wimp, method = "simple")
+    c_direct_io <- c_direct_io[, c(2, 1, 3)]
+    edges <- sum(c_direct_io[, 2])
+    coef_max <- edges * coef
+    pb_mat[, "p"] <- pb_mat[, "p"] / coef_max
+    pb_mat[, "b"] <- pb_mat[, "b"] / coef_max
 
-    ph.mat[,"p"] <- ph.mat[,"p"]/coef.max.p
-    ph.mat[,"h"] <- ph.mat[,"h"]/coef.max.h
+  } else if (std == "max_edges") {
+    edges <- max(c_io[, 2])
+    pb_mat[, "p"] <- pb_mat[, "p"] / edges
+    pb_mat[, "b"] <- pb_mat[, "b"] / edges
 
-  }else if (std == 'edges'){
-    c.direct.io <- degree_index(wimp, method = "simple")
-    c.direct.io <- c.direct.io[, c(2,1,3)]
-
-    edges <- sum(c.direct.io[, 2]) # The number of edges is the sum of all outgoing connections
-
-    coef.max.p <- edges * coef
-    coef.max.h <- edges * coef
-
-    ph.mat[,"p"] <- ph.mat[,"p"]/coef.max.p
-    ph.mat[,"h"] <- ph.mat[,"h"]/coef.max.h
-
-  }else if (std == 'max_edges'){
-    edges <- max((c.io[, 2])) # Max outgoing connections
-
-    coef.max.p <- edges
-    coef.max.h <- edges
-
-    ph.mat[,"p"] <- ph.mat[,"p"]/coef.max.p
-    ph.mat[,"h"] <- ph.mat[,"h"]/coef.max.h
-
-
-  }else if (std == "density"){
-    vertices <- if(!is.null(wimp$vertices) && is.data.frame(wimp$vertices)) nrow(wimp$vertices) else .wimp_n_constructs(wimp)
-
-    max.edges <- vertices * (vertices -1) # Maximum theoretical number of edges
-
-    c.direct.io <- degree_index(wimp, method = "simple")
-    c.direct.io <- c.direct.io[, c(2,1,3)]
-    total.edges <- sum(c.direct.io[, 2]) # The number of edges is the sum of all outgoing connections
-
-    dens <- total.edges/ max.edges
-
-    ph.mat[,"p"] <- ph.mat[,"p"]*dens
-    ph.mat[,"h"] <- ph.mat[,"h"]*dens
-
+  } else if (std == "density") {
+    vertices <- nrow(wimp$vertices)
+    max_edges <- vertices * (vertices - 1)
+    c_direct_io <- degree_index(wimp, method = "simple")
+    c_direct_io <- c_direct_io[, c(2, 1, 3)]
+    total_edges <- sum(c_direct_io[, 2])
+    dens <- total_edges / max_edges
+    pb_mat[, "p"] <- pb_mat[, "p"] * dens
+    pb_mat[, "b"] <- pb_mat[, "b"] * dens
   }
 
-  return(ph.mat)
+  return(pb_mat)
 }
 
-# Eigen Indices ------------------------------------------------------------
+# Eigen Indices ----------------------------------------------------------------
 
-#' Eigenvalue Centrality index -- eigen_index()
+#' Eigenvalue Centrality Index -- eigen_index()
 #'
-#' @description This function calculates centrality scores for constructs within a `wimp` object,
-#'              based on the eigenvalue decomposition of a specified adjacency matrix from the WIMP scores.
-#'              It supports analyzing centrality using the 'direct', 'weights', or 'implications' matrices.
-#'              The centrality calculation is performed over the specified number of eigenvectors.
+#' @description Calculates centrality scores based on eigenvalue decomposition
+#'              of the adjacency matrix.
 #'
-#' @param wimp wimp An object of class 'wimp' (weighted implications grid)
-#' @param matrix A character string specifying which matrix to use for the centrality analysis. Accepted values are
-#'        'direct', 'weights', or 'implications'. Default is 'implications'.
-#' @param num.vectors An integer specifying the number of eigenvectors to use for computing centrality scores.
+#' @param wimp An object of class 'wimp' (weighted implications grid).
+#' @param matrix Matrix type for analysis: 'direct', 'weights', or
+#'        'implications'. Default is 'weights'. Note: only 'weights' is
+#'        available in new format.
+#' @param num.vectors Number of eigenvectors to use for centrality computation.
 #'
 #' @author Carlos Hurtado
 #'
-#' @return A dataframe containing the constructs' names and their respective centrality scores.
+#' @return A dataframe containing the constructs' names and their respective
+#'         centrality scores.
 #'
 #' @export
 #'
 #' @examples
 #'
-#' eigen_index(example.wimp)
+#' eigen_index(example_wimp)
 #'
 
-eigen_index <- function(wimp, matrix = "weights", num.vectors = 2) {
-  # Validate the specified method
+eigen_index <- function(wimp, matrix = "weights", num_vectors = 2) {
+
   if (!matrix %in% c("direct", "weights", "implications")) {
-    stop("method debe ser 'direct', 'weights' o 'implications'.")
+    stop("matrix debe ser 'direct', 'weights' o 'implications'.")
   }
 
-  # Access the matrix based on the specified method
-  if(matrix != "weights") warning("Only 'weights' matrix is available in new wimp format; using weights.")
-  adj.matrix <- .wimp_get_weights_matrix(wimp)
+  if (matrix != "weights") {
+    warning("Only 'weights' matrix available in new wimp format; using 
+            weights.")
+  }
 
-  # Compute eigenvectors and eigenvalues
-  results <- eigen(adj.matrix)
+  adj_matrix <- wimp$global$weight_matrix
 
-  # Ensure the number of requested eigenvectors does not exceed available components
-  if (num.vectors > length(results$values)) {
+  if (is.null(adj_matrix)) {
+    stop("No weights matrix found in wimp object")
+  }
+
+  results <- eigen(adj_matrix)
+
+  if (num_vectors > length(results$values)) {
     stop("num.vectors exceeds the number of available eigenvectors.")
   }
 
-  # Calculate centrality using the specified number of eigenvectors. This calculation takes the absolute value
-  # of the real part of each eigenvector, squares it, and then multiplies it by the real part of the corresponding
-  # eigenvalue to compute centrality scores.
-  centralidad <- Reduce(`+`, lapply(1:num.vectors, function(i) {
+  # Calculate centrality using specified number of eigenvectors
+  centrality <- Reduce(`+`, lapply(1:num_vectors, function(i) {
     Re(results$vectors[, i])^2 * Re(results$values[i])
   }))
 
-  # Create a dataframe with the centrality results
-  df.centrality <- data.frame(
-    Constructs = .wimp_get_construct_names(wimp),
-    Eigenvalues = abs(centralidad)
+  df_centrality <- data.frame(
+    Constructs = .construct_names(wimp),
+    Eigenvalues = abs(centrality)
   )
 
-  return(df.centrality)
+  return(df_centrality)
 }
 
-# PH Plot ------------------------------------------------
+# PB Plot ----------------------------------------------------------------------
 
-#' Scatter Plot of Constructs in PH Space -- ph_plot()
+#' PB Space Scatter Plot -- ph_plot()
 #'
-#' @description This function generates a scatter plot of constructs in the P-H space,
-#' where P represents Presence (frequency of the construct) and H represents Hierarchy
-#' (influence of the construct).
+#' @description Creates a scatter plot of constructs in Presence-Balance
+#'              space. P represents construct frequency, B represents
+#'              construct influence balance.
 #'
-#' @param wimp An object of class 'wimp', which contains an implication grid
-#'        and associated constructs.
-#'
-#' @param text.size Size of the text labels. Default is 1.
-#'
-#' @param ... Additional arguments are passed from \code{\link{ph_index}} function.
+#' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
+#'        imported by the \code{\link{importwimp}} function.
+#' @param text_size Text label size. Default is 1.
+#' @param ... Additional arguments passed to \code{\link{ph_index}} function.
 #'
 #' @author Carlos Hurtado and Alejandro Sanfeliciano
 #'
@@ -382,64 +357,120 @@ eigen_index <- function(wimp, matrix = "weights", num.vectors = 2) {
 #'
 #' @examples
 #'
-#' ph_plot(example.wimp)
+#' pb_plot(example_wimp)
 #'
 
-ph_plot <- function(wimp, text.size = 1, ...) {
+pb_plot <- function(wimp, text_size = 1, ...) {
 
-  # Extract the Mahalobis distance matrix for the given wimp
-  phm.mat <- ph_index(wimp)
-  # Convert the matrix to a dataframe
-  phm.mat.df <- as.data.frame(phm.mat)
-  # Assign the names of constructs from the row names of the matrix
-  phm.mat.df$constructo <- rownames(phm.mat)
-  # Assign the names of constructs in "Self"
-  phm.mat.df$self.constr <- if("self_pole" %in% names(wimp$vertices)) wimp$vertices$self_pole else paste(wimp$vertices$lpole, "-", wimp$vertices$rpole)
-  # Limits for the graph by the largest value of P or H dimensions. We add a small margin
-  limit <- max(abs(phm.mat.df$p), abs(phm.mat.df$h)) * 1.1
+  pb_mat <- pb_index(wimp, ...)
+  pb_mat_df <- as.data.frame(pb_mat)
+  pb_mat_df$construct <- rownames(pb_mat)
 
-  # Round P and H values
-  phm.mat.df$p <- round(phm.mat.df$p, 3)
-  phm.mat.df$h <- round(phm.mat.df$h, 3)
+  # Get construct labels for display
+  if ("self_pole" %in% names(wimp$vertices)) {
+    pb_mat_df$self_constr <- wimp$vertices$self_pole
+  } else {
+    pb_mat_df$self_constr <- .construct_names(wimp)
+  }
 
+  # Set plot limits with margin
+  limit <- max(abs(pb_mat_df$p), abs(pb_mat_df$b)) * 1.1
+  # Round values for display
+  pb_mat_df$p <- round(pb_mat_df$p, 3)
+  pb_mat_df$b <- round(pb_mat_df$b, 3)
 
-  phm.mat.df$color <- .construct.colors(wimp = wimp, mode = "red/green")[,"color"]
+  # Get construct colors
+  pb_mat_df$color <- .construct_colors(wimp = wimp,
+                                       mode = "red/green")[, "color"]
 
-  # Shapes for non-viable area if requested
-  shapes <-
-    list(
-      list(type = "path", path = paste("M 0,0 L", limit, ",", limit, " L0,", limit, " Z"),
-           fillcolor = "#CCCBF8", opacity = 0.2, line = list(color = "#CCCBF8")),
-      list(type = "path", path = paste("M 0,0 L", limit, ",", -limit, " L0,", -limit, " Z"),
-           fillcolor = "#CCCBF8", opacity = 0.2, line = list(color = "#CCCBF8")),
-      list(type = "line", x0 = 0, y0 = 0, x1 = limit, y1 = limit,
-           xref = "x", yref = "y", line = list(color = "#6F6BFF", width = 1, dash = "dash")),
-      list(type = "line", x0 = 0, y0 = 0, x1 = limit, y1 = -limit,
-           xref = "x", yref = "y", line = list(color = "#6F6BFF", width = 1, dash = "dash"))
+  # Define plot shapes for non-viable area
+  shapes <- list(
+    list(type = "path",
+         path = paste("M 0,0 L", limit, ",", limit, " L0,", limit, " Z"),
+         fillcolor = "#CCCBF8", opacity = 0.2,
+         line = list(color = "#CCCBF8")),
+    list(type = "path",
+         path = paste("M 0,0 L", limit, ",", -limit, " L0,", -limit, " Z"),
+         fillcolor = "#CCCBF8", opacity = 0.2,
+         line = list(color = "#CCCBF8")),
+    list(type = "line", x0 = 0, y0 = 0, x1 = limit, y1 = limit,
+         xref = "x", yref = "y",
+         line = list(color = "#6F6BFF", width = 1, dash = "dash")),
+    list(type = "line", x0 = 0, y0 = 0, x1 = limit, y1 = -limit,
+         xref = "x", yref = "y",
+         line = list(color = "#6F6BFF", width = 1, dash = "dash"))
+  )
+
+  # Normalize coordinates for the label optimization algorithm
+  # Map from data coordinates to normalized [0,1] range
+  x_range <- range(pb_mat_df$p)
+  y_range <- range(pb_mat_df$b)
+  x_span <- diff(x_range)
+  y_span <- diff(y_range)
+
+  # Add small padding to avoid edge issues
+  x_padding <- x_span * 0.1
+  y_padding <- y_span * 0.1
+
+  norm_x <- (pb_mat_df$p - (x_range[1] - x_padding)) / (x_span + 2 * x_padding)
+  norm_y <- (pb_mat_df$b - (y_range[1] - y_padding)) / (y_span + 2 * y_padding)
+
+  # Apply smart label positioning algorithm
+  optimized_positions <- .smart_label_positions(
+    x_coords = norm_x,
+    y_coords = norm_y,
+    labels = pb_mat_df$self_constr,
+    distance = 8,
+    text_size = 12 * text_size
+  )
+
+  # Convert optimized positions back to original data scale
+  if (nrow(optimized_positions) > 0) {
+    # Convert normalized shifts back to data coordinates
+    optimized_positions$xshift_data <- optimized_positions$xshift *
+      (x_span + 2 * x_padding)
+    optimized_positions$yshift_data <- optimized_positions$yshift *
+      (y_span + 2 * y_padding)
+  }
+
+  # Create plotly graph
+  p <- plot_ly() %>%
+    layout(
+      title = "",
+      xaxis = list(title = list(text = "PRESENCE", font = list(size = 20),
+                                standoff = 25)),
+      yaxis = list(title = list(text = "BALANCE",
+                                font = list(size = 20), standoff = 25)),
+      plot_bgcolor = "white",
+      font = list(family = "Arial"),
+      showlegend = FALSE,
+      shapes = shapes
+    ) %>%
+    add_markers(
+      data = pb_mat_df, x = ~p, y = ~b,
+      marker = list(color = pb_mat_df$color, size = 7,
+                    line = list(color = "black", width = 1)),
+      text = ~paste("Construct:", self_constr, "<br>P:", p, "<br>B:", b),
+      hoverinfo = "text"
     )
 
-  # Initialize Plotly graph
-  p <- plot_ly()
-
-  # Set the layout of the graph
-  p <- p %>%
-    layout(title = '',
-           xaxis = list(title = list(text='PRESENCE', font = list(size = 20), standoff = 25)),
-           yaxis = list(title = list(text='IMPLICATION BALANCE', font = list(size = 20), standoff = 25)),
-           plot_bgcolor = "white",
-           font = list(family = "Arial"),
-           showlegend = FALSE,
-           shapes = shapes)
-  p <- p %>%
-      add_annotations(data = phm.mat.df, x = ~p, y = ~h, text = ~self.constr,
-                      hovertext = ~paste('Constructo:', constructo, '\nP:', p, 'H:', h), hoverinfo = 'text',
-                      font = list(size = 12 * text.size, color = 'black'),
-                      showarrow = FALSE, xanchor = 'center', yanchor = 'bottom',
-                      yshift = 5)
-  p <- p %>%
-    add_markers(data = phm.mat.df, x = ~p, y = ~h,
-                marker = list(color = phm.mat.df$color, size = 7, line = list(color = 'black', width = 1)),
-                text = ~paste('P:', p, '; H:', h), hoverinfo = 'text')
+  # Add optimized annotations
+  if (nrow(optimized_positions) > 0) {
+    for (i in seq_len(nrow(optimized_positions))) {
+      p <- p %>% add_annotations(
+        x = pb_mat_df$p[i],
+        y = pb_mat_df$b[i],
+        text = optimized_positions$label[i],
+        hoverinfo = "skip",
+        font = list(size = 12 * text_size, color = "black"),
+        showarrow = FALSE,
+        xanchor = optimized_positions$xanchor[i],
+        yanchor = optimized_positions$yanchor[i],
+        xshift = optimized_positions$xshift_data[i],
+        yshift = optimized_positions$yshift_data[i]
+      )
+    }
+  }
 
   return(p)
 }

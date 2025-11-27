@@ -93,7 +93,7 @@ self_index <- function(wimp, method = "ssi", rc = TRUE, alpha = .5, beta = .5) {
   for (i in seq_len(nrow(wimp$vertices))) {
     self_val <- wimp$vertices$self[i]
     ideal_val <- wimp$vertices$ideal[i]
-    hypo_val <- .calc.hypo(self_val, ideal_val)
+    hypo_val <- .calc_hypo(self_val, ideal_val)
     if (is.na(ideal_val) || ideal_val == 0) {
       congruence[i] <- "Dilemmatic"
     } else if (is.na(hypo_val)) {
@@ -178,7 +178,7 @@ self_index <- function(wimp, method = "ssi", rc = TRUE, alpha = .5, beta = .5) {
   return(result)
 }
 
-# Self Radar Chart ---------------------------------------------------
+# Self Radar Chart -------------------------------------------------------------
 
 #' Self-Ideal Radar Chart -- self_plot()
 #'
@@ -202,7 +202,7 @@ self_index <- function(wimp, method = "ssi", rc = TRUE, alpha = .5, beta = .5) {
 
 self_plot <- function(wimp) {
 
-  wimp <- .align.wimp(wimp, exclude.dilemmatics = FALSE)
+  wimp <- .align_wimp(wimp, exclude_dilemmatics = FALSE)
 
   self <- wimp$vertices$self
   self <- c(self, self[1])
@@ -210,15 +210,15 @@ self_plot <- function(wimp) {
   ideal <- wimp$vertices$ideal
   ideal <- c(ideal, ideal[1])
 
-  r_poles <- wimp$vertices$rpole
-  l_poles <- wimp$vertices$lpole
+  r_poles <- wimp$vertices$right_pole
+  l_poles <- wimp$vertices$left_pole
   poles <- paste(r_poles, " (", l_poles, ")", sep = "")
   poles <- c(poles, poles[1])
 
-  construct <- paste(wimp$vertices$lpole, "-", wimp$vertices$rpole, sep = " ")
+  construct <- .construct_names(wimp)
   construct <- c(construct, construct[1])
 
-  colors <- .construct.colors(wimp, mode = "red/green")[, 1]
+  colors <- .construct_colors(wimp, mode = "red/green")[, 1]
   colors <- c(colors, colors[1])
 
   plot <- plot_ly(
@@ -252,7 +252,7 @@ self_plot <- function(wimp) {
       mode = "lines+markers",
       r = self,
       theta = poles,
-      name = paste("SSI Index:", round(self_index(wimp)$global[1], 2)),
+      name = "Self",
       marker = list(color = colors, size = 7,
                     line = list(color = "#6F6BFF", width = 1.5)),
       fillcolor = "rgba(204, 203, 248, 0.5)",
@@ -264,7 +264,7 @@ self_plot <- function(wimp) {
     )
   plot <- plot %>%
     layout(
-      showlegend = FALSE,
+      showlegend = TRUE,
       polar = list(
         radialaxis = list(
           visible = TRUE,
@@ -276,7 +276,8 @@ self_plot <- function(wimp) {
   plot
 }
 
-# SSI Heatmap -----------------------------------------------------------
+# SSI Heatmap ------------------------------------------------------------------
+
 #'
 #' SSI Heatmap -- ssi_heatmap()
 #'
@@ -387,6 +388,7 @@ ssi_heatmap <- function(wimp) {
 
   plot
 }
+# Hypothetical Scenarios Plot --------------------------------------------------
 
 #' Hypothetical Scenarios Plot  -- hypo_plot()
 #'
@@ -417,7 +419,7 @@ ssi_heatmap <- function(wimp) {
 #' # Without labels for cleaner view
 #' hypo_plot(example_wimp, show.labels = FALSE)
 
-hypo_plot <- function(wimp, text.size = 1, show.labels = TRUE, ...) { 
+hypo_plot <- function(wimp, text_size = 1, show_labels = TRUE, ...) {
 
   hypo_matrix <- wimp$global$hypo_matrix
   self_vector <- wimp$vertices$self
@@ -440,14 +442,14 @@ hypo_plot <- function(wimp, text.size = 1, show.labels = TRUE, ...) {
   for (i in seq_len(nrow(wimp$vertices))) {
     self_val <- wimp$vertices$self[i]
     ideal_val <- wimp$vertices$ideal[i]
-    hypo_val <- .calc.hypo(self_val, ideal_val)
+    hypo_val <- .calc_hypo(self_val, ideal_val)
     if (is.na(hypo_val)) {
-      pole_names[i] <- paste(wimp$vertices$lpole[i], "-",
-                             wimp$vertices$rpole[i])
+      pole_names[i] <- paste(wimp$vertices$left_pole[i], "-",
+                             wimp$vertices$right_pole[i])
     } else if (hypo_val > 0) {
-      pole_names[i] <- wimp$vertices$rpole[i]
+      pole_names[i] <- wimp$vertices$right_pole[i]
     } else {
-      pole_names[i] <- wimp$vertices$lpole[i]
+      pole_names[i] <- wimp$vertices$left_pole[i]
     }
   }
   df <- self_index_data$construct[c(4, 3)]
@@ -476,14 +478,14 @@ hypo_plot <- function(wimp, text.size = 1, show.labels = TRUE, ...) {
     )
 
   # Add labels only if requested
-  if (show.labels) {
+  if (show_labels) {
     # Use smart label positioning to avoid overlaps
     label_positions <- .smart_label_positions(
       x_coords = df$self,
       y_coords = df$ideal,
       labels = df$construct,
       distance = 8,
-      text_size = 11 * text.size
+      text_size = 11 * text_size
     )
 
     df$xanchor <- label_positions$xanchor
@@ -498,7 +500,7 @@ hypo_plot <- function(wimp, text.size = 1, show.labels = TRUE, ...) {
         y = ~ideal,
         text = ~construct,
         hoverinfo = "skip",
-        font = list(size = 11 * text.size, color = "black"),
+        font = list(size = 11 * text_size, color = "black"),
         showarrow = FALSE,
         xanchor = ~xanchor,
         xshift = ~xshift,

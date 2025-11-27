@@ -1,399 +1,382 @@
-## CHANGE IMPLICATIONS FUNCTIONS ##
+## CHANGE IMPLICATIONS FUNCTIONS
 
-# IF Index function---------------------------------------------------------------
-
-#' Impact And Feedback Index -- if_index()
+#' Impact and Feedback Index — if_index()
 #'
-#' @description This function calculates the intensity of the of impact in the
-#' system and feedback from the system for each construct.
+#' @description Computes Impact and Feedback indices for each construct.
+#' Impact quantifies influence exerted on other constructs; Feedback
+#' quantifies reciprocal influence from the system.
 #'
-#' @param wimp An object of class 'wimp', which contains a Weigthed Implication
-#'             Grid.
-#' @param std A character string indicating the type of standardization to apply.
-#'        Options are 'none' (no standardization), 'vertex' (standardize by the maximum total degree
-#'        of the constructs), 'edges' (standardize by the total number of edges) and 'adjacent'
-#'        (standarized by the number of the adjacent vertices). Default is 'adjacent'.
+#' @param wimp A `wimp` object with vertices and `global$weight_matrix`.
+#' @param std Standardization method. One of `"none"`, `"vertex"`,
+#'   `"edges"`, or `"adjacent"`. Defaults to `"adjacent"`.
 #'
-#' @author Maite Benitez Santos, Guillermo Calleja Garate, Alejandro Sanfeliciano
+#' @return A data frame with columns:
+#'   - "Negative Impact", "Positive Impact", "Global Impact"
+#'   - "Negative Feedback", "Positive Feedback", "Global Feedback"
+#'   Rows are constructs ("left_pole - right_pole").
 #'
-#' @return Returns a dataframe showing the intensity of the impact in the
-#' system and feedback from the system for each construct (negative, postive and
-#'  global).
+#' @details Dilemmatic targets (ideal = 0) are excluded from Impact sums.
+#'   Standardization divides results by the chosen coefficient.
 #'
+#' @author Maite Benitez Santos, Guillermo Calleja Garate,
+#'   Alejandro Sanfeliciano
 #' @export
-#'
 #' @examples
-#'
-#' if_index (example.wimp)
-#'
+#' if_index(example_wimp)
 
 if_index <- function(wimp, std = "adjacent") {
+  # Align so all ideal values are positive (required for comparisons)
+  wimp <- .align_wimp(wimp, exclude_dilemmatics = FALSE)
 
-  # Aligning the wimp object to ideal
-  wimp <- .align.wimp(wimp, exclude.dilemmatics = FALSE)
-
-  # Extract weight matrix from the wimp
-  wmatrix <- wimp$scores$weights
+  # Base matrices and adjacency (used for standardization when needed)
+  wmatrix <- wimp$global$weight_matrix
   amatrix <- wmatrix
   amatrix[amatrix != 0] <- 1
-  ncol <- ncol(wmatrix)
 
-  # Define standarization coefficient
+  # Standardization coefficient selection
+  if (std == "vertex") std_coef <- nrow(wmatrix) - 1
+  if (std == "edges") std_coef <- length(wmatrix[wmatrix != 0])
+  if (std == "adjacent") std_coef <- rowSums(amatrix)
 
-  if(std == "vertex"){std.coef <- dim(wmatrix)[1] - 1}
-  if(std == "edges"){std.coef <- length(wmatrix[wmatrix != 0])}
-  if(std == "adjacent"){std.coef <- rowSums(amatrix)}
+  ideal_vector <- wimp$vertices$ideal
 
-  self.vector <- wimp$self$standarized
-  ideal.vector <- wimp$ideal$standarized
-
-  self.matrix <- matrix(rep(self.vector, ncol), nrow = length(self.vector), ncol = ncol, byrow = TRUE)
-  ideal.matrix <- matrix(rep(ideal.vector, ncol), nrow = length(ideal.vector), ncol = ncol, byrow = TRUE)
-
-  # Impact calculation
+  # Impact matrix (zero out dilemmatic targets)
   imatrix <- wmatrix
-  imatrix[,.which.dilemmatics(wimp)] <- 0
+  dilemmatic_idx <- which(ideal_vector == 0)
+  if (length(dilemmatic_idx) > 0) imatrix[, dilemmatic_idx] <- 0
 
-  #imatrix <- mapply(.impact, w = wmatrix, s=self.matrix , i=ideal.matrix)
-  #imatrix <- matrix(imatrix , ncol = ncol)
+  # Split impact into positive / negative components
+  imatrix_pos <- imatrix
+  imatrix_pos[imatrix_pos < 0] <- 0
+  imatrix_neg <- imatrix
+  imatrix_neg[imatrix_pos > 0] <- 0
 
-  imatrix.positive <- imatrix
-  imatrix.positive[imatrix.positive < 0] <- 0
+  negative_impact <- apply(imatrix_neg, 1, sum)
+  positive_impact <- apply(imatrix_pos, 1, sum)
+  global_impact <- apply(imatrix, 1, sum)
 
-  imatrix.negative <- imatrix
-  imatrix.negative[imatrix.positive > 0] <- 0
-
-  negative.impact <- apply(imatrix.negative, MARGIN = 1, FUN = sum)
-  positive.impact <- apply(imatrix.positive, MARGIN = 1, FUN = sum)
-  global.impact <- apply(imatrix, MARGIN = 1, FUN = sum)
-
-  if(std != "none"){
-    negative.impact <- negative.impact / std.coef
-    positive.impact <- positive.impact / std.coef
-    global.impact <- global.impact / std.coef
+  # Standardize impact if requested
+  if (std != "none") {
+    negative_impact <- negative_impact / std_coef
+    positive_impact <- positive_impact / std_coef
+    global_impact <- global_impact / std_coef
   }
 
-  # Feedback calculation
-
+  # Feedback matrix (interaction of bilateral influence)
   fmatrix <- wmatrix * t(wmatrix)
+  fmatrix_pos <- fmatrix
+  fmatrix_pos[fmatrix_pos < 0] <- 0
+  fmatrix_neg <- fmatrix
+  fmatrix_neg[fmatrix_pos > 0] <- 0
 
-  fmatrix.positive <- fmatrix
-  fmatrix.positive[fmatrix.positive < 0] <- 0
+  negative_feedback <- apply(fmatrix_neg, 1, sum)
+  positive_feedback <- apply(fmatrix_pos, 1, sum)
+  global_feedback <- apply(fmatrix, 1, sum)
 
-  fmatrix.negative <- fmatrix
-  fmatrix.negative[fmatrix.positive > 0] <- 0
-
-  negative.feedback <- apply(fmatrix.negative, MARGIN = 1, FUN = sum)
-  positive.feedback  <- apply(fmatrix.positive, MARGIN = 1, FUN = sum)
-  global.feedback  <- apply(fmatrix, MARGIN = 1, FUN = sum)
-
-  if(std != "none"){
-    negative.feedback <- negative.feedback / std.coef
-    positive.feedback <- positive.feedback / std.coef
-    global.feedback <- global.feedback / std.coef
+  # Standardize feedback if requested
+  if (std != "none") {
+    negative_feedback <- negative_feedback / std_coef
+    positive_feedback <- positive_feedback / std_coef
+    global_feedback <- global_feedback / std_coef
   }
 
-  # Defining data.frame
-  result <- data.frame(abs(negative.impact),positive.impact, global.impact,
-                        abs(negative.feedback),positive.feedback,
-                        global.feedback)
-
-  # Set up col and row names
-    colnames(result) <- c("Negative Impact", "Positive Impact", "Global Impact",
-                          "Negative Feedback", "Positive Feedback",
-                          "Global Feedback")
-    rownames(result) <- wimp$constructs$constructs
-
-  # Return function
-    return(result)
+  # Assemble result data frame
+  result <- data.frame(
+    abs(negative_impact), positive_impact, global_impact,
+    abs(negative_feedback), positive_feedback, global_feedback
+  )
+  colnames(result) <- c(
+    "Negative Impact", "Positive Impact", "Global Impact",
+    "Negative Feedback", "Positive Feedback", "Global Feedback"
+  )
+  constructs <- paste(wimp$vertices$left_pole, "-", wimp$vertices$right_pole)
+  rownames(result) <- constructs
+  return(result)
 }
 
-# IF Plot Function ----------------------------------------------------------------
+## IF Plot Function
 
-#' IF Index Plot  -- if_plot()
+#' IF Index Scatter Plot — if_plot()
 #'
-#' @description This function creates a scatter plot to show the results of the
-#'              \code{\link{if_index}} function.
+#' @description Scatter plot of Impact (x) vs Feedback (y) per construct.
+#' Quadrants highlight typical patterns. Labels are positioned with
+#' a smart optimization to reduce overlap.
 #'
-#' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
-#'        imported by the \code{\link{importwimp}} function.
-#' @param show A character string indicating the constructs to be displayed. 'all' will display
-#'        all constructus, 'dil' will only display dilemmatic constructs and 'nodil' will
-#'        exclude dilemmatic constructs. Default is 'all'.
-#' @param text.size Scalar that modifies the text size. Default is 1.
-#' @param center Establishes the centre of the frame. Use "data" to set the data
-#'        to be framed and "origin" to set the origin to be in the centre. the default
-#'        is "data".
-#' @param ... additional arguments are passed from \code{\link{if_index}}
-#'        function.
+#' @param wimp A `wimp` object imported via \code{importwimp()}.
+#' @param show Construct filter. One of `"all"`, `"dil"`, `"nodil"`.
+#' @param center Axis centering. `"data"` (span data) or `"origin"`.
+#' @param text.size Text size multiplier. Defaults to 1.
+#' @param ... Additional arguments passed to \code{if_index()}.
 #'
-#' @author Maite Benitez Santos, Guillermo Calleja Garate and Alejandro Sanfeliciano
+#' @return A plotly scatter plot.
 #'
-#' @return returns a interactive scatter plot made with Plotly.
+#' @details Colors reflect congruency between self and ideal:
+#'   green (congruent), red (discrepant), yellow (dilemmatic).
 #'
+#' @author Maite Benitez Santos, Guillermo Calleja Garate,
+#'   Alejandro Sanfeliciano
 #' @export
-#'
 #' @import plotly
-#'
 #' @examples
-#'
-#' if_plot (example.wimp)
-#'
+#' if_plot(example_wimp)
 
-if_plot <- function(wimp, show = "all", center = "data", text.size = 1, ...) {
+if_plot <- function(wimp, show = "all", center = "data", text_size = 1, ...) {
+  # Align grid and extract core vectors
+  wimp <- .align_wimp(wimp, exclude_dilemmatics = FALSE)
+  self_vector <- wimp$vertices$self
+  ideal_vector <- wimp$vertices$ideal
+  left_poles <- wimp$vertices$left_pole
+  right_poles <- wimp$vertices$right_pole
 
-    # Align wimpgrid towards ideal
-    wimp <- .align.wimp(wimp, exclude.dilemmatics = FALSE)
+  # Derive displayed pole depending on self position
+  self_poles <- ifelse(
+    self_vector < 0, left_poles,
+    ifelse(self_vector > 0, right_poles, paste(left_poles, "-", right_poles))
+  )
+  constructs <- paste(left_poles, "-", right_poles)
+  dil <- which(ideal_vector == 0)
 
-    # Extract important info
-    self.poles <- wimp$constructs$self.poles
-    right.poles <- wimp$constructs$right.poles
-    constructs <- wimp$constructs$constructs
-    dil <- .which.dilemmatics(wimp)
-    construct.color <- .construct.colors(wimp, "red/green")
+  # Congruency coloring
+  congruency <- self_vector / ideal_vector
+  construct_color <- sapply(congruency, function(x) {
+    if (is.na(x) || is.infinite(x)) "#FFD97D"
+    else if (x < 0) "#d13b43"
+    else if (x > 0) "#5ce75c"
+    else "grey"
+  })
 
-    # Set up data.frame
-    df <- if_index(wimp, ...)[c(3,6)]
-    df <- data.frame (df, right.poles, constructs, self.poles, construct.color)
+  # Build plotting data frame from index results
+  df <- if_index(wimp, ...)[c(3, 6)]
+  df <- data.frame(df, right_poles, constructs, self_poles, construct_color)
+  names(df) <- c("I", "FB", "poles", "construct", "self", "color")
+  rownames(df) <- right_poles
+  if (show == "nodil") df <- df[-dil, ]
+  if (show == "dil") df <- df[dil, ]
 
+  # Axis range selection
+  if (center == "data") {
+    impact_min <- min(df[1]) - 0.15 * max(abs(df[1]))
+    impact_max <- max(df[1]) + 0.15 * max(abs(df[1]))
+    feedback_min <- min(df[2]) - 0.15 * max(abs(df[2]))
+    feedback_max <- max(df[2]) + 0.15 * max(abs(df[2]))
+  }
+  if (center == "origin") {
+    impact_min <- -(max(abs(df[1])) + 0.15 * max(abs(df[1])))
+    impact_max <- max(abs(df[1])) + 0.15 * max(abs(df[1]))
+    feedback_min <- -(max(abs(df[2])) + 0.15 * max(abs(df[2])))
+    feedback_max <- max(abs(df[2])) + 0.15 * max(abs(df[2]))
+  }
 
-    # Row and col names for data.frame
-    names(df) <- c("I", "FB", "poles", "construct", "self", "color")
-    rownames(df) <- right.poles
+  # Quadrant background shapes
+  shapes <- list(
+    list(type = "rect", fillcolor = "palegreen",
+         line = list(color = "palegreen"), opacity = 0.3, layer = "below",
+         x0 = 0, x1 = 10000, y0 = 0, y1 = 10000),
+    list(type = "rect", fillcolor = "#eb636b",
+         line = list(color = "#eb636b"), opacity = 0.3, layer = "below",
+         x0 = 0, x1 = -10000, y0 = 0, y1 = -10000),
+    list(type = "rect", fillcolor = "#ffe65d",
+         line = list(color = "#ffe65d"), opacity = 0.3, layer = "below",
+         x0 = 0, x1 = -10000, y0 = 0, y1 = 10000),
+    list(type = "rect", fillcolor = "#ffe65d",
+         line = list(color = "#ffe65d"), opacity = 0.3, layer = "below",
+         x0 = 0, x1 = 10000, y0 = 0, y1 = -10000)
+  )
 
-    # Show options
-    if(show == "nodil"){
-      df <- df[-dil,]
-    }
-    if(show == "dil"){
-      df <- df[dil,]
-    }
+  # Normalized coordinates for label optimization
+  x_range <- range(df$I)
+  y_range <- range(df$FB)
+  x_span <- diff(x_range)
+  y_span <- diff(y_range)
+  x_padding <- x_span * 0.1
+  y_padding <- y_span * 0.1
+  norm_x <- (df$I - (x_range[1] - x_padding)) / (x_span + 2 * x_padding)
+  norm_y <- (df$FB - (y_range[1] - y_padding)) / (y_span + 2 * y_padding)
+  optimized_positions <- .smart_label_positions(
+    x_coords = norm_x, y_coords = norm_y, labels = df$poles,
+    distance = 8, text_size = 15 * text_size
+  )
+  if (nrow(optimized_positions) > 0) {
+    optimized_positions$xshift_data <- optimized_positions$xshift *
+      (x_span + 2 * x_padding)
+    optimized_positions$yshift_data <- optimized_positions$yshift *
+      (y_span + 2 * y_padding)
+  }
 
-    # Plotting
-    # Axis set up
-    if(center == "data"){
-    irange.min <- min(df[1]) - 0.15 * max(abs(df[1]))
-    irange.max <- max(df[1]) + 0.15 * max(abs(df[1]))
-
-    frange.min <- min(df[2]) - 0.15 * max(abs(df[2]))
-    frange.max <- max(df[2]) + 0.15 * max(abs(df[2]))
-    }
-
-    if(center == "origin"){
-
-      irange.min <- -(max(abs(df[1])) + 0.15 * max(abs(df[1])))
-      irange.max <- max(abs(df[1])) + 0.15 * max(abs(df[1]))
-
-      frange.min <- -(max(abs(df[2])) + 0.15 * max(abs(df[2])))
-      frange.max <- max(abs(df[2])) + 0.15 * max(abs(df[2]))
-    }
-
-    # Shapes
-    shapes <- list(
-      list(type = "rect",
-           fillcolor = "palegreen", line = list(color = "palegreen"), opacity = 0.3, layer="below",
-           x0 = 0, x1 = 10000,
-           y0 = 0, y1 = 10000),
-
-      list(type = "rect",
-           fillcolor = "#eb636b", line = list(color = "#eb636b"), opacity = 0.3, layer="below",
-           x0 = 0, x1 = -10000,
-           y0 = 0, y1 = -10000)
-      ,
-      list(type = "rect",
-           fillcolor = "#ffe65d", line = list(color = "#ffe65d"), opacity = 0.3, layer="below",
-           x0 = 0, x1 = -10000,
-           y0 = 0, y1 = 10000),
-
-      list(type = "rect",
-           fillcolor = "#ffe65d", line = list(color = "#ffe65d"), opacity = 0.3, layer="below",
-           x0 = 0, x1 = 10000,
-           y0 = 0, y1 = -10000)
+  # Core scatter plot
+  fig <- plot_ly(data = df, x = ~I, y = ~FB) %>%
+    add_markers(
+      data = df, x = ~I, y = ~FB,
+      marker = list(color = ~color, size = 7,
+                    line = list(color = "black", width = 1)),
+      text = ~paste("<B>", construct, "</B>", "\nSelf:", self,
+                    "\nI:", round(I, 2), "\nF:", round(FB, 2)),
+      hoverinfo = "text"
+    ) %>%
+    layout(
+      xaxis = list(title = "IMPACT", range = c(impact_min, impact_max),
+                   gridcolor = "white", gridwidth = 0.5, zeroline = TRUE,
+                   zerolinecolor = "black", zerolinewidth = 2),
+      yaxis = list(title = "FEEDBACK", range = c(feedback_min, feedback_max),
+                   gridcolor = "white", gridwidth = 0.5, zeroline = TRUE,
+                   zerolinecolor = "black", zerolinewidth = 2),
+      showlegend = FALSE, shapes = shapes
     )
 
-    # Scatter plot
-    fig <- plot_ly(
-      data = df,
-      x = ~I,
-      y = ~FB
-    ) %>% add_annotations(
-      data = df,
-      x = ~I,
-      y = ~FB,
-      text = ~poles,
-      hoverinfo = 'text',
-      font = list(size = 15 * text.size),
-      showarrow = FALSE,
-      xanchor = 'center',
-      yanchor = 'bottom',
-      yshift = 5
-    ) %>% add_markers(
-      data = df,
-      x = ~I,
-      y = ~FB,
-      marker = list(color = ~color, size = 7, line = list(color = 'black', width = 1)),
-      text = ~paste('<B>',construct,'</B>' , '\nSelf:', self, '\nI:', round(I,digits = 2), '\nF:', round(FB,digits = 2)),
-      hoverinfo = 'text'
-    ) %>% layout(
-             xaxis = list(title = "IMPACT",
-                          range = c(irange.min,irange.max),
-                          gridcolor ="white",
-                          gridwidth= 0.5,
-                          zeroline = TRUE,
-                          zerolinecolor = "black",
-                          zerolinewidth = 2),
-             yaxis = list(title = "FEEDBACK",
-                          range = c(frange.min,frange.max),
-                          gridcolor ="white",
-                          gridwidth= 0.5,
-                          zeroline = TRUE,
-                          zerolinecolor = "black",
-                          zerolinewidth = 2),
-             showlegend = FALSE,
-             shapes = shapes
-             )
+  # Optimized label annotations
+  if (nrow(optimized_positions) > 0) {
+    for (i in seq_len(nrow(optimized_positions))) {
+      fig <- fig %>% add_annotations(
+        x = df$I[i], y = df$FB[i], text = optimized_positions$label[i],
+        hoverinfo = "skip", font = list(size = 15 * text_size),
+        showarrow = FALSE, xanchor = optimized_positions$xanchor[i],
+        yanchor = optimized_positions$yanchor[i],
+        xshift = optimized_positions$xshift_data[i],
+        yshift = optimized_positions$yshift_data[i]
+      )
+    }
+  }
 
-    # Return function
-    return(fig)
+  fig <- fig %>% .plot_optimization()
+  return(fig)
 }
 
-# Impact and Feedback Bar Chart Function ----------------------------------------------------------------
+## Impact and Feedback Bar Chart Function
 
-
-#' Impact and Feedback Bar Chart  -- if_barchart()
+#' Impact and Feedback Bar Chart — if_barchart()
 #'
-#' @description This function creates a bar chart to show the results of the
-#'              \code{\link{if_index}} function.
+#' @description Two-panel horizontal bar chart showing positive and
+#' negative components of Impact and Feedback.
 #'
-#' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
-#'        imported by the \code{\link{importwimp}} function.
-#' @param show A character string indicating the constructs to be displayed. 'all' will display
-#'        all constructus, 'dil' will only display dilemmatic constructs and 'nodil' will
-#'        exclude dilemmatic constructs. Default is 'all'.
-#' @param ... additional arguments are passed from \code{\link{if_index}}
-#'        function.
+#' @param wimp A `wimp` object imported via \code{importwimp()}.
+#' @param show Construct filter. One of `"all"`, `"dil"`, `"nodil"`.
+#' @param ... Additional arguments forwarded to \code{if_index()}.
+#'
+#' @return A plotly subplot with Impact and Feedback panels.
+#'
+#' @details Dilemmatic constructs (ideal = 0) are highlighted in yellow
+#'   when included. Ranges are symmetric for easier comparison.
 #'
 #' @author Alejandro Sanfeliciano
-#'
-#' @return returns a interactive bar chart made with plotly.
-#'
 #' @export
-#'
 #' @import plotly
-#'
 #' @examples
-#'
-#' if_barchart(example.wimp)
-#'
+#' if_barchart(example_wimp)
 
-if_barchart <- function(wimp, show = "all",...){
+if_barchart <- function(wimp, show = "all", ...) {
+  # Align and extract base vectors
+  wimp <- .align_wimp(wimp, exclude_dilemmatics = FALSE)
+  self_vector <- wimp$vertices$self
+  ideal_vector <- wimp$vertices$ideal
+  left_poles <- wimp$vertices$left_pole
+  right_poles <- wimp$vertices$right_pole
 
-  # Align wimp
-  wimp <- .align.wimp(wimp, exclude.dilemmatics = FALSE)
+  # Display pole based on self orientation
+  self_poles <- ifelse(
+    self_vector < 0, left_poles,
+    ifelse(self_vector > 0, right_poles, paste(left_poles, "-", right_poles))
+  )
+  constructs <- paste(left_poles, "-", right_poles)
+  dil <- which(ideal_vector == 0)
 
-  #Extract important info
-
-  self.poles <- wimp$constructs$self.poles
-  rigth.poles <- wimp$constructs$right.poles
-  constructs <- wimp$constructs$constructs
-
-  dim <- length(constructs)
-  dil <- .which.dilemmatics(wimp)
-
-  color.line.p <- rep("#5ce75c",dim)
-  if(show == "all"){color.line.p[dil] <- "#FFD97D"}
-
-  color.line.n <- rep("#d13b43",dim)
-  if(show == "all"){color.line.n[dil] <- "#FFD97D"}
-
-  width.line <- rep(1,dim)
-  if(show == "all"){width.line[dil] <- 1}
-
-  pattern <- rep(0,dim)
+  # Base colors (dilemmatics highlighted in yellow if shown)
+  col_p <- rep("#5ce75c", length(constructs))
+  col_n <- rep("#d13b43", length(constructs))
+  if (show == "all") {
+    col_p[dil] <- "#FFD97D"
+    col_n[dil] <- "#FFD97D"
+  }
+  width_line <- rep(1, length(constructs))
+  pattern <- rep(0, length(constructs))
   pattern[dil] <- 1
-  # Set up data frame for further plotting
-  df <- if_index(wimp,...)[c(1,2,4,5)]
-  df <- data.frame(df,df[,1] + df[,2],rigth.poles,self.poles,constructs,color.line.n,color.line.p,width.line)
-  df[,1] <- -df[,1]
-  df[,3] <- -df[,3]
 
-  # Row and col names of data frame
-  names(df) <- c("NI","PI","NF","PF","global","right.poles","self.poles","construct","colorn","colorp","widthline")
-  rownames(df) <- rigth.poles
+  # Prepare index data (NI/PI/NF/PF + global)
+  df <- if_index(wimp, ...)[c(1, 2, 4, 5)]
+  df <- data.frame(df, df[, 1] + df[, 2], right_poles, self_poles,
+                   constructs, col_n, col_p, width_line)
+  df[, 1] <- -df[, 1]
+  df[, 3] <- -df[, 3]
+  names(df) <- c("NI", "PI", "NF", "PF", "global", "right.poles",
+                 "self.poles", "construct", "colorn", "colorp",
+                 "widthline")
+  rownames(df) <- right_poles
+  if (show == "nodil") df <- df[-dil, ]
+  if (show == "dil") df <- df[dil, ]
 
-  # Show options
-  if(show == "nodil"){
-    df <- df[-dil,]
-  }
-  if(show == "dil"){
-    df <- df[dil,]
-  }
+  # Range for symmetric scaling
+  range <- max(abs(df[c(1, 2, 3, 4)])) * 1.15
 
-  # Plotting
-  # Important info to plot
-  range <- max(abs(df[c(1,2,3,4)])) + 0.15 * max(abs(df[c(1,2,3,4)]))
+  # Positive / Negative Impact panel
+  fig1 <- plot_ly(data = df, x = ~PI, y = ~reorder(right_poles, global),
+                  type = "bar", orientation = "h",
+                  marker = list(color = "#AAF683",
+                                line = list(color = ~colorp,
+                                            width = ~widthline),
+                                pattern = list(shape = ~ifelse(pattern == 1,
+                                                               "/", ""),
+                                               fillmode = "overlay",
+                                               fgcolor = "#FFEE7D",
+                                               size = 20)),
+                  hovertext = ~paste("<B>", construct, "</B>", "\nSelf:",
+                                     self_poles, "\nPositive Impact:",
+                                     round(PI, 2)), hoverinfo = "text") %>%
+    add_trace(x = ~NI, name = "Impact",
+              marker = list(color = "#EE6055",
+                            line = list(color = ~colorn,
+                                        width = ~widthline),
+                            pattern = list(shape = ~ifelse(pattern == 1,
+                                                           "/", ""),
+                                           fillmode = "overlay",
+                                           fgcolor = "#FFEE7D",
+                                           size = 20)),
+              hovertext = ~paste("<B>", construct, "</B>", "\nSelf:",
+                                 self_poles, "\nNegative Impact:",
+                                 round(NI, 2)), hoverinfo = "text") %>%
+    layout(barmode = "overlay", bargap = 0.08,
+           xaxis = list(title = "IMPACT", range = c(-range, range),
+                        showline = TRUE),
+           yaxis = list(title = "", showgrid = TRUE, showline = TRUE),
+           showlegend = FALSE)
 
-  # Plot fig1
-  fig1 <- plot_ly(
-    data = df,
-    x = ~PI,
-    y = ~reorder(right.poles, global),
-    type = "bar",
-    orientation = "h",
-    marker = list(color = "#AAF683", line = list(color = ~colorp, width = ~widthline), pattern = list(shape = ~ifelse(pattern == 1, "/", ""),fillmode="overlay", fgcolor="#FFEE7D", size=20)),
-    hovertext = ~paste('<B>', construct,'</B>', '\nSelf:', self.poles, '\nPositive Impact:', round(PI, 2)),
-    hoverinfo = "text"
-  ) %>% add_trace(
-    x = ~NI,
-    name = 'Impact',
-    marker = list(color = "#EE6055", line = list(color = ~colorn, width = ~widthline), pattern = list(shape = ~ifelse(pattern == 1, "/", ""),fillmode="overlay", fgcolor="#FFEE7D", size=20)),
-    hovertext = ~paste('<B>', construct,'</B>','\nSelf:', self.poles, '\nNegative Impact:', round(NI, 2)),
-    hoverinfo = "text"
-  ) %>% layout(
-    barmode = "overlay",
-    bargap = 0.08,
-    xaxis = list(title = "IMPACT", range = c(-range, range), showline = TRUE),
-    yaxis = list(title = "", showgrid = TRUE, showline = TRUE),
-    showlegend = FALSE
-  )
+  # Positive / Negative Feedback panel
+  fig2 <- plot_ly(data = df, x = ~PF, y = ~reorder(right_poles, global),
+                  type = "bar", orientation = "h", name = "Feedback",
+                  marker = list(color = "#AAF683",
+                                line = list(color = ~colorp,
+                                            width = ~widthline),
+                                pattern = list(shape = ~ifelse(pattern == 1,
+                                                               "/", ""),
+                                               fillmode = "overlay",
+                                               fgcolor = "#FFEE7D",
+                                               size = 20)),
+                  hovertext = ~paste("<B>", construct, "</B>", "\nSelf:",
+                                     self_poles, "\nPositive Feedback:",
+                                     round(PF, 2)), hoverinfo = "text") %>%
+    add_trace(x = ~NF, name = "Feedback",
+              marker = list(color = "#EE6055",
+                            line = list(color = ~colorn,
+                                        width = ~widthline),
+                            pattern = list(shape = ~ifelse(pattern == 1,
+                                                           "/", ""),
+                                           fillmode = "overlay",
+                                           fgcolor = "#FFEE7D",
+                                           size = 20)),
+              hovertext = ~paste("<B>", construct, "</B>", "\nSelf:",
+                                 self_poles, "\nNegative Feedback:",
+                                 round(NF, 2)), hoverinfo = "text") %>%
+    layout(barmode = "overlay", bargap = 0.08,
+           xaxis = list(title = "FEEDBACK", range = c(-range, range),
+                        showline = TRUE),
+           yaxis = list(title = "", showgrid = TRUE, showline = TRUE,
+                        showticklabels = TRUE, side = "right"),
+           showlegend = FALSE)
 
-  # Plot fig2
-  fig2 <- plot_ly(
-      data = df,
-      x = ~PF,
-      y = ~reorder(right.poles, global),
-      type = "bar",
-      orientation = "h",
-      name = "Feedback",
-      marker = list(color = "#AAF683", line = list(color = ~colorp, width = ~widthline), pattern = list(shape = ~ifelse(pattern == 1, "/", ""),fillmode="overlay", fgcolor="#FFEE7D", size=20)),
-      hovertext = ~paste('<B>', construct, '</B>', '\nSelf:', self.poles, '\nPositive Feedback:', round(PF, 2)),
-      hoverinfo = "text"
-  ) %>% add_trace(
-      x = ~NF,
-      name = 'Feedback',
-      marker = list(color = "#EE6055", line = list(color = ~colorn, width = ~widthline), pattern = list(shape = ~ifelse(pattern == 1, "/", ""),fillmode="overlay", fgcolor="#FFEE7D", size=20)),
-      hovertext = ~paste('<B>', construct,'</B>', '\nSelf:', self.poles, '\nNegative Feedback:', round(NF, 2)),
-      hoverinfo = "text"
-  ) %>% layout(
-      barmode = "overlay",
-      bargap = 0.08,
-      xaxis = list(title = "FEEDBACK", range = c(-range, range), showline = TRUE),
-      yaxis = list(title = "", showgrid = TRUE, showline = TRUE, showticklabels = TRUE, side = "right"),
-      showlegend = FALSE
-  )
-
-  # Combine fig1 and f2 in a subplot
-  fig <- subplot(
-      fig1, fig2, margin = 0.005
-  ) %>% layout(
-      xaxis = list(title = "IMPACT"),
-      yaxis = list(title = ""),
-      xaxis2 = list(title = "FEEDBACK"),
-      yaxis2 = list(title = "", showticklabels = TRUE, side = "right", overlaying = "y")
-     # plot_bgcolor = "#FFFAED"
-  )
-
-  # Return function
+  # Combine panels
+  fig <- subplot(fig1, fig2, margin = 0.005) %>%
+    layout(xaxis = list(title = "IMPACT"), yaxis = list(title = ""),
+           xaxis2 = list(title = "FEEDBACK"),
+           yaxis2 = list(title = "", showticklabels = TRUE,
+                         side = "right", overlaying = "y")) %>%
+    .plot_optimization()
   return(fig)
-  }
-
+}
