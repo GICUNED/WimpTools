@@ -13,7 +13,7 @@ eigen_index(wimp, matrix = "weights", num_vectors = 2)
 'implications'. Default is 'weights'. Note: only 'weights' is
 available in new format.}
 
-\item{num.vectors}{Number of eigenvectors to use for centrality computation.}
+\item{num_vectors}{Number of eigenvectors to use for centrality computation.}
 }
 \value{
 A dataframe containing the constructs' names and their respective

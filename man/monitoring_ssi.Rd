@@ -4,12 +4,14 @@
 \alias{monitoring_ssi}
 \title{Monitoring SSI Adjustment -- monitoring_ssi()}
 \usage{
-monitoring_ssi(wimp.t0, wimp.t1)
+monitoring_ssi(wimp_t0, wimp_t1)
 }
 \arguments{
-\item{wimp.t0}{First Subject's WimpGrid (e.g., pre-intervention). It must be a "wimp" S3 object.}
+\item{wimp_t0}{First Subject's WimpGrid (e.g., pre-intervention). It must
+be a "wimp" S3 object.}
 
-\item{wimp.t1}{Second Subject's WimpGrid (e.g., post-intervention). It must be a "wimp" S3 object.}
+\item{wimp_t1}{Second Subject's WimpGrid (e.g., post-intervention). It must
+be a "wimp" S3 object.}
 }
 \value{
 A two heatmap made with plotly.
@@ -20,7 +22,5 @@ and compare the progress of the SSI index across different
 time points (e.g., pre- and post-intervention).
 }
 \examples{
-
-monitoring_ssi(example_wimp, example_wimp)
-
+ monitoring_ssi(example_wimp, example_wimp)
 }

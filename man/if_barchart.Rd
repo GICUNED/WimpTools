@@ -2,7 +2,7 @@
 % Please edit documentation in R/ChangeImplicationsFunctions.R
 \name{if_barchart}
 \alias{if_barchart}
-\title{Impact and Feedback Bar Chart — if_barchart()}
+\title{Impact and Feedback Bar Chart - if_barchart()}
 \usage{
 if_barchart(wimp, show = "all", ...)
 }

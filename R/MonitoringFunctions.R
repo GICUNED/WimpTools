@@ -1,5 +1,6 @@
 utils::globalVariables(c("h", "p", ".merge_wimp",
-                         ".compatibility_merge_wimp"))
+                         ".compatibility_merge_wimp", ".align_wimp",
+                         ".construct_colors"))
 
 #' Monitoring SSI Adjustment -- monitoring_ssi()
 #'
@@ -308,7 +309,7 @@ monitoring_ssi <- function(wimp_t0, wimp_t1) {
 #' @param show_centroid Logical; if TRUE, displays the centroid of construct
 #'   P-H coordinates for both grids on the graph.
 #' @param text_size Size of the text labels. Default is 1.
-#' @param ... additional arguments are passed from \\code{\\link{ph_index}}
+#' @param ... additional arguments are passed from \\code{\\link{pb_index}}
 #'   function.
 #'
 #' @return A Plotly object representing the comparative graph of constructs

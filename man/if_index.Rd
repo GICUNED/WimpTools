@@ -2,7 +2,7 @@
 % Please edit documentation in R/ChangeImplicationsFunctions.R
 \name{if_index}
 \alias{if_index}
-\title{Impact and Feedback Index — if_index()}
+\title{Impact and Feedback Index - if_index()}
 \usage{
 if_index(wimp, std = "adjacent")
 }

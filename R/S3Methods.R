@@ -22,7 +22,7 @@ print.wimp <- function(x, n = 10, m = 10, digits = 3, ...) {
   .trunc <- function(z, width) {
     z <- as.character(z)
     too_long <- nchar(z) > width
-    z[too_long] <- paste0(substr(z[too_long], 1, width - 1), "…")
+    z[too_long] <- paste0(substr(z[too_long], 1, width - 1), "...")
     z
   }
   .num <- function(v) ifelse(is.na(v), NA, round(v, digits))
@@ -77,7 +77,7 @@ print.wimp <- function(x, n = 10, m = 10, digits = 3, ...) {
       }
       .cat(paste(cells, collapse = "  |  "), "\n")
     }
-    if(NROW(df) > max_rows) .cat("… with ", NROW(df) - max_rows, " more rows\n")
+    if(NROW(df) > max_rows) .cat("... with ", NROW(df) - max_rows, " more rows\n")
   }
 
   width <- getOption("width", 80)
@@ -118,7 +118,7 @@ print.wimp <- function(x, n = 10, m = 10, digits = 3, ...) {
         paste0(nm, ": ", .trunc(val, 30))
       }, character(1))
       .cat(paste(kv, collapse = "  |  "), "\n")
-      if(length(meta_names) > length(k)) .cat("            … and ", length(meta_names) - length(k), " more\n")
+      if(length(meta_names) > length(k)) .cat("            ... and ", length(meta_names) - length(k), " more\n")
     }
   }
   .cat("\n")
@@ -148,7 +148,7 @@ print.wimp <- function(x, n = 10, m = 10, digits = 3, ...) {
     if(!is.null(gl$wmatrix) && is.matrix(gl$wmatrix)){
       d <- dim(gl$wmatrix)
       nz <- sum(gl$wmatrix != 0, na.rm = TRUE) - sum(diag(gl$wmatrix) != 0, na.rm = TRUE)
-      .cat("(no edges table) — inferred ", max(0L, nz), " non-zero weights from ", d[1], "x", d[2], " matrix\n")
+      .cat("(no edges table) - inferred ", max(0L, nz), " non-zero weights from ", d[1], "x", d[2], " matrix\n")
     } else {
       .cat("(no edges)\n")
     }

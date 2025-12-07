@@ -10,13 +10,13 @@ hypo_plot(wimp, text_size = 1, show_labels = TRUE, ...)
 \item{wimp}{Subject's WimpGrid. It must be a "wimp" S3 object
 imported by the \code{\link{importwimp}} function.}
 
-\item{...}{Additional arguments passed to \code{\link{self_index}} function.}
+\item{text_size}{Scalar that modifies the text size. Default is 1.}
 
-\item{text.size}{Scalar that modifies the text size. Default is 1.}
-
-\item{show.labels}{Logical. Whether to show construct labels on the plot
+\item{show_labels}{Logical. Whether to show construct labels on the plot
 Default is TRUE. Set to FALSE to reduce visual clutter with many
 constructs.}
+
+\item{...}{Additional arguments passed to \code{\link{self_index}} function.}
 }
 \value{
 returns a interactive scatter plot made with Plotly.

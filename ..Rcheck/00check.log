@@ -2,8 +2,16 @@
 * using R version 4.2.2 Patched (2022-11-10 r83330)
 * using platform: x86_64-pc-linux-gnu (64-bit)
 * using session charset: UTF-8
-* checking for file ‘./DESCRIPTION’ ... ERROR
-Required field missing or empty:
-  ‘Author’
+* checking for file ‘./DESCRIPTION’ ... OK
+* checking extension type ... Package
+* this is package ‘WimpTools’ version ‘1.1.0’
+* package encoding: UTF-8
+* checking package namespace information ... OK
+* checking package dependencies ... ERROR
+Namespace dependencies missing from DESCRIPTION Imports/Depends entries:
+  'MESS', 'dplyr', 'htmlwidgets', 'readxl', 'useful'
+
+See section ‘The DESCRIPTION file’ in the ‘Writing R Extensions’
+manual.
 * DONE
 Status: 1 ERROR

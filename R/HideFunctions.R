@@ -424,18 +424,18 @@
       var l0=Math.hypot(e0.x,e0.y)||1, l1=Math.hypot(e1.x,e1.y)||1; e0.x/=l0; e0.y/=l0; e1.x/=l1; e1.y/=l1;
       var n0={x:e0.y,y:-e0.x}, n1={x:e1.y,y:-e1.x};
       
-      // Calcular ángulo para detectar esquinas agudas
+      // Calculate angle to detect sharp corners
       var dot=e0.x*e1.x+e0.y*e1.y; var angle=Math.acos(Math.max(-1,Math.min(1,-dot)));
       var isSharpCorner=angle<Math.PI/3; // Menos de 60 grados
       
       var pB={x:p1.x+n0.x*d,y:p1.y+n0.y*d}, pC={x:p1.x+n1.x*d,y:p1.y+n1.y*d};
       var q=lineIntersect(pB,e0,pC,e1);
       
-      // Validar intersección y distancia
+      // Validate intersection and distance
       if(q && distance(p1,q)<=MAX_OFFSET_DIST && !isSharpCorner){
         out[i]=q;
       } else {
-        // Fallback mejorado para esquinas problemáticas
+        // Improved fallback for problematic corners
         var avgNormal={x:(n0.x+n1.x)*0.5, y:(n0.y+n1.y)*0.5};
         var len=Math.hypot(avgNormal.x,avgNormal.y)||1;
         avgNormal.x/=len; avgNormal.y/=len;
@@ -462,7 +462,7 @@
         var v1x=p1.x-p0.x,v1y=p1.y-p0.y,v2x=p2.x-p1.x,v2y=p2.y-p1.y;
         var l1=Math.hypot(v1x,v1y)||1,l2=Math.hypot(v2x,v2y)||1;
         
-        // Adaptar radio de redondeado según el ángulo
+        // Adapt rounding radius based on angle
         var dot=(v1x/l1)*(-v2x/l2)+(v1y/l1)*(-v2y/l2);
         var angle=Math.acos(Math.max(-1,Math.min(1,dot)));
         var angleRatio=Math.max(0.3,Math.sin(angle*0.5));
@@ -525,7 +525,7 @@
         {x:minX-adaptivePad,y:maxY+adaptivePad}
       ];
     } else {
-      // Mejorado: padding adaptativo basado en dispersión de puntos
+      // Mejorado: adaptive padding based on point dispersion
       var xs=pts.map(p => p.x), ys=pts.map(p => p.y);
       var avgX=xs.reduce((a,b) => a+b)/xs.length, avgY=ys.reduce((a,b) => a+b)/ys.length;
       var avgDist=pts.reduce((sum,p) => sum+distance({x:avgX,y:avgY},p),0)/pts.length;

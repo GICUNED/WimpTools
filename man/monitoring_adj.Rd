@@ -2,26 +2,36 @@
 % Please edit documentation in R/MonitoringFunctions.R
 \name{monitoring_adj}
 \alias{monitoring_adj}
-\title{Monitoring Self Adjustment -- monitoring_adj()}
+\title{Monitoring SSI Adjustment -- monitoring_ssi()}
 \usage{
-monitoring_adj(wimp.t0, wimp.t1, legend = TRUE)
+monitoring_adj(wimp_t0, wimp_t1, legend = TRUE)
 }
 \arguments{
-\item{wimp.t0}{First Subject's WimpGrid (e.g., pre-intervention). It must be a "wimp" S3 object.}
+\item{wimp_t0}{First Subject's WimpGrid (e.g., pre-intervention). It must be
+a "wimp" S3 object.}
 
-\item{wimp.t1}{Second Subject's WimpGrid (e.g., post-intervention). It must be a "wimp" S3 object.}
+\item{wimp_t1}{Second Subject's WimpGrid (e.g., post-intervention). It must
+be a "wimp" S3 object.}
 
 \item{legend}{If TRUE, displays legend of plot. Default is TRUE.}
 }
 \value{
+A two heatmap made with plotly.
+
 Interactive radar plot using plotly
 }
 \description{
+This function generates an interactive heatmap to visualize
+and compare the progress of the SSI index across different
+time points (e.g., pre- and post-intervention).
+
 This function generates an interactive radar plot to visualize
 and compare the progress of the "self" and "ideal" across different
 time points (e.g., pre- and post-intervention).
 }
 \examples{
+ monitoring_ssi(example_wimp, example_wimp)
+Monitoring Self Adjustment -- monitoring_adj()
 
- monitoring_adj(example_wimp,example_wimp)
+ monitoring_adj(example_wimp, example_wimp)
 }

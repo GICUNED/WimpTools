@@ -285,7 +285,7 @@ pb_index <- function(wimp, method = "wnorm", std = "none") {
 #' @param matrix Matrix type for analysis: 'direct', 'weights', or
 #'        'implications'. Default is 'weights'. Note: only 'weights' is
 #'        available in new format.
-#' @param num.vectors Number of eigenvectors to use for centrality computation.
+#' @param num_vectors Number of eigenvectors to use for centrality computation.
 #'
 #' @author Carlos Hurtado
 #'
@@ -344,9 +344,9 @@ eigen_index <- function(wimp, matrix = "weights", num_vectors = 2) {
 #'              construct influence balance.
 #'
 #' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
-#'        imported by the \code{\link{importwimp}} function.
+#'        imported by the \\code{\\link{importwimp}} function.
 #' @param text_size Text label size. Default is 1.
-#' @param ... Additional arguments passed to \code{\link{ph_index}} function.
+#' @param ... Additional arguments passed to \\code{\\link{pb_index}} function.
 #'
 #' @author Carlos Hurtado and Alejandro Sanfeliciano
 #'

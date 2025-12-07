@@ -1,6 +1,6 @@
 ## CHANGE IMPLICATIONS FUNCTIONS
 
-#' Impact and Feedback Index — if_index()
+#' Impact and Feedback Index - if_index()
 #'
 #' @description Computes Impact and Feedback indices for each construct.
 #' Impact quantifies influence exerted on other constructs; Feedback
@@ -97,7 +97,7 @@ if_index <- function(wimp, std = "adjacent") {
 
 ## IF Plot Function
 
-#' IF Index Scatter Plot — if_plot()
+#' IF Index Scatter Plot - if_plot()
 #'
 #' @description Scatter plot of Impact (x) vs Feedback (y) per construct.
 #' Quadrants highlight typical patterns.
@@ -106,7 +106,7 @@ if_index <- function(wimp, std = "adjacent") {
 #'        imported by the \code{\link{importwimp}} function.
 #' @param show Construct filter. One of `"all"`, `"dil"`, `"nodil"`.
 #' @param center Axis centering. `"data"` (span data) or `"origin"`.
-#' @param text.size Text size multiplier. Defaults to 1.
+#' @param text_size Text size multiplier. Defaults to 1.
 #' @param ... Additional arguments passed to \code{if_index()}.
 #'
 #' @return A plotly scatter plot.
@@ -244,7 +244,7 @@ if_plot <- function(wimp, show = "all", center = "data", text_size = 1, ...) {
 
 ## Impact and Feedback Bar Chart Function
 
-#' Impact and Feedback Bar Chart — if_barchart()
+#' Impact and Feedback Bar Chart - if_barchart()
 #'
 #' @description Two-panel horizontal bar chart showing positive and
 #' negative components of Impact and Feedback.

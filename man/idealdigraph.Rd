@@ -8,15 +8,15 @@ idealdigraph(wimp, hide_direct = FALSE, layout = "circle", ...)
 }
 \arguments{
 \item{wimp}{Subject's WimpGrid. It must be a "wimp" S3 object
-imported by the \code{\link{importwimp}} function.}
+imported by the \\code{\\link{importwimp}} function.}
+
+\item{hide_direct}{If TRUE, hide direct relationships between nodes. Default is
+FALSE.}
 
 \item{layout}{Layout for the digraph. Options: "circle", "rtcircle", "tree",
 "graphopt", "mds", "grid" or "areas". Default is "circle".}
 
-\item{...}{Additional arguments passed to \code{\link{digraph}}.}
-
-\item{inc}{If TRUE, hide direct relationships between nodes. Default is
-FALSE.}
+\item{...}{Additional arguments passed to \\code{\\link{digraph}}.}
 }
 \value{
 A visNetwork graph

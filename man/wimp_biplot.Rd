@@ -2,7 +2,7 @@
 % Please edit documentation in R/PCAFunctions.R
 \name{wimp_biplot}
 \alias{wimp_biplot}
-\title{Weighted Implication Grid Biplot — wimp_biplot()}
+\title{Weighted Implication Grid Biplot - wimp_biplot()}
 \usage{
 wimp_biplot(wimp, text_size = 1)
 }

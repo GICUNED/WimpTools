@@ -398,8 +398,8 @@ ssi_heatmap <- function(wimp) {
 #'
 #' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
 #'        imported by the \code{\link{importwimp}} function.
-#' @param text.size Scalar that modifies the text size. Default is 1.
-#' @param show.labels Logical. Whether to show construct labels on the plot
+#' @param text_size Scalar that modifies the text size. Default is 1.
+#' @param show_labels Logical. Whether to show construct labels on the plot
 #'        Default is TRUE. Set to FALSE to reduce visual clutter with many
 #'        constructs.
 #' @param ... Additional arguments passed to \code{\link{self_index}} function.

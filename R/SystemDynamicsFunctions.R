@@ -364,6 +364,7 @@ auc_index <- function(scn, std = TRUE) {
 #'
 #' @importFrom stats sd
 #' @importFrom stats rnorm
+#' @importFrom tidyr pivot_longer
 #'
 #' @export
 #'

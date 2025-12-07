@@ -14,10 +14,10 @@
 #' @param wimp A subject's WimpGrid object. Must be a "wimp" S3 object
 #'        imported by the \code{\link{importwimp}} function, or a "scn"
 #'        scenario object from \code{\link{scenariomatrix}}.
-#' @param vertex.vector Numeric vector defining the value of each vertex in the
+#' @param vertex_vector Numeric vector defining the value of each vertex in the
 #'        digraph. If \code{NA} (default), uses the normalized self values
 #'        from the wimp object.
-#' @param ideal.vector Numeric vector defining the ideal value of each vertex.
+#' @param ideal_vector Numeric vector defining the ideal value of each vertex.
 #'        If \code{NA} (default), uses the normalized ideal values from the
 #'        wimp object.
 #' @param width Character string specifying the graph width. Default is "100%".
@@ -30,16 +30,16 @@
 #'        and "areas".
 #' @param show Logical vector or single value defining which constructs to
 #'        display. Default is \code{TRUE} (show all constructs).
-#' @param hide.direct Logical; if \code{TRUE}, hides positive direct
+#' @param hide_direct Logical; if \code{TRUE}, hides positive direct
 #'        relationships between nodes. Default is \code{FALSE}.
 #' @param areas Logical; if \code{TRUE}, draws colored areas grouping nodes
 #'        by the specified attribute. Default is \code{FALSE}.
-#' @param area.attr Character string specifying the vertex attribute name for
+#' @param area_attr Character string specifying the vertex attribute name for
 #'        grouping nodes into areas. Default is "category". Must be a column
 #'        name in the wimp vertices data frame.
-#' @param area.color Character vector of hex colors for area backgrounds. If
+#' @param area_color Character vector of hex colors for area backgrounds. If
 #'        \code{NA} (default), uses predefined color palette.
-#' @param pad.side Numeric value specifying padding in pixels for areas drawn
+#' @param pad_side Numeric value specifying padding in pixels for areas drawn
 #'        around nodes. Default is 50.
 #' @param rounding Numeric value specifying radius for rounding area corners
 #'        (0 for sharp corners). Default is 10.
@@ -473,7 +473,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
   # Handle areas-specific layout
   .handle_areas_layout <- function(vertex, area_attr) {
     cat2 <- vertex[[area_attr]]
-    cat2[is.na(cat2) | cat2 == ""] <- "Sin categoría"
+    cat2[is.na(cat2) | cat2 == ""] <- "Uncategorized"
     vertex[[area_attr]] <- cat2
     cats <- unique(cat2)
     k <- length(cats)
@@ -645,12 +645,12 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
 #' @description Plot the ideal self based on the constructs and their relations.
 #'
 #' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
-#'        imported by the \code{\link{importwimp}} function.
-#' @param inc If TRUE, hide direct relationships between nodes. Default is
+#'        imported by the \\code{\\link{importwimp}} function.
+#' @param hide_direct If TRUE, hide direct relationships between nodes. Default is
 #'            FALSE.
-#' @param ... Additional arguments passed to \code{\link{digraph}}.
 #' @param layout Layout for the digraph. Options: "circle", "rtcircle", "tree",
 #'        "graphopt", "mds", "grid" or "areas". Default is "circle".
+#' @param ... Additional arguments passed to \\code{\\link{digraph}}.
 #'
 #' @author Alejandro Sanfeliciano
 #'

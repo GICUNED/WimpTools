@@ -1,6 +1,6 @@
 ## WimpGrid Biplot Function
 
-#' Weighted Implication Grid Biplot — wimp_biplot()
+#' Weighted Implication Grid Biplot - wimp_biplot()
 #'
 #' @description PCA biplot combining hypothetical selves and personal
 #' constructs. Visualizes the first two principal components to reveal

@@ -2,7 +2,7 @@
 % Please edit documentation in R/ChangeImplicationsFunctions.R
 \name{if_plot}
 \alias{if_plot}
-\title{IF Index Scatter Plot — if_plot()}
+\title{IF Index Scatter Plot - if_plot()}
 \usage{
 if_plot(wimp, show = "all", center = "data", text_size = 1, ...)
 }
@@ -14,9 +14,9 @@ imported by the \code{\link{importwimp}} function.}
 
 \item{center}{Axis centering. `"data"` (span data) or `"origin"`.}
 
-\item{...}{Additional arguments passed to \code{if_index()}.}
+\item{text_size}{Text size multiplier. Defaults to 1.}
 
-\item{text.size}{Text size multiplier. Defaults to 1.}
+\item{...}{Additional arguments passed to \code{if_index()}.}
 }
 \value{
 A plotly scatter plot.

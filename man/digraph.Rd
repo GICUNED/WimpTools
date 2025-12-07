@@ -26,6 +26,14 @@ digraph(
 imported by the \code{\link{importwimp}} function, or a "scn"
 scenario object from \code{\link{scenariomatrix}}.}
 
+\item{vertex_vector}{Numeric vector defining the value of each vertex in the
+digraph. If \code{NA} (default), uses the normalized self values
+from the wimp object.}
+
+\item{ideal_vector}{Numeric vector defining the ideal value of each vertex.
+If \code{NA} (default), uses the normalized ideal values from the
+wimp object.}
+
 \item{width}{Character string specifying the graph width. Default is "100%".}
 
 \item{height}{Character string specifying the graph height. Default is
@@ -41,32 +49,24 @@ and "areas".}
 \item{show}{Logical vector or single value defining which constructs to
 display. Default is \code{TRUE} (show all constructs).}
 
+\item{hide_direct}{Logical; if \code{TRUE}, hides positive direct
+relationships between nodes. Default is \code{FALSE}.}
+
 \item{areas}{Logical; if \code{TRUE}, draws colored areas grouping nodes
 by the specified attribute. Default is \code{FALSE}.}
 
-\item{rounding}{Numeric value specifying radius for rounding area corners
-(0 for sharp corners). Default is 10.}
-
-\item{vertex.vector}{Numeric vector defining the value of each vertex in the
-digraph. If \code{NA} (default), uses the normalized self values
-from the wimp object.}
-
-\item{ideal.vector}{Numeric vector defining the ideal value of each vertex.
-If \code{NA} (default), uses the normalized ideal values from the
-wimp object.}
-
-\item{hide.direct}{Logical; if \code{TRUE}, hides positive direct
-relationships between nodes. Default is \code{FALSE}.}
-
-\item{area.attr}{Character string specifying the vertex attribute name for
+\item{area_attr}{Character string specifying the vertex attribute name for
 grouping nodes into areas. Default is "category". Must be a column
 name in the wimp vertices data frame.}
 
-\item{area.color}{Character vector of hex colors for area backgrounds. If
+\item{area_color}{Character vector of hex colors for area backgrounds. If
 \code{NA} (default), uses predefined color palette.}
 
-\item{pad.side}{Numeric value specifying padding in pixels for areas drawn
+\item{pad_side}{Numeric value specifying padding in pixels for areas drawn
 around nodes. Default is 50.}
+
+\item{rounding}{Numeric value specifying radius for rounding area corners
+(0 for sharp corners). Default is 10.}
 }
 \value{
 A \code{visNetwork} interactive graph object that can be displayed

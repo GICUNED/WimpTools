@@ -8,11 +8,11 @@ pb_plot(wimp, text_size = 1, ...)
 }
 \arguments{
 \item{wimp}{Subject's WimpGrid. It must be a "wimp" S3 object
-imported by the \code{\link{importwimp}} function.}
+imported by the \\code{\\link{importwimp}} function.}
 
 \item{text_size}{Text label size. Default is 1.}
 
-\item{...}{Additional arguments passed to \code{\link{ph_index}} function.}
+\item{...}{Additional arguments passed to \\code{\\link{pb_index}} function.}
 }
 \value{
 A Plotly object representing the generated scatter plot.

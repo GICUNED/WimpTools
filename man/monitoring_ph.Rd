@@ -4,27 +4,31 @@
 \alias{monitoring_ph}
 \title{Monitoring PH index -- monitoring_ph()}
 \usage{
-monitoring_ph(wimp.t0, wimp.t1, show.centroid = TRUE, text.size = 1, ...)
+monitoring_ph(wimp_t0, wimp_t1, show_centroid = TRUE, text_size = 1, ...)
 }
 \arguments{
-\item{wimp.t0}{Data object containing constructs and their respective P and H coordinates for the first grid.}
+\item{wimp_t0}{Data object containing constructs and their respective P and
+H coordinates for the first grid.}
 
-\item{wimp.t1}{Data object containing constructs and their respective P and H coordinates for the second grid}
+\item{wimp_t1}{Data object containing constructs and their respective P and
+H coordinates for the second grid.}
 
-\item{show.centroid}{Logical; if TRUE, displays the centroid of construct P-H coordinates for both grids on the graph.}
+\item{show_centroid}{Logical; if TRUE, displays the centroid of construct
+P-H coordinates for both grids on the graph.}
 
-\item{text.size}{Size of the text labels. Default is 1.}
+\item{text_size}{Size of the text labels. Default is 1.}
 
-\item{...}{additional arguments are passed from \code{\link{ph_index}} function.}
+\item{...}{additional arguments are passed from \\code{\\link{pb_index}}
+function.}
 }
 \value{
-A Plotly object representing the comparative graph of constructs across both grids
+A Plotly object representing the comparative graph of constructs
+  across both grids.
 }
 \description{
-This function generates a graphical comparison of constructs from two
-different Weigthed Implications Grids plotted in a PH space.
+This function generates a graphical comparison of constructs
+  from two different Weighted Implications Grids plotted in a PH space.
 }
 \examples{
-
-monitoring_ph(example_wimp,example_wimp)
+ monitoring_ph(example_wimp, example_wimp)
 }
