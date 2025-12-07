@@ -1,0 +1,9 @@
+* using log directory ‘/home/asanfe/ASanfe/WimpTools/..Rcheck’
+* using R version 4.2.2 Patched (2022-11-10 r83330)
+* using platform: x86_64-pc-linux-gnu (64-bit)
+* using session charset: UTF-8
+* checking for file ‘./DESCRIPTION’ ... ERROR
+Required field missing or empty:
+  ‘Author’
+* DONE
+Status: 1 ERROR

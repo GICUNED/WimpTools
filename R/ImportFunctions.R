@@ -1,5 +1,7 @@
 ## IMPORT FUNCTIONS ##
 
+utils::globalVariables(c(".self_poles"))
+
 # Import Weighted Implication Grid ----------------------------------------
 
 #' Import Weighted Implication Grid -- importwimp()
@@ -104,7 +106,7 @@ importwimp <- function(path, sheet = 1) {
   normalized_ideal <- (direct_ideal - (scale_center * rep(1, n_constructs))) /
     (0.5 * (scale_max - scale_min))
   # Calculate hypothetical values using .calc.hypo algorithm
-  normalized_hypothetical <- mapply(.calc.hypo, normalized_self,
+  normalized_hypothetical <- mapply(.calc_hypo, normalized_self,
                                     normalized_ideal)
   # Normalize the entire hypothetical matrix and update diagonal
   normalized_hypo_matrix <- (hypo_matrix -
@@ -130,8 +132,8 @@ importwimp <- function(path, sheet = 1) {
   }
   colnames(normalized_hypo_matrix) <- hypo_names
   rownames(normalized_hypo_matrix) <- paste(left_poles, "-", right_poles)
-  self_poles <- mapply(.self.poles, normalized_self, left_poles, right_poles)
-  ideal_poles <- mapply(.self.poles, normalized_ideal, left_poles, right_poles)
+  self_poles <- mapply(.self_poles, normalized_self, left_poles, right_poles)
+  ideal_poles <- mapply(.self_poles, normalized_ideal, left_poles, right_poles)
 
   # Calculate weight matrix for implication analysis
   # This represents the standardized implication relationships

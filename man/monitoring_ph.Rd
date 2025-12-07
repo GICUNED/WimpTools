@@ -26,5 +26,5 @@ different Weigthed Implications Grids plotted in a PH space.
 }
 \examples{
 
-monitoring_ph(example.wimp,example.wimp)
+monitoring_ph(example_wimp,example_wimp)
 }

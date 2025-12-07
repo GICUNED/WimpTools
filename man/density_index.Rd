@@ -20,5 +20,5 @@ calculated digraph of the impgrid
 }
 \examples{
 
-density_index(example.wimp)
+density_index(example_wimp)
 }

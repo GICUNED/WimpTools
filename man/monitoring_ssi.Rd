@@ -21,6 +21,6 @@ time points (e.g., pre- and post-intervention).
 }
 \examples{
 
-monitoring_ssi(example.wimp, example.wimp)
+monitoring_ssi(example_wimp, example_wimp)
 
 }

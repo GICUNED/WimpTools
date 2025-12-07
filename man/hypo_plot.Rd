@@ -4,32 +4,34 @@
 \alias{hypo_plot}
 \title{Hypothetical Scenarios Plot  -- hypo_plot()}
 \usage{
-hypo_plot(wimp, text.size = 1, ...)
+hypo_plot(wimp, text_size = 1, show_labels = TRUE, ...)
 }
 \arguments{
 \item{wimp}{Subject's WimpGrid. It must be a "wimp" S3 object
 imported by the \code{\link{importwimp}} function.}
 
+\item{...}{Additional arguments passed to \code{\link{self_index}} function.}
+
 \item{text.size}{Scalar that modifies the text size. Default is 1.}
 
-\item{...}{additional arguments are passed from \code{\link{self_index}}
-function.}
-
-\item{center}{Establishes the centre of the frame. Use "data" to set the data
-to be framed and "origin" to set the origin to be in the centre. the default
-is "data".}
+\item{show.labels}{Logical. Whether to show construct labels on the plot
+Default is TRUE. Set to FALSE to reduce visual clutter with many
+constructs.}
 }
 \value{
 returns a interactive scatter plot made with Plotly.
 }
 \description{
-This function creates a scatter plot to show the results of the
-             \code{\link{self_index}} function.
+Creates a scatter plot showing self-hypothetical similarity
+             (SHS) vs self-ideal hypothetical similarity (SHI) for each
+             construct, with congruence color coding.
 }
 \examples{
+hypo_plot(example_wimp)
 
-hypo_plot (example.wimp)
+# Without labels for cleaner view
+hypo_plot(example_wimp, show.labels = FALSE)
 }
 \author{
-Maite Benitez Santos, Guillermo Calleja Garate and Alejandro Sanfeliciano
+Alejandro Sanfeliciano
 }

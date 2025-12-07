@@ -2,7 +2,7 @@
 % Please edit documentation in R/ChangeImplicationsFunctions.R
 \name{if_barchart}
 \alias{if_barchart}
-\title{Impact and Feedback Bar Chart  -- if_barchart()}
+\title{Impact and Feedback Bar Chart — if_barchart()}
 \usage{
 if_barchart(wimp, show = "all", ...)
 }
@@ -10,24 +10,23 @@ if_barchart(wimp, show = "all", ...)
 \item{wimp}{Subject's WimpGrid. It must be a "wimp" S3 object
 imported by the \code{\link{importwimp}} function.}
 
-\item{show}{A character string indicating the constructs to be displayed. 'all' will display
-all constructus, 'dil' will only display dilemmatic constructs and 'nodil' will
-exclude dilemmatic constructs. Default is 'all'.}
+\item{show}{Construct filter. One of `"all"`, `"dil"`, `"nodil"`.}
 
-\item{...}{additional arguments are passed from \code{\link{if_index}}
-function.}
+\item{...}{Additional arguments forwarded to \code{if_index()}.}
 }
 \value{
-returns a interactive bar chart made with plotly.
+A plotly subplot with Impact and Feedback panels.
 }
 \description{
-This function creates a bar chart to show the results of the
-             \code{\link{if_index}} function.
+Two-panel horizontal bar chart showing positive and
+negative components of Impact and Feedback.
+}
+\details{
+Dilemmatic constructs (ideal = 0) are highlighted in yellow
+  when included.
 }
 \examples{
-
-if_barchart(example.wimp)
-
+if_barchart(example_wimp)
 }
 \author{
 Alejandro Sanfeliciano

@@ -2,28 +2,28 @@
 % Please edit documentation in R/CentralityFunctions.R
 \name{close_index}
 \alias{close_index}
-\title{Closeness index -- close_index()}
+\title{Closeness Centrality Index -- close_index()}
 \usage{
 close_index(wimp, norm = TRUE)
 }
 \arguments{
-\item{wimp}{Subject's Weigthed ImpGrid. It must be a "wimp" S3 object
+\item{wimp}{Subject's WimpGrid. It must be a "wimp" S3 object
 imported by the \code{\link{importwimp}} function.}
 
-\item{norm}{If TRUE, the values will be standardized. Default is TRUE.}
+\item{norm}{If TRUE, values will be normalized. Default is TRUE.}
 }
 \value{
 Returns a vector with the closeness index for each of the
         constructs.
 }
 \description{
-Function to calculate the closeness of a construct to the rest
-             of the constructs within the digraph.
+Calculates closeness centrality of constructs within the
+             implication digraph (inverse of average shortest distance).
 }
 \examples{
 
-close_index(example.wimp)
-close_index(example.wimp, norm = FALSE)
+close_index(example_wimp)
+close_index(example_wimp, norm = FALSE)
 
 }
 \author{

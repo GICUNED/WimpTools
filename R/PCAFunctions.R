@@ -1,145 +1,136 @@
+## WimpGrid Biplot Function
 
-# WimpGrid Biplot ------------------------------------------------
-
-#' Weigthed Implication Grid Biplot
+#' Weighted Implication Grid Biplot — wimp_biplot()
 #'
-#' @description This function generates a biplot visualization from the
-#'              semi-structured interview data collected via the WimpGrid
-#'              methodology. A biplot is a graphical representation that
-#'              combines both hipothetical selves and personal constructs of a
-#'              matrix into a single plot, making it easier to identify
-#'              patterns, relationships, and clusters within the data.
+#' @description PCA biplot combining hypothetical selves and personal
+#' constructs. Visualizes the first two principal components to reveal
+#' patterns and relationships among constructs and situations.
 #'
-#' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
-#'        imported by the \code{\link{importwimp}} function.
-#' @param text.size Size of the text labels. Default is 1.
+#' @param wimp A `wimp` object imported via \code{importwimp()}.
+#' @param text_size Text label size multiplier. Defaults to 1.
 #'
-#' @return A interactive biplot made with plotly
+#' @return A plotly biplot with PC1/PC2 axes, construct vectors, and
+#'   situation labels (SELF, IDEAL, hypothetical scenarios).
 #'
+#' @details Constructs are reoriented so all ideal values are positive
+#'   before PCA. Construct poles are displayed as vectors radiating from
+#'   the origin.
+#'
+#' @author Alejandro Sanfeliciano
 #' @importFrom DescTools CartToPol PolToCart
 #' @import useful
 #' @importFrom stats cor prcomp runif
 #' @export
-#'
 #' @examples
-#'
-#' wimp_biplot(example.wimp)
-#'
+#' wimp_biplot(example_wimp)
 
-wimp_biplot <- function(wimp, text.size = 1){
+wimp_biplot <- function(wimp, text_size = 1) {
+  # Align constructs so all ideal values are positive
+  wimp <- .align_wimp(wimp, exclude_dilemmatics = FALSE)
 
-  wimp <- .align.wimp(wimp, exclude.dilemmatics = FALSE)
+  left_poles <- wimp$vertices$left_pole
+  right_poles <- wimp$vertices$right_pole
+  n_constructs <- length(left_poles)
 
-  lpoles <- wimp$constructs$left.poles
-  rpoles <- wimp$constructs$right.poles
-  dim <- length(lpoles)
+  # Build matrix: SELF | hypo scenarios | IDEAL
+  hypo_matrix <- wimp$global$hypo_matrix
+  self_vector <- wimp$vertices$self
+  ideal_vector <- wimp$vertices$ideal
+  pca_matrix <- cbind(self_vector, hypo_matrix, ideal_vector)
+  colnames(pca_matrix)[c(1, ncol(pca_matrix))] <- c("SELF", "IDEAL")
 
-  matrix <- .hypo.matrix(wimp)
+  # PCA on first two principal components
+  pca <- prcomp(pca_matrix, rank. = 2)
 
-  pca <- prcomp(matrix, rank. = 2)
+  # Variance explained percentages
+  variance_pc1 <- round(
+    summary(pca)[6]$importance[2, 1] * 100, digits = 2
+  )
+  variance_pc2 <- round(
+    summary(pca)[6]$importance[2, 2] * 100, digits = 2
+  )
 
-  s.pc1 <- round(summary(pca)[6]$importance[2,1] * 100, digits = 2)
-  s.pc2 <- round(summary(pca)[6]$importance[2,2] * 100, digits = 2)
+  # Rotation coordinates (construct loadings)
+  pc1_loads <- pca$rotation[, 1]
+  pc2_loads <- pca$rotation[, 2]
 
-  pc1 <-pca$rotation[,1]
-  pc2 <-pca$rotation[,2]
+  # Convert to polar for vector placement
+  pc_radius <- DescTools::CartToPol(pc1_loads, pc2_loads)$r
 
-  pc.r <- DescTools::CartToPol(pc1,pc2)$r
-  pc.t <- DescTools::CartToPol(pc1,pc2)$theta
+  situation_names <- colnames(pca_matrix)
 
-  names <- colnames(matrix)
+  # Construct vector placement (opposite poles)
+  construct_x <- c(pca$x[, 1], -pca$x[, 1])
+  construct_y <- c(pca$x[, 2], -pca$x[, 2])
 
-  v1 <- c(pca$x[,1], -pca$x[,1])
-  v2 <- c(pca$x[,2], -pca$x[,2])
+  # Add spacing to avoid overlap
+  vector_radius <- max(abs(pc_radius)) + 0.05 * max(abs(pc_radius)) +
+    max(abs(pc_radius)) * runif(n_constructs, -0.35, 0.1)
+  vector_theta <- DescTools::CartToPol(construct_x, construct_y)$theta
 
-  v.r <- max(abs(pc.r)) + 0.05 * max(abs(pc.r)) + max(abs(pc.r)) * runif(dim,-0.35,0.1)
-  v.t <-  DescTools::CartToPol(v1,v2)$theta
+  vector_x <- DescTools::PolToCart(vector_radius, vector_theta)$x
+  vector_y <- DescTools::PolToCart(vector_radius, vector_theta)$y
 
-  v1 <- DescTools::PolToCart(v.r,v.t)$x
-  v2 <- DescTools::PolToCart(v.r,v.t)$y
+  pole_names <- c(right_poles, left_poles)
 
-  vnames <- c(rpoles,lpoles)
+  # Prepare data frames for plotting
+  df_situations <- data.frame(situation_names, pc1_loads, pc2_loads)
+  df_vectors <- data.frame(pole_names, vector_x, vector_y)
 
-  df <- data.frame(names,pc1,pc2)
-  dfv <- data.frame(vnames,v1,v2)
+  # Plot range
+  plot_range <- max(abs(df_vectors[2:3]) + 0.1 * abs(df_vectors[2:3]))
 
-  range <- max(abs(dfv[2:3]) + 0.1 * abs(dfv[2:3]))
-
+  # Build plotly biplot
   fig <- plot_ly(type = "scatter") %>%
+    # Hypothetical situations (middle rows, excluding SELF and IDEAL)
     add_annotations(
-      data = df[-c(1,dim+2),],
-      x = ~pc1,
-      y = ~pc2,
-      text = ~names,
-      hoverinfo = 'text',
-      font = ~list(size = 15 * text.size),
-      showarrow = FALSE,
-      xanchor = 'center',
-      yanchor = 'center'
+      data = df_situations[-c(1, n_constructs + 2), ],
+      x = ~pc1_loads, y = ~pc2_loads, text = ~situation_names,
+      hoverinfo = "text", font = list(size = 15 * text_size),
+      showarrow = FALSE, xanchor = "center", yanchor = "center"
     ) %>%
+    # SELF (first row, dark blue)
     add_annotations(
-      data = df[1,],
-      x = ~pc1,
-      y = ~pc2,
-      text = ~names,
-      hoverinfo = 'text',
-      font = ~list(size = 15 * text.size, color="darkblue"),
-      showarrow = FALSE,
-      xanchor = 'center',
-      yanchor = 'center'
+      data = df_situations[1, ],
+      x = ~pc1_loads, y = ~pc2_loads, text = ~situation_names,
+      hoverinfo = "text",
+      font = list(size = 15 * text_size, color = "darkblue"),
+      showarrow = FALSE, xanchor = "center", yanchor = "center"
     ) %>%
+    # IDEAL (last row, dark green)
     add_annotations(
-      data = df[dim+2,],
-      x = ~pc1,
-      y = ~pc2,
-      text = ~names,
-      hoverinfo = 'text',
-      font = ~list(size = 15 * text.size, color="darkgreen"),
-      showarrow = FALSE,
-      xanchor = 'center',
-      yanchor = 'center'
+      data = df_situations[n_constructs + 2, ],
+      x = ~pc1_loads, y = ~pc2_loads, text = ~situation_names,
+      hoverinfo = "text",
+      font = list(size = 15 * text_size, color = "darkgreen"),
+      showarrow = FALSE, xanchor = "center", yanchor = "center"
     ) %>%
+    # Construct vectors as dashed lines
     add_segments(
-      data = dfv,
-      x = 0, xend = ~v1,
-      y = 0, yend = ~v2,
-      line = list(color = '#6F6BFF', dash = "dot", width = 0.75),
-      hoverinfo = 'none',
-      inherit = FALSE,
-      showlegend = FALSE
+      data = df_vectors, x = 0, xend = ~vector_x, y = 0, yend = ~vector_y,
+      line = list(color = "#6F6BFF", dash = "dot", width = 0.75),
+      hoverinfo = "none", inherit = FALSE, showlegend = FALSE
     ) %>%
+    # Construct pole labels
     add_annotations(
-      data = dfv,
-      x = ~v1,
-      y = ~v2,
-      text = ~vnames,
-      hoverinfo = 'none',
-      font = list(size = 12 * text.size, color = "#6F6BFF"),
-      showarrow = FALSE,
-      xanchor = 'center',
-      yanchor = 'bottom'
+      data = df_vectors, x = ~vector_x, y = ~vector_y, text = ~pole_names,
+      hoverinfo = "none",
+      font = list(size = 12 * text_size, color = "#6F6BFF"),
+      showarrow = FALSE, xanchor = "center", yanchor = "bottom"
     ) %>%
     layout(
-      xaxis = list(title = paste("<B>PC1</B> [", s.pc1, "%]", sep = ""),
-                   range = c(-range, range),
-                   #gridcolor = "white",
-                   #gridwidth = 3,
-                   zeroline = TRUE,
-                   zerolinecolor = "black",
-                   zerolinewidth = 2,
-                   showline = FALSE),
-      yaxis = list(title = paste("<B>PC2</B> [", s.pc2, "%]", sep = ""),
-                   range = c(-range, range),
-                   #gridcolor = "white",
-                   #gridwidth = 3,
-                   zeroline = TRUE,
-                   zerolinecolor = "black",
-                   zerolinewidth = 2,
-                   showline = FALSE),
+      xaxis = list(
+        title = paste("<B>PC1</B> [", variance_pc1, "%]", sep = ""),
+        range = c(-plot_range, plot_range), zeroline = TRUE,
+        zerolinecolor = "black", zerolinewidth = 2, showline = FALSE
+      ),
+      yaxis = list(
+        title = paste("<B>PC2</B> [", variance_pc2, "%]", sep = ""),
+        range = c(-plot_range, plot_range), zeroline = TRUE,
+        zerolinecolor = "black", zerolinewidth = 2, showline = FALSE
+      ),
       showlegend = FALSE
-      #plot_bgcolor = "#FFFAED"
     )
 
   return(fig)
-
 }

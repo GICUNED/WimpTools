@@ -7,24 +7,22 @@
 stability_index(scn)
 }
 \arguments{
-\item{scn}{A "scn" S3 class object, the result of the \code{\link{scenariomatrix}} function.
-This object contains the scenario matrix and relevant metadata.}
+\item{scn}{A "scn" object returned by \code{scenariomatrix()}.}
 }
 \value{
-Returns a vector with the standard deviation of each of the
-constructs.
+A vector with the standard deviation of each construct.
 }
 \description{
-This function returns the standard deviation for each
-construct over the mathematical iterations of the PCSD.
+Compute the standard deviation of each construct across PCSD
+  iterations.
 }
 \examples{
 # Example Scenario Matrix (scn)
 example_scn <- scenariomatrix(
-  wimp = example.wimp,
+  wimp = example_wimp,
   infer = "self dynamics",
   thr = "saturation",
-  act.vector = c(0.1, -0.2, 0.3, -0.1, 0)
+  act_vector = c(0.1, -0.2, 0.3, -0.1, 0)
 )
 
 # Calculate stability index for each construct

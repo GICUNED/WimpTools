@@ -2,29 +2,32 @@
 % Please edit documentation in R/PCAFunctions.R
 \name{wimp_biplot}
 \alias{wimp_biplot}
-\title{Weigthed Implication Grid Biplot}
+\title{Weighted Implication Grid Biplot — wimp_biplot()}
 \usage{
-wimp_biplot(wimp, text.size = 1)
+wimp_biplot(wimp, text_size = 1)
 }
 \arguments{
-\item{wimp}{Subject's WimpGrid. It must be a "wimp" S3 object
-imported by the \code{\link{importwimp}} function.}
+\item{wimp}{A `wimp` object imported via \code{importwimp()}.}
 
-\item{text.size}{Size of the text labels. Default is 1.}
+\item{text_size}{Text label size multiplier. Defaults to 1.}
 }
 \value{
-A interactive biplot made with plotly
+A plotly biplot with PC1/PC2 axes, construct vectors, and
+  situation labels (SELF, IDEAL, hypothetical scenarios).
 }
 \description{
-This function generates a biplot visualization from the
-             semi-structured interview data collected via the WimpGrid
-             methodology. A biplot is a graphical representation that
-             combines both hipothetical selves and personal constructs of a
-             matrix into a single plot, making it easier to identify
-             patterns, relationships, and clusters within the data.
+PCA biplot combining hypothetical selves and personal
+constructs. Visualizes the first two principal components to reveal
+patterns and relationships among constructs and situations.
+}
+\details{
+Constructs are reoriented so all ideal values are positive
+  before PCA. Construct poles are displayed as vectors radiating from
+  the origin.
 }
 \examples{
-
-wimp_biplot(example.wimp)
-
+wimp_biplot(example_wimp)
+}
+\author{
+Alejandro Sanfeliciano
 }

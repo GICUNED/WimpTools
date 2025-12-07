@@ -2,7 +2,7 @@
 % Please edit documentation in R/AdjustmentFunctions.R
 \name{construct_index}
 \alias{construct_index}
-\title{Frencuency and proportions of constructs -- construct_index()}
+\title{Construct Congruence Analysis -- construct_index()}
 \usage{
 construct_index(wimp)
 }
@@ -11,16 +11,16 @@ construct_index(wimp)
 imported by the \code{\link{importwimp}} function.}
 }
 \value{
-A matrix with the frequency and proportion of congruents, discrepants
-       , dilemmatics and undefined constructs.
+A matrix with frequency and proportion values for each construct
+        type: Congruents, Discrepants, Dilemmatics, and Undefined.
 }
 \description{
-This function calculates frequency and proportion of
-             congruents, discrepants, dilemmatics and undefined constructs.
+Calculates frequency and proportion of construct types
+             (congruent, discrepant, dilemmatic and undefined) based on
+             self-ideal relationship analysis.
 }
 \examples{
-
-construct_index(example.wimp)
+construct_index(example_wimp)
 
 }
 \author{

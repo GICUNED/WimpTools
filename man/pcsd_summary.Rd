@@ -7,23 +7,22 @@
 pcsd_summary(scn)
 }
 \arguments{
-\item{scn}{A "scn" S3 class object, the result of the \code{\link{scenariomatrix}} function.
-This object contains the scenario matrix and relevant metadata.}
+\item{scn}{A "scn" object returned by \code{scenariomatrix()}.}
 }
 \value{
-Returns a matrix with the PCSD summary.
+A matrix with PCSD summary metrics per construct.
 }
 \description{
-This function returns a summary of the PCSD. It informs us the
-initial and final value of each construct and the difference between them.
+Summarize PCSD results: initial, final, average, and change per
+  construct.
 }
 \examples{
 # Example Scenario Matrix (scn)
 example_scn <- scenariomatrix(
-  wimp = example.wimp,
+  wimp = example_wimp,
   infer = "self dynamics",
   thr = "saturation",
-  act.vector = c(0.1, -0.2, 0.3, -0.1, 0)
+  act_vector = c(0.1, -0.2, 0.3, -0.1, 0)
 )
 
 # Calculate PCSD summary for each construct

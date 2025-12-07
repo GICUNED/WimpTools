@@ -6,7 +6,8 @@
 #' Impact quantifies influence exerted on other constructs; Feedback
 #' quantifies reciprocal influence from the system.
 #'
-#' @param wimp A `wimp` object with vertices and `global$weight_matrix`.
+#' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
+#'        imported by the \code{\link{importwimp}} function.
 #' @param std Standardization method. One of `"none"`, `"vertex"`,
 #'   `"edges"`, or `"adjacent"`. Defaults to `"adjacent"`.
 #'
@@ -99,10 +100,10 @@ if_index <- function(wimp, std = "adjacent") {
 #' IF Index Scatter Plot — if_plot()
 #'
 #' @description Scatter plot of Impact (x) vs Feedback (y) per construct.
-#' Quadrants highlight typical patterns. Labels are positioned with
-#' a smart optimization to reduce overlap.
+#' Quadrants highlight typical patterns.
 #'
-#' @param wimp A `wimp` object imported via \code{importwimp()}.
+#' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
+#'        imported by the \code{\link{importwimp}} function.
 #' @param show Construct filter. One of `"all"`, `"dil"`, `"nodil"`.
 #' @param center Axis centering. `"data"` (span data) or `"origin"`.
 #' @param text.size Text size multiplier. Defaults to 1.
@@ -248,14 +249,15 @@ if_plot <- function(wimp, show = "all", center = "data", text_size = 1, ...) {
 #' @description Two-panel horizontal bar chart showing positive and
 #' negative components of Impact and Feedback.
 #'
-#' @param wimp A `wimp` object imported via \code{importwimp()}.
+#' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
+#'        imported by the \code{\link{importwimp}} function.
 #' @param show Construct filter. One of `"all"`, `"dil"`, `"nodil"`.
 #' @param ... Additional arguments forwarded to \code{if_index()}.
 #'
 #' @return A plotly subplot with Impact and Feedback panels.
 #'
 #' @details Dilemmatic constructs (ideal = 0) are highlighted in yellow
-#'   when included. Ranges are symmetric for easier comparison.
+#'   when included.
 #'
 #' @author Alejandro Sanfeliciano
 #' @export

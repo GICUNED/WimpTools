@@ -2,31 +2,29 @@
 % Please edit documentation in R/CentralityFunctions.R
 \name{degree_index}
 \alias{degree_index}
-\title{Degree Index -- degree_index()}
+\title{Degree Centrality Index -- degree_index()}
 \usage{
 degree_index(wimp, method = "weight")
 }
 \arguments{
-\item{wimp}{Subject's Weigthed ImpGrid. It must be a "wimp" S3 object
-imported by  the \code{\link{importwimp}} function.}
+\item{wimp}{Subject's WimpGrid. It must be a "wimp" S3 object
+imported by the \code{\link{importwimp}} function.}
 
-\item{method}{Method for calculating centrality. You can use the simple
-method with "simple", normalized with "norm", weighted with "weigth",
-normalized weighted with "wnorm" and the ego density method with "ego".
-Default is Weigthed Method.}
+\item{method}{Centrality calculation method: "simple", "norm", "weight",
+"wnorm", or "ego". Default is "weight".}
 }
 \value{
 Returns a list with the centrality data by construct and separated by
         input degree, output degree and total degree (in and out).
 }
 \description{
-Function to calculate the centrality of the constructs.
-             In this case, centrality is understood as the degree of connection that each
-             construct maintains with the rest, i.e. the number of links for each vertex.
+Calculates centrality based on construct connections. Centrality
+             represents the degree of connection each construct maintains
+             with others (number of links per vertex).
 }
 \examples{
 
-degree_index(example.wimp)
+degree_index(example_wimp)
 
 }
 \author{

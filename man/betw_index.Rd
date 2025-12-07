@@ -2,29 +2,28 @@
 % Please edit documentation in R/CentralityFunctions.R
 \name{betw_index}
 \alias{betw_index}
-\title{Betweeness index -- betw_index()}
+\title{Betweenness Centrality Index -- betw_index()}
 \usage{
 betw_index(wimp, norm = TRUE)
 }
 \arguments{
-\item{wimp}{Subject's Weigthed ImpGrid. It must be a "wimp" S3 object
+\item{wimp}{Subject's WimpGrid. It must be a "wimp" S3 object
 imported by the \code{\link{importwimp}} function.}
 
-\item{norm}{If TRUE, the values will be normalized. Default is TRUE.}
+\item{norm}{If TRUE, values will be normalized. Default is TRUE.}
 }
 \value{
 Returns a vector with the betweeness index for each of the
         constructs.
 }
 \description{
-Function that calculates the betweenness of each of the
-             constructs. This is the number of times a geodesic path (shortest path)
-             between two other constructs passes through that construct in the digraph.
+Calculates betweenness centrality (number of shortest paths
+             passing through each construct).
 }
 \examples{
 
-betw_index(example.wimp)
-betw_index(example.wimp, norm = FALSE)
+betw_index(example_wimp)
+betw_index(example_wimp, norm = FALSE)
 
 }
 \author{

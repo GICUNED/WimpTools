@@ -2,26 +2,25 @@
 % Please edit documentation in R/CentralityFunctions.R
 \name{dismatrix}
 \alias{dismatrix}
-\title{Distance Matrix -- dismatrix()}
+\title{Shortest Distance Matrix -- dismatrix()}
 \usage{
 dismatrix(wimp, mode = "out")
 }
 \arguments{
-\item{wimp}{Subject's Weigthed ImpGrid. It must be a "wimp" S3 object
+\item{wimp}{Subject's WimpGrid. It must be a "wimp" S3 object
 imported by the \code{\link{importwimp}} function.}
 
-\item{mode}{Method to calculate the distances depending on the direction of
-the edges. With "out" we calculate them respecting the direction of the edges,
-"in" through the inverse of the direction of the edges and "all" without
-taking into account the direction. Default is "out"}
+\item{mode}{Distance calculation mode: "out" (respecting edge direction),
+"in" (inverse direction), "all" (ignoring direction). Default is
+"out".}
 }
 \value{
 Returns the digraph distance matrix. Matrix that contains the
         distances of the shortest paths from one construct to another.
 }
 \description{
-Function that calculates the shortest distance between each of
-             the pairs of digraph constructions.
+Calculates shortest distances between construct pairs in the
+             implication digraph.
 }
 \author{
 Alejandro Sanfeliciano

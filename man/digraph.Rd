@@ -2,74 +2,118 @@
 % Please edit documentation in R/GraphFunctions.R
 \name{digraph}
 \alias{digraph}
-\title{Selfdigraph -- digraph()}
+\title{Self Digraph -- digraph()}
 \usage{
 digraph(
   wimp,
-  vertex.vector = NA,
-  ideal.vector = NA,
+  vertex_vector = NA,
+  ideal_vector = NA,
   width = "100\%",
-  height = "1000px",
+  height = "700px",
   color = "red/green",
   layout = "graphopt",
   show = TRUE,
-  hide.direct = FALSE,
+  hide_direct = FALSE,
   areas = FALSE,
-  area.color = NA,
-  pad.side = 50,
+  area_attr = "category",
+  area_color = NA,
+  pad_side = 50,
   rounding = 10
 )
 }
 \arguments{
-\item{wimp}{Subject's WimpGrid. It must be a "wimp" S3 object
-imported by the \code{\link{importwimp}} function.}
+\item{wimp}{A subject's WimpGrid object. Must be a "wimp" S3 object
+imported by the \code{\link{importwimp}} function, or a "scn"
+scenario object from \code{\link{scenariomatrix}}.}
 
-\item{vertex.vector}{Vector defining the value of each of the vertices of the digraph.
-Default is the value of the standarized self from the wimp object.}
+\item{width}{Character string specifying the graph width. Default is "100%".}
 
-\item{ideal.vector}{Vector defining the ideal value of each of the vertices of the digraph.
-Default is the value of the standarized ideal self from the wimp object.}
+\item{height}{Character string specifying the graph height. Default is
+"700px".}
 
-\item{width}{digraph width.}
+\item{color}{Character string specifying the color palette. Options are
+"red/green" (default) and "grey scale".}
 
-\item{height}{Digraph heigth.}
+\item{layout}{Character string specifying the layout algorithm. Options are:
+"graphopt" (default), "circle", "rtcircle", "tree", "mds", "grid",
+and "areas".}
 
-\item{color}{Color palette to be used. The options are "red/green" and "grey scale". Default is "red/green".}
+\item{show}{Logical vector or single value defining which constructs to
+display. Default is \code{TRUE} (show all constructs).}
 
-\item{layout}{Layout with which the digraph will be displayed. The options
-are: "circle", "rtcircle", "tree", "graphopt", "mds" and "grid". Default is "graphopt".}
+\item{areas}{Logical; if \code{TRUE}, draws colored areas grouping nodes
+by the specified attribute. Default is \code{FALSE}.}
 
-\item{show}{Logical vector defining which constructs to display. By default all constructs are shown.}
+\item{rounding}{Numeric value specifying radius for rounding area corners
+(0 for sharp corners). Default is 10.}
 
-\item{hide.direct}{If TRUE, hide direct relationship between nodes of the graph. Default is FALSE.}
+\item{vertex.vector}{Numeric vector defining the value of each vertex in the
+digraph. If \code{NA} (default), uses the normalized self values
+from the wimp object.}
 
-\item{areas}{Logical; if TRUE, draw coloured areas that group nodes by category. Default is FALSE.}
+\item{ideal.vector}{Numeric vector defining the ideal value of each vertex.
+If \code{NA} (default), uses the normalized ideal values from the
+wimp object.}
 
-\item{rounding}{Numeric; radius used to round the area corners (0 for sharp corners). Default is 10.}
+\item{hide.direct}{Logical; if \code{TRUE}, hides positive direct
+relationships between nodes. Default is \code{FALSE}.}
 
-\item{pad_side}{Numeric; padding in pixels used for the areas drawn around the nodes. Default is 50.}
+\item{area.attr}{Character string specifying the vertex attribute name for
+grouping nodes into areas. Default is "category". Must be a column
+name in the wimp vertices data frame.}
+
+\item{area.color}{Character vector of hex colors for area backgrounds. If
+\code{NA} (default), uses predefined color palette.}
+
+\item{pad.side}{Numeric value specifying padding in pixels for areas drawn
+around nodes. Default is 50.}
 }
 \value{
-A digraph made with visNetwork
-
-A digraph made with visNetwork
+A \code{visNetwork} interactive graph object that can be displayed
+        in R Viewer, R Markdown documents, or Shiny applications.
 }
 \description{
-A digraph that represents the self of the person being assessed
-             on the basis of its constructs and the relationships between them.
-
-A digraph that represents the self of the person being assessed
-             on the basis of its constructs and the relationships between them.
+Creates a directed graph (digraph) visualization representing the self of
+the person being assessed based on their personal constructs and the
+relationships between them. The digraph displays constructs as nodes with
+colors indicating congruency between self and ideal values, and edges
+representing the influence relationships derived from the weight matrix.
+}
+\details{
+The digraph visualization provides insights into:
+\itemize{
+  \item \strong{Node colors}: Reflect congruency between self and ideal
+  values
+    \itemize{
+      \item Red/green palette: Green (congruent), red (discrepant),
+            grey (undefined), yellow (dilemmatic)
+    }
+  \item \strong{Node sizes}: Proportional to absolute self values
+  \item \strong{Edge colors}: Represent relationship types
+  (positive/negative)
+  \item \strong{Edge directions}: Show influence flow between constructs
+}
+}
+\note{
+The function automatically reorients the weight matrix based on vertex signs
+to ensure proper directionality. For reproducible layouts, the function uses
+a fixed random seed (33) for graph layout algorithms.
 }
 \examples{
+# Basic digraph with default settings
+digraph(example_wimp)
 
- digraph(su.wimp)
+# Custom layout and colors
+digraph(example_wimp, layout = "circle", color = "grey scale")
 
-Selfdigraph -- digraph()
+# Show areas grouped by category
+digraph(example_wimp, areas = TRUE, area.attr = "category")
 
-
- digraph(su.wimp)
-
+}
+\seealso{
+\code{\link{idealdigraph}} for ideal self visualization,
+\code{\link{simdigraph}} for scenario-based digraphs,
+\code{\link{inout_digraph}} for construct relationship analysis
 }
 \author{
 Alejandro Sanfeliciano

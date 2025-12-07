@@ -6,58 +6,51 @@
 \usage{
 scenariomatrix(
   wimp,
-  act.vector = NA,
+  act_vector = NA,
   infer = "self dynamics",
   thr = "saturation",
-  max.iter = 5,
+  max_iter = 5,
   e = 1e-04,
-  stop.iter = 2,
-  exclude.dilemmatics = FALSE
+  stop_iter = 2,
+  exclude_dilemmatics = FALSE
 )
 }
 \arguments{
 \item{wimp}{A "wimp" S3 object.}
 
-\item{act.vector}{A numeric vector representing the actions or interventions
-to be applied to the constructs in the WimpGrid.}
+\item{act_vector}{Numeric vector of construct activations applied to the
+grid. Length must match number of constructs unless using impact dynamics.}
 
-\item{infer}{A character string indicating the type of inference to be used
-in the scenario analysis. Possible values include "self dynamics"
-or "impact dynamics". Default is "self dynamics"}
+\item{infer}{Inference type: "self dynamics" or "impact dynamics".
+Defaults to "self dynamics".}
 
-\item{thr}{A character string specifying the threshold method to be applied
-to the constructs. Supported options include "saturation","tanh"
-or "none". Default is "saturation"}
+\item{thr}{Thresholding method: "saturation", "tanh", or "none".
+Defaults to "saturation".}
 
-\item{max.iter}{An integer specifying the maximum number of iterations for
-the scenario analysis. Defaults is 5.}
+\item{max_iter}{Maximum number of iterations. Defaults to 5.}
 
-\item{e}{A numeric value representing the convergence threshold. Smaller
-values lead to stricter convergence criteria. Default is 0.0001}
+\item{e}{Convergence tolerance. Smaller values are stricter. Default 0.0001.}
 
-\item{stop.iter}{An integer specifying the number of consecutive iterations
-with no significant change required to declare convergence.
-Default is 2}
+\item{stop_iter}{Consecutive iterations below tolerance required to stop.
+Defaults to 2.}
 
-\item{exclude.dilemmatics}{A logical value. If TRUE, dilemmatic constructs
-are excluded from the scenario matrix calculations.
-Default is TRUE}
+\item{exclude_dilemmatics}{If TRUE, exclude dilemmatic constructs in
+calculations. Defaults to TRUE.}
 }
 \value{
 A "scn" S3 class object.
 }
 \description{
-This function generates a scenario matrix based on the provided
-             WimpGrid object and a vector of actions. It models potential
-             outcomes iteratively based on user-defined parameters, allowing
-             for scenario analysis and decision-making.
+Generate a scenario matrix from a wimp object and action
+  vector. Iteratively simulates outcomes using the selected inference
+  method to support scenario analysis.
 }
 \examples{
 
 # Activation vector (example)
-act.vector <- c(0.1, -0.2, 0.3, -0.1, 0)
+act_vector <- c(0.1, -0.2, 0.3, -0.1, 0)
 
 # Generate a scenario matrix
-scenariomatrix(wimp = example.wimp, act.vector = act.vector)
+scenariomatrix(wimp = example_wimp, act_vector = act_vector)
 
 }

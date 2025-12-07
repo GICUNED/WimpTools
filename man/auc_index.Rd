@@ -7,10 +7,9 @@
 auc_index(scn, std = TRUE)
 }
 \arguments{
-\item{scn}{A "scn" S3 class object, the result of the \code{\link{scenariomatrix}} function.
-This object contains the scenario matrix and relevant metadata.}
+\item{scn}{A "scn" object returned by \code{scenariomatrix()}.}
 
-\item{std}{A logical value. If \code{TRUE}, standardizes the AUC results.}
+\item{std}{If \code{TRUE}, standardizes the AUC results. Defaults to TRUE.}
 }
 \value{
 Returns a vector with the AUC index of each construct.
@@ -22,13 +21,13 @@ construct.
 \examples{
 # Example Scenario Matrix (scn)
 example_scn <- scenariomatrix(
-  wimp = example.wimp,
+  wimp = example_wimp,
   infer = "self dynamics",
   thr = "saturation",
-  act.vector = c(0.1, -0.2, 0.3, -0.1, 0)
+  act_vector = c(0.1, -0.2, 0.3, -0.1, 0)
 )
 
 # Calculate AUC index for each construct
-auc_index(example_scn,std = TRUE)
+auc_index(example_scn, std = TRUE)
 
 }

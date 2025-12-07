@@ -2,33 +2,36 @@
 % Please edit documentation in R/ChangeImplicationsFunctions.R
 \name{if_index}
 \alias{if_index}
-\title{Impact And Feedback Index -- if_index()}
+\title{Impact and Feedback Index — if_index()}
 \usage{
 if_index(wimp, std = "adjacent")
 }
 \arguments{
-\item{wimp}{An object of class 'wimp', which contains a Weigthed Implication
-Grid.}
+\item{wimp}{Subject's WimpGrid. It must be a "wimp" S3 object
+imported by the \code{\link{importwimp}} function.}
 
-\item{std}{A character string indicating the type of standardization to apply.
-Options are 'none' (no standardization), 'vertex' (standardize by the maximum total degree
-of the constructs), 'edges' (standardize by the total number of edges) and 'adjacent'
-(standarized by the number of the adjacent vertices). Default is 'adjacent'.}
+\item{std}{Standardization method. One of `"none"`, `"vertex"`,
+`"edges"`, or `"adjacent"`. Defaults to `"adjacent"`.}
 }
 \value{
-Returns a dataframe showing the intensity of the impact in the
-system and feedback from the system for each construct (negative, postive and
- global).
+A data frame with columns:
+  - "Negative Impact", "Positive Impact", "Global Impact"
+  - "Negative Feedback", "Positive Feedback", "Global Feedback"
+  Rows are constructs ("left_pole - right_pole").
 }
 \description{
-This function calculates the intensity of the of impact in the
-system and feedback from the system for each construct.
+Computes Impact and Feedback indices for each construct.
+Impact quantifies influence exerted on other constructs; Feedback
+quantifies reciprocal influence from the system.
+}
+\details{
+Dilemmatic targets (ideal = 0) are excluded from Impact sums.
+  Standardization divides results by the chosen coefficient.
 }
 \examples{
-
-if_index (example.wimp)
-
+if_index(example_wimp)
 }
 \author{
-Maite Benitez Santos, Guillermo Calleja Garate, Alejandro Sanfeliciano
+Maite Benitez Santos, Guillermo Calleja Garate,
+  Alejandro Sanfeliciano
 }

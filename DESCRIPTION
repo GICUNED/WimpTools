@@ -7,7 +7,13 @@ Authors@R: person(given = "Alejandro",
                       role = c("aut", "cre"),
                       email = "sanfeliciano.alejandro@gmail.com")
 Maintainer: Alejandro Sanfeliciano <sanfeliciano.alejandro@gmail.com>
-Description: Implements a graph-theoretical approach to model psychological change based on the Personal Construct Psychology (Kelly,1955). The method is derived from the Implication Grid proposed by Hinkle (1965) and extends traditional repertory grids by analyzing the hierarchical and structural relationships between personal constructs. This approach provides a quantitative framework to examine cognitive organization and change. 
+Description: Implements the Weighted Implication Grid (WimpGrid) framework based
+             on Personal Construct Theory. The package analyzes the grid as a 
+             weighted directed graph to compute structural measures of the 
+             cognitive system, including hierarchy, centrality, and internal 
+             conflict. Methodological details and theoretical foundations are 
+             described in Sanfeliciano et al. (2025) 
+             doi:10.3389/fpsyg.2025.1630920.
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
@@ -26,4 +32,9 @@ Imports:
     visNetwork (>= 2.1.2),
     htmlwidgets (>= 1.6.0),
     jsonlite (>= 1.8.0)
+Suggests:
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
+Config/testthat/edition: 3
 

@@ -2,39 +2,37 @@
 % Please edit documentation in R/ChangeImplicationsFunctions.R
 \name{if_plot}
 \alias{if_plot}
-\title{IF Index Plot  -- if_plot()}
+\title{IF Index Scatter Plot — if_plot()}
 \usage{
-if_plot(wimp, show = "all", center = "data", text.size = 1, ...)
+if_plot(wimp, show = "all", center = "data", text_size = 1, ...)
 }
 \arguments{
 \item{wimp}{Subject's WimpGrid. It must be a "wimp" S3 object
 imported by the \code{\link{importwimp}} function.}
 
-\item{show}{A character string indicating the constructs to be displayed. 'all' will display
-all constructus, 'dil' will only display dilemmatic constructs and 'nodil' will
-exclude dilemmatic constructs. Default is 'all'.}
+\item{show}{Construct filter. One of `"all"`, `"dil"`, `"nodil"`.}
 
-\item{center}{Establishes the centre of the frame. Use "data" to set the data
-to be framed and "origin" to set the origin to be in the centre. the default
-is "data".}
+\item{center}{Axis centering. `"data"` (span data) or `"origin"`.}
 
-\item{text.size}{Scalar that modifies the text size. Default is 1.}
+\item{...}{Additional arguments passed to \code{if_index()}.}
 
-\item{...}{additional arguments are passed from \code{\link{if_index}}
-function.}
+\item{text.size}{Text size multiplier. Defaults to 1.}
 }
 \value{
-returns a interactive scatter plot made with Plotly.
+A plotly scatter plot.
 }
 \description{
-This function creates a scatter plot to show the results of the
-             \code{\link{if_index}} function.
+Scatter plot of Impact (x) vs Feedback (y) per construct.
+Quadrants highlight typical patterns.
+}
+\details{
+Colors reflect congruency between self and ideal:
+  green (congruent), red (discrepant), yellow (dilemmatic).
 }
 \examples{
-
-if_plot (example.wimp)
-
+if_plot(example_wimp)
 }
 \author{
-Maite Benitez Santos, Guillermo Calleja Garate and Alejandro Sanfeliciano
+Maite Benitez Santos, Guillermo Calleja Garate,
+  Alejandro Sanfeliciano
 }

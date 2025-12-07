@@ -2,33 +2,39 @@
 % Please edit documentation in R/AdjustmentFunctions.R
 \name{self_index}
 \alias{self_index}
-\title{Correlations between Self and Hypothetical scenarios -- self_index()}
+\title{Self-Ideal Analysis -- self_index()}
 \usage{
-self_index(wimp, method = "sim", rc = TRUE, alpha = 0.5, beta = 0.5)
+self_index(wimp, method = "ssi", rc = TRUE, alpha = 0.5, beta = 0.5)
 }
 \arguments{
 \item{wimp}{Subject's WimpGrid. It must be a "wimp" S3 object
 imported by the \code{\link{importwimp}} function.}
 
-\item{method}{The correlation method to use. All methods of the \code{\link{cor}} function
-are allowed and "sim" for Tversky similarity. Default is "sim".}
+\item{method}{Correlation method: "ssi" (SSI Index), "pearson", "kendall",
+or "spearman". Default is "ssi".}
 
-\item{rc}{Use Cohen's rc which is invariant to construct reflection. Default is TRUE.}
+\item{rc}{Use Cohen's rc (reflection invariant). Default is TRUE.}
 
-\item{alpha}{Alpha value for Tversky similarity calculation. Default is .5.}
+\item{alpha}{Discrepancy salience for SSI (0-1). Default is 0.5.}
 
-\item{beta}{Beta value for Tversky similarity calculation. Default is .5.}
+\item{beta}{Aspiration salience for SSI (0-1). Default is 0.5.}
 }
 \value{
-A list with global adjustment self indices and specific indices for each construct.
+List with \code{global} indices (Self/Ideal, Self/Hypo, Ideal/Hypo)
+        and \code{construct} data frame with congruence classifications
+        and similarity measures.
 }
 \description{
-this function Calculates the global and specific adjustment
-             indices of the self for each hypothetical scenario in the WimpGrid.
+Calculates global and construct-specific adjustment indices
+             between self and hypothetical scenarios. Uses SSI Index or
+             standard correlation methods.
 }
 \examples{
+self_index(example_wimp)
 
-self_index(example.wimp)
+# Using different methods
+self_index(example_wimp, method = "pearson")
+self_index(example_wimp, method = "kendall", rc = FALSE)
 
 }
 \author{

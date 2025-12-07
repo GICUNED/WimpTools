@@ -12,14 +12,14 @@
 #' @param ... Ignored.
 #'
 #' @examples
-#' # print(example.wimp)
+#' # print(example_wimp)
 #'
 #' @export
-print.wimp <- function(x, n = 10, m = 10, digits = 3, ...){
+print.wimp <- function(x, n = 10, m = 10, digits = 3, ...) {
   stopifnot(is.list(x), inherits(x, "wimp"))
 
   # Helpers ---------------------------------------------------------------
-  .trunc <- function(z, width){
+  .trunc <- function(z, width) {
     z <- as.character(z)
     too_long <- nchar(z) > width
     z[too_long] <- paste0(substr(z[too_long], 1, width - 1), "…")
@@ -168,3 +168,188 @@ print.wimp <- function(x, n = 10, m = 10, digits = 3, ...){
 
   invisible(x)
 }
+
+#' Print method for scn objects
+#'
+#' Shows the parameters used to generate the scenario matrix and the values
+#' for each iteration.
+#'
+#' @param x An object of class `scn` returned by `scenariomatrix()`.
+#' @param digits Digits to round numeric values. Default: 3.
+#' @param ... Ignored.
+#'
+#' @export
+print.scn <- function(x, digits = 3, ...) {
+  stopifnot(is.list(x), inherits(x, "scn"))
+
+  `%||%` <- function(a, b) if (!is.null(a)) a else b
+
+  params <- if (!is.null(x$params)) x$params else list()
+  method <- if (!is.null(x$method)) x$method else list()
+
+  act_vec <- params$act_vector
+  act_vec_txt <- if (!is.null(act_vec)) {
+    paste(round(act_vec, digits), collapse = ", ")
+  } else {
+    "(not provided)"
+  }
+
+  width <- getOption("width", 80)
+  rule <- function(title = NULL) {
+    if (is.null(title) || title == "") {
+      cat(strrep("-", width), "\n", sep = "")
+    } else {
+      ttl <- paste0(" ", title, " ")
+      k <- max(0, width - nchar(ttl))
+      left <- floor(k / 2)
+      right <- k - left
+      cat(strrep("-", left), ttl, strrep("-", right), "\n", sep = "")
+    }
+  }
+
+  rule("Scenario (scn)")
+  cat("Parameters\n")
+  cat("  inference:  ", `%||%`(params$infer, method$infer), "\n", sep = "")
+  cat("  threshold:  ", `%||%`(params$threshold, method$threshold), "\n",
+      sep = "")
+  if (!is.null(params$max_iter)) {
+    cat("  max_iter:   ", params$max_iter, "\n", sep = "")
+  }
+  if (!is.null(params$e)) {
+    cat("  tolerance:  ", params$e, "\n", sep = "")
+  }
+  if (!is.null(params$stop_iter)) {
+    cat("  stop_iter:  ", params$stop_iter, "\n", sep = "")
+  }
+  if (!is.null(params$exclude_dilemmatics)) {
+    cat("  exclude_dilemmatics: ", params$exclude_dilemmatics, "\n",
+        sep = "")
+  }
+  cat("  act_vector: ", act_vec_txt, "\n", sep = "")
+  cat("  constructs: ", length(x$constructs$constructs), "\n", sep = "")
+  cat("  iterations: ", nrow(x$values), "\n", sep = "")
+
+  mat <- x$values
+  rule("Values by iteration")
+  if (is.null(mat) || length(mat) == 0) {
+    cat("(no values)\n")
+    return(invisible(x))
+  }
+  if (!is.matrix(mat)) {
+    mat <- as.matrix(mat)
+  }
+  mat <- round(mat, digits)
+
+  print(mat)
+
+  invisible(x)
+}
+
+#' Print method for self_index results
+#'
+#' Provides a formatted display of self-ideal similarity index results including
+#' global indices, construct classification, and detailed construct-level analysis.
+#'
+#' @param x A self_index object returned by the \code{\link{self_index}} function
+#' @param ... Additional arguments (not used)
+#' @return Invisibly returns the input object
+#' @method print self_index
+#' @export
+print.self_index <- function(x, ...) {
+
+  cat("\n")
+  cat("===================================================================\n")
+  cat("                     SELF ANALYSIS                              \n")
+  cat("===================================================================\n")
+
+  # Method information
+  method_name <- switch(x$method[1],
+                       "ssi" = "Similarity Self-Ideal  (SSI)",
+                       "pearson" = "Pearson Correlation",
+                       "spearman" = "Spearman Correlation",
+                       "kendall" = "Kendall Correlation",
+                       paste("Correlation -", x$method[1]))
+
+  # RC correction status - SSI doesn't need RC correction
+  if(x$method[1] == "ssi") {
+    rc_status <- "Not applicable (SSI does not require RC correction)"
+  } else {
+    rc_status <- if(x$method[2] == "rc") "with RC Correction" else "without RC Correction"
+  }
+
+  cat("Method:     ", method_name, "\n")
+  cat("Correction: ", rc_status, "\n")
+  cat("\n")
+
+  # Global indices
+  cat("-------------------------------------------------------------------\n")
+  cat("                        GLOBAL INDICES                        \n")
+  cat("-------------------------------------------------------------------\n")
+
+  global_data <- x$global
+  cat(sprintf("%-20s %8.4f\n", "Self/Ideal:", global_data[["Self/Ideal"]]))
+  cat(sprintf("%-20s %8.4f\n", "Self/Hypothetical:", global_data[["Self/Hypo"]]))
+  cat(sprintf("%-20s %8.4f\n", "Ideal/Hypothetical:", global_data[["Ideal/Hypo"]]))
+
+  cat("\n")
+
+  # Construct level analysis
+  cat("-------------------------------------------------------------------\n")
+  cat("                    CONSTRUCT LEVEL ANALYSIS                  \n")
+  cat("-------------------------------------------------------------------\n")
+
+  construct_data <- x$construct
+
+  # Get proper construct classification using construct_index function
+  if(!is.null(x$wimp)) {
+    ci_result <- construct_index(x$wimp)
+    cat("\nConstruct Classification:\n")
+    for(i in seq_len(nrow(ci_result))) {
+      type <- rownames(ci_result)[i]
+      count <- ci_result[i, "Frequency"]
+      cat(sprintf("  %-12s: %2d constructs\n", type, count))
+    }
+  } else {
+    # Fallback if wimp object not available
+    congruence_summary <- table(construct_data[["Congruence Scenario"]])
+    cat("\nConstruct Classification:\n")
+    for(type in names(congruence_summary)) {
+      cat(sprintf("  %-12s: %2d constructs\n", type, congruence_summary[type]))
+    }
+  }
+  cat("\n")
+
+  # Detailed table header
+  cat(sprintf("%-35s %-12s %8s %8s\n",
+              "Hypothetical Scenario",
+              "Congruence",
+              "Hypothetical/Self",
+              "Hypothetical/Ideal"))
+  cat("-------------------------------------------------------------------\n")
+
+  # Print each construct
+  for(i in seq_len(nrow(construct_data))) {
+    scenario <- construct_data[[i, "Hypothetical Scenario"]]
+    congruence <- construct_data[[i, "Congruence Scenario"]]
+    self_sim <- construct_data[[i, "SHS"]]
+    ideal_sim <- construct_data[[i, "SHI"]]
+
+    # Truncate scenario name if too long
+    if(nchar(scenario) > 32) {
+      scenario <- paste0(substr(scenario, 1, 29), "...")
+    }
+
+    cat(sprintf("%-35s %-12s %8.4f %8.4f\n",
+                scenario,
+                congruence,
+                self_sim,
+                ideal_sim))
+  }
+
+  cat("\n")
+  cat("===================================================================\n")
+  cat("\n")
+
+  invisible(x)
+}
+

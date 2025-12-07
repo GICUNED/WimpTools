@@ -15,14 +15,29 @@
 #'
 #' @examples
 #'
-#' density_index(example.wimp)
+#' density_index(example_wimp)
 
 density_index <- function(wimp) {
 
-  wmat <- .wimp_get_weights_matrix(wimp)
+  # Get weights matrix directly from wimp
+  if (!is.null(wimp$global$weight_matrix)) {
+    wmat <- wimp$global$weight_matrix
+  } else {
+    # Fallback: reconstruct from edges
+    edges <- wimp$edges
+    n <- nrow(wimp$vertices)
+    wmat <- matrix(0, nrow = n, ncol = n)
+    if (!is.null(edges) && nrow(edges) > 0) {
+      for (r in seq_len(nrow(edges))) {
+        i <- as.integer(edges[r, "from"])
+        j <- as.integer(edges[r, "to"])
+        wmat[i, j] <- as.numeric(edges[r, "weight"])
+      }
+    }
+  }
   n <- ncol(wmat)
 
-  result <- sum(degree_index(wimp)[,1]) / (n * (n - 1))
+  result <- sum(degree_index(wimp)[, 1]) / (n * (n - 1))
 
-  return(result)
+  result
 }

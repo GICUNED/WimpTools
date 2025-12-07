@@ -2,25 +2,24 @@
 % Please edit documentation in R/AdjustmentFunctions.R
 \name{ssi_heatmap}
 \alias{ssi_heatmap}
-\title{Adjustment Heatmap -- ssi_heatmap()}
+\title{SSI Heatmap -- ssi_heatmap()}
 \usage{
 ssi_heatmap(wimp)
 }
 \arguments{
 \item{wimp}{Subject's WimpGrid. It must be a "wimp" S3 object
-imported by  the \code{\link{importwimp}} function.}
+imported by the \code{\link{importwimp}} function.}
 }
 \value{
 A plotly heatmap.
 }
 \description{
-A heat map representing the fit between I-actual and I-ideal as
-             a function of the person's different cognitive states. It uses
-             Tversky's concept of similarity in its calculations.
+Creates a heatmap showing SSI values across different
+             alpha (discrepancy salience) and beta (aspiration salience)
+             parameter combinations.
 }
 \examples{
-
-ssi_heatmap(example.wimp)
+ssi_heatmap(example_wimp)
 
 }
 \author{

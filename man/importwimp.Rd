@@ -7,14 +7,35 @@
 importwimp(path, sheet = 1)
 }
 \arguments{
-\item{path}{Path to the excel file on your computer. The file suffix has to be .xlsx.}
+\item{path}{Path to the Excel file on your computer. The file suffix
+must be .xlsx.}
 
-\item{sheet}{Number of the Excel sheet that contains the WimpGrid data.}
+\item{sheet}{Number of the Excel sheet that contains the WimpGrid data.
+Defaults to 1.}
 }
 \value{
-A wimp S3 object.
+A wimp S3 object containing:
+  \itemize{
+    \item global: metadata and matrices (scale, wmatrix, hypo_matrix)
+    \item vertices: data.frame with construct information
+    \item edges: data.frame with implication relationships
+  }
 }
 \description{
-Function to transform the data of a WimpGrid contained in an
-Excel file into an S3 object of class wimp.
+Function to transform the data of a Weighted Implication
+Grid (WimpGrid) contained in an Excel file into an S3 object of class
+wimp. This function reads the Excel data, normalizes values, calculates
+hypothetical scenarios, and structures the data into vertices and edges
+for network analysis.
+}
+\examples{
+\dontrun{
+# Import your own Excel file
+my_wimp <- importwimp("path/to/your/file.xlsx")
+# Or use the example data included in the package
+example_path <- system.file("extdata", "example_wimp.xlsx",
+                           package = "WimpTools")
+example_wimp <- importwimp(example_path)
+#' }
+
 }

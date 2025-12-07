@@ -7,27 +7,26 @@
 pcsd(scn, vline = NA)
 }
 \arguments{
-\item{scn}{A "scn" S3 class object, the result of the \code{\link{scenariomatrix}} function.
-This object contains the scenario matrix and relevant metadata.}
+\item{scn}{A "scn" object returned by \code{scenariomatrix()}.}
 
-\item{vline}{An optional numeric value indicating a specific iteration to highlight
-with a vertical line on the plot. Defaults is NA.}
+\item{vline}{Optional iteration index to highlight with a vertical line.
+Defaults to NA (no line).}
 }
 \value{
 Interactive plot created with plotly.
 }
 \description{
-Interactive line plot of personal constructs system dinamics.
-Show \code{\link{scenariomatrix}} values across the mathematical iterations.
+Interactive line plot of personal constructs system dynamics.
+  Displays \code{\link{scenariomatrix}} values across iterations.
 }
 \examples{
 
 # Example Scenario Matrix (scn)
 example_scn <- scenariomatrix(
-  wimp = example.wimp,
+  wimp = example_wimp,
   infer = "self dynamics",
   thr = "saturation",
-  act.vector = c(0.1, -0.2, 0.3, -0.1, 0)
+  act_vector = c(0.1, -0.2, 0.3, -0.1, 0)
 )
 
 # Plot the dynamics
