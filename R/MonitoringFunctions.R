@@ -1,6 +1,6 @@
 utils::globalVariables(c("h", "p", ".merge_wimp",
                          ".compatibility_merge_wimp", ".align_wimp",
-                         ".construct_colors"))
+                         ".construct_colors", ".estimate_ssi_parameters"))
 
 #' Monitoring SSI Adjustment -- monitoring_ssi()
 #'
@@ -177,12 +177,18 @@ monitoring_adj <- function(wimp_t0, wimp_t1, legend = TRUE) {
 #'
 #' @description This function generates an interactive heatmap to visualize
 #' and compare the progress of the SSI index across different
-#' time points (e.g., pre- and post-intervention).
+#' time points (e.g., pre- and post-intervention). Optionally, it can estimate
+#' the alpha and beta parameters from the data using a probabilistic bivariate
+#' normal distribution model based on construct preference weights.
 #'
 #' @param wimp_t0 First Subject's WimpGrid (e.g., pre-intervention). It must
 #'   be a "wimp" S3 object.
 #' @param wimp_t1 Second Subject's WimpGrid (e.g., post-intervention). It must
 #'   be a "wimp" S3 object.
+#' @param estimation Logical. If \code{TRUE}, estimates alpha and beta parameters
+#'   using a probabilistic model based on construct preferences (congruence,
+#'   discrepancy, and aspiration). If \code{FALSE} (default), uses fixed values
+#'   of 0.5 for both parameters.
 #'
 #' @return A two heatmap made with plotly.
 #'
@@ -191,11 +197,13 @@ monitoring_adj <- function(wimp_t0, wimp_t1, legend = TRUE) {
 #'
 #' @examples
 #'  monitoring_ssi(example_wimp, example_wimp)
+#'  monitoring_ssi(example_wimp, example_wimp, estimation = TRUE)
 
-monitoring_ssi <- function(wimp_t0, wimp_t1) {
+monitoring_ssi <- function(wimp_t0, wimp_t1, estimation = FALSE) {
 
   create_heatmap <- function(wimp, show_y_axis_title = TRUE,
-                             show_legend = FALSE, hide_y_ticks = FALSE) {
+                             show_legend = FALSE, hide_y_ticks = FALSE,
+                             alpha_param = 0.5, beta_param = 0.5) {
     x <- wimp$vertices$self
     y <- wimp$vertices$ideal
 
@@ -225,7 +233,6 @@ monitoring_ssi <- function(wimp_t0, wimp_t1) {
         "<b>Beta:</b> %{y}<br>",
         "<b>Adjustment:</b> %{z}<extra></extra>"
       ),
-      showscale = show_legend
     ) %>%
       layout(
         xaxis = list(title = "Attention to Self Discrepances"),
@@ -238,7 +245,7 @@ monitoring_ssi <- function(wimp_t0, wimp_t1) {
           showticklabels = !hide_y_ticks,
           ticks = if (hide_y_ticks) "" else "outside"
         ),
-        shapes = list(
+        shapes = c(
           list(
             type = "rect",
             x0 = -0.005,
@@ -258,7 +265,20 @@ monitoring_ssi <- function(wimp_t0, wimp_t1) {
               width = 1,
               dash = "dot"
             )
-          )
+          ),
+          if (!is.na(alpha_param) && !is.na(beta_param)) {
+            list(
+              type = "circle",
+              x0 = alpha_param - 0.02,
+              x1 = alpha_param + 0.02,
+              y0 = beta_param - 0.02,
+              y1 = beta_param + 0.02,
+              line = list(color = "blue", width = 3),
+              fillcolor = "rgba(0, 0, 255, 0)"
+            )
+          } else {
+            NULL
+          }
         ),
         annotations = list(
           list(
@@ -281,11 +301,30 @@ monitoring_ssi <- function(wimp_t0, wimp_t1) {
       )
   }
 
+  # Estimate parameters if requested
+  if (estimation) {
+    params_t0 <- .estimate_ssi_parameters(wimp_t0)
+    params_t1 <- .estimate_ssi_parameters(wimp_t1)
+    alpha_t0 <- params_t0$mu_alpha
+    beta_t0 <- params_t0$mu_beta
+    alpha_t1 <- params_t1$mu_alpha
+    beta_t1 <- params_t1$mu_beta
+  } else {
+    alpha_t0 <- 0.5
+    beta_t0 <- 0.5
+    alpha_t1 <- 0.5
+    beta_t1 <- 0.5
+  }
+
   heatmap1 <- create_heatmap(wimp_t0, show_y_axis_title = TRUE,
-                             show_legend = TRUE) %>%
+                             show_legend = TRUE,
+                             alpha_param = alpha_t0,
+                             beta_param = beta_t0) %>%
     layout(title = "Pre-Intervention")
   heatmap2 <- create_heatmap(wimp_t1, show_y_axis_title = FALSE,
-                             show_legend = FALSE, hide_y_ticks = TRUE) %>%
+                             show_legend = FALSE, hide_y_ticks = TRUE,
+                             alpha_param = alpha_t1,
+                             beta_param = beta_t1) %>%
     layout(title = "Post-Intervention")
 
   subplot(heatmap1, heatmap2, nrows = 1, titleX = TRUE, titleY = TRUE,

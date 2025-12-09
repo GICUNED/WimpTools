@@ -292,6 +292,24 @@ print.self_index <- function(x, ...) {
   cat(sprintf("%-20s %8.4f\n", "Ideal/Hypothetical:", global_data[["Ideal/Hypo"]]))
 
   cat("\n")
+  
+  # Structural coefficients (only for SSI method)
+  if(x$method[1] == "ssi" && !is.null(x$structural_coefs)) {
+    cat("-------------------------------------------------------------------\n")
+    cat("                   STRUCTURAL COEFFICIENTS                    \n")
+    cat("-------------------------------------------------------------------\n")
+    
+    coefs <- x$structural_coefs
+    cat(sprintf("%-30s %8.4f\n", "Discrepancy Ratio (ω_α):", coefs$omega_alpha))
+    cat(sprintf("%-30s %8.4f\n", "Aspiration Ratio (ω_β):", coefs$omega_beta))
+    cat("\n")
+    cat("Magnitude Functions:\n")
+    cat(sprintf("  %-28s %8.4f\n", "f(S ∩ I) [Shared]:", coefs$f_shared))
+    cat(sprintf("  %-28s %8.4f\n", "f(S \\ I) [Discrepancy]:", coefs$f_discrepancy))
+    cat(sprintf("  %-28s %8.4f\n", "f(I \\ S) [Aspiration]:", coefs$f_aspiration))
+    
+    cat("\n")
+  }
 
   # Construct level analysis
   cat("-------------------------------------------------------------------\n")

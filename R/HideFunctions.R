@@ -549,3 +549,169 @@
   )
   # nolint end
 }
+
+# Salience Parameter Estimation ------------------------------------------------
+
+# Calculate structural coefficients for SSI (Definition 9)
+.calc_structural_coefs <- function(wimp) {
+  
+  self <- wimp$vertices$self
+  ideal <- wimp$vertices$ideal
+  
+  # Helper function: local similarity g(s_i, d_i) from Definition 5
+  g_similarity <- function(s, d) {
+    numerator <- (s - d)^2
+    denominator <- pmax(d^2, (1 - abs(d))^2)
+    1 - (numerator / denominator)
+  }
+  
+  # Definition 4: Set relations
+  # (i) Shared attributes: s_i · d_i > 0 (congruent)
+  congruent_idx <- which(self * ideal > 0)
+  
+  # (ii) Discrepancies: s_i · d_i ≤ 0 (S \ I)
+  discrepant_idx <- which(self * ideal <= 0)
+  
+  # Definition 5: Magnitude of shared attributes f(S ∩ I)
+  f_shared <- if (length(congruent_idx) > 0) {
+    sum(g_similarity(self[congruent_idx], ideal[congruent_idx]))
+  } else {
+    1e-6  # Avoid division by zero
+  }
+  
+  # Definition 6: Magnitude of self-now discrepancies f(S \ I)
+  f_discrepancy <- if (length(discrepant_idx) > 0) {
+    sum(abs(self[discrepant_idx]))
+  } else {
+    0
+  }
+  
+  # Definition 7: Magnitude of aspirational gaps f(I \ S)
+  f_aspiration <- if (length(discrepant_idx) > 0) {
+    sum(abs(ideal[discrepant_idx]))
+  } else {
+    0
+  }
+  
+  # Definition 9: Structural coefficients
+  omega_alpha <- f_discrepancy / f_shared
+  omega_beta <- f_aspiration / f_shared
+  
+  list(
+    omega_alpha = omega_alpha,
+    omega_beta = omega_beta,
+    f_shared = f_shared,
+    f_discrepancy = f_discrepancy,
+    f_aspiration = f_aspiration
+  )
+}
+
+.estimate_ssi_parameters <- function(wimp) {
+  
+  # --- 1. Extracción y Limpieza ---
+  self <- wimp$vertices$self
+  ideal <- wimp$vertices$ideal
+  preference <- wimp$vertices$preference
+  
+  if (is.character(preference)) preference <- as.numeric(preference)
+  if (is.null(preference) || all(is.na(preference))) preference <- rep(0, length(self))
+  
+  # --- 2. Clasificación de Constructos ---
+  # Congruencia: Signos coinciden
+  is_congruent <- (sign(self) * sign(ideal)) > 0
+  idx_cong <- which(is_congruent)
+  idx_disc <- which(!is_congruent)
+  
+  # --- 3. Cálculo de Importancias (Weighted Saliency) ---
+  # A) Congruencia
+  w_cong_values <- numeric(length(idx_cong))
+  if (length(idx_cong) > 0) {
+    matches <- sign(preference[idx_cong]) == sign(self[idx_cong])
+    w_cong_values[matches] <- abs(preference[idx_cong][matches])
+    # Importante: Si no coincide, asumimos un valor residual pequeño en vez de 0 absoluto
+    # para evitar varianzas colapsadas
+    w_cong_values[!matches] <- 0.1 
+  }
+  
+  # B) Discrepancia Yoica (Alpha)
+  w_disc_values <- numeric(length(idx_disc))
+  if (length(idx_disc) > 0) {
+    matches_self <- sign(preference[idx_disc]) == sign(self[idx_disc])
+    w_disc_values[matches_self] <- abs(preference[idx_disc][matches_self])
+    w_disc_values[!matches_self] <- 0.1
+  }
+  
+  # C) Aspiración (Beta)
+  w_asp_values <- numeric(length(idx_disc))
+  if (length(idx_disc) > 0) {
+    matches_ideal <- sign(preference[idx_disc]) == sign(ideal[idx_disc])
+    w_asp_values[matches_ideal] <- abs(preference[idx_disc][matches_ideal])
+    w_asp_values[!matches_ideal] <- 0.1
+  }
+  
+  # --- 4. Estadísticos con Suavizado ---
+  # Usamos un suavizado bayesiano simple (añadir pseudo-observaciones) 
+  # para que las medias nunca sean 0 y las varianzas no exploten.
+  
+  safe_mean <- function(x) {
+    if(length(x) == 0) return(0.5)
+    mean(c(x, 1), na.rm=TRUE) # "Push" suave hacia 1 para evitar ceros
+  }
+  
+  safe_var <- function(x) {
+    if(length(x) < 2) return(0.25) # Varianza por defecto alta si hay pocos datos
+    var(c(x, 0.5, 1), na.rm=TRUE) # Añadir variabilidad artificial para estabilidad
+  }
+
+  w_bar_cong <- safe_mean(w_cong_values)
+  w_bar_disc <- safe_mean(w_disc_values)
+  w_bar_asp  <- safe_mean(w_asp_values)
+  
+  var_cong <- safe_var(w_cong_values)
+  var_disc <- safe_var(w_disc_values)
+  var_asp  <- safe_var(w_asp_values)
+  
+  # --- 5. Parámetros Normalizados ---
+  denom_alpha <- w_bar_disc + w_bar_cong
+  denom_beta  <- w_bar_asp + w_bar_cong
+  
+  mu_alpha <- w_bar_disc / denom_alpha
+  mu_beta  <- w_bar_asp / denom_beta
+  
+  # --- 6. Varianza (Método Delta) ---
+  deriv_disc_a <- w_bar_cong / (denom_alpha^2)
+  deriv_cong_a <- -w_bar_disc / (denom_alpha^2)
+  sigma2_alpha <- (deriv_disc_a^2 * var_disc) + (deriv_cong_a^2 * var_cong)
+  
+  deriv_asp_b  <- w_bar_cong / (denom_beta^2)
+  deriv_cong_b <- -w_bar_asp / (denom_beta^2)
+  sigma2_beta  <- (deriv_asp_b^2 * var_asp) + (deriv_cong_b^2 * var_cong)
+  
+  # --- 7. SANITY CHECK (La clave del arreglo) ---
+  # Forzamos que la varianza esté en un rango razonable para visualización.
+  # Una varianza > 0.1 en una escala 0-1 aplana demasiado la curva.
+  # Una varianza < 0.001 hace un pico invisible.
+  
+  clamp <- function(x, min_val=0.005, max_val=0.05) {
+    max(min(x, max_val), min_val)
+  }
+  
+  sigma2_alpha <- clamp(sigma2_alpha)
+  sigma2_beta  <- clamp(sigma2_beta)
+  
+  # --- 8. Función PDF ---
+  pdf_function <- function(alpha_grid, beta_grid) {
+    const <- 1 / (2 * pi * sqrt(sigma2_alpha * sigma2_beta))
+    z_score <- ((alpha_grid - mu_alpha)^2 / sigma2_alpha) + 
+               ((beta_grid - mu_beta)^2  / sigma2_beta)
+    return(const * exp(-0.5 * z_score))
+  }
+  
+  list(
+    mu_alpha = mu_alpha,
+    mu_beta = mu_beta,
+    sigma2_alpha = sigma2_alpha,
+    sigma2_beta = sigma2_beta,
+    pdf_function = pdf_function
+  )
+}

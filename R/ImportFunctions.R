@@ -205,7 +205,17 @@ importwimp <- function(path, sheet = 1) {
       if (is.na(col_name) || col_name == "") {
         col_name <- paste0("attr_", col_idx)
       }
-      vertices_df[[col_name]] <- as.character(extra_attrs[[col_idx]])
+      
+      # Special handling for 'preference' column: normalize using wimp scale
+      if (tolower(col_name) == "preference") {
+        pref_raw <- as.numeric(extra_attrs[[col_idx]])
+        # Normalize to [-1, 1] using the same scale as self and ideal
+        pref_normalized <- (pref_raw - (scale_center * rep(1, n_constructs))) /
+          (0.5 * (scale_max - scale_min))
+        vertices_df[[col_name]] <- pref_normalized
+      } else {
+        vertices_df[[col_name]] <- as.character(extra_attrs[[col_idx]])
+      }
     }
   }
   # Create edges data.frame: one row per significant implication weight

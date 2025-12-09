@@ -1,5 +1,7 @@
 ## ADJUSTMENT FUNCTIONS ##
 
+utils::globalVariables(c(".estimate_ssi_parameters"))
+
 # Construct proportions index -------------------------------------------------
 
 #' Construct Congruence Analysis -- construct_index()
@@ -168,9 +170,16 @@ self_index <- function(wimp, method = "ssi", rc = TRUE, alpha = .5, beta = .5) {
 
   names(df_construct) <- c("Hypothetical Scenario", "Congruence Scenario",
                            "SHS", "SHI")
+  
+  # Calculate structural coefficients if using SSI method
+  structural_coefs <- NULL
+  if (method == "ssi") {
+    structural_coefs <- .calc_structural_coefs(wimp)
+  }
 
   result$global <- df_global
   result$construct <- df_construct
+  result$structural_coefs <- structural_coefs
   result$method <- c(method, rc_text)
   result$wimp <- wimp
   class(result) <- "self_index"
@@ -283,10 +292,22 @@ self_plot <- function(wimp) {
 #'
 #' @description Creates a heatmap showing SSI values across different
 #'              alpha (discrepancy salience) and beta (aspiration salience)
-#'              parameter combinations.
+#'              parameter combinations. Optionally, estimates alpha and beta
+#'              parameters from the data using a probabilistic model based on
+#'              construct preference weights.
 #'
 #' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
 #'        imported by the \code{\link{importwimp}} function.
+#' @param estimation Logical. If \code{TRUE}, estimates alpha and beta parameters
+#'   using a probabilistic model based on construct preferences (congruence,
+#'   discrepancy, and aspiration). If \code{FALSE} (default), uses fixed values
+#'   of 0.5 for both parameters.
+#' @param palette Character. Color palette for the heatmap. Options: \code{"redgreen"}
+#'   (default, red-white-green), \code{"viridis"} (purple to yellow),
+#'   \code{"plasma"} (purple to yellow), \code{"inferno"} (black to yellow),
+#'   \code{"magma"} (black to white), \code{"cividis"} (blue to yellow),
+#'   \code{"turbo"} (blue to red), \code{"picnic"}, \code{"bluered"},
+#'   or \code{"rdbu"} (red-white-blue diverging).
 #'
 #' @return A plotly heatmap.
 #'
@@ -297,97 +318,167 @@ self_plot <- function(wimp) {
 #'
 #' @examples
 #' ssi_heatmap(example_wimp)
+#' ssi_heatmap(example_wimp, estimation = TRUE)
+#' ssi_heatmap(example_wimp, palette = "viridis")
 #'
 
-ssi_heatmap <- function(wimp) {
-
+ssi_heatmap <- function(wimp, estimation = FALSE, palette = "Redgreen") {
+  
+  # Extract self and ideal ratings
   x <- wimp$vertices$self
   y <- wimp$vertices$ideal
-
+  
+  # Create fixed grid [0,1] for SSI parameter space
   alpha_values <- seq(0, 1, by = 0.01)
-  beta_values <- seq(0, 1, by = 0.01)
-
+  beta_values  <- seq(0, 1, by = 0.01)
+  
+  # Compute SSI surface across parameter grid
   sim_matrix <- outer(alpha_values, beta_values,
                       Vectorize(function(alpha, beta) {
                         .sim_index(x, y, alpha = alpha, beta = beta)
                       }))
+  
+  # Estimate probability distribution if requested
+  params <- NULL
+  pdf_matrix <- NULL
+  structural_coefs <- NULL
+  
+  if (estimation) {
+    params <- .estimate_ssi_parameters(wimp)
+    pdf_matrix <- outer(alpha_values, beta_values, params$pdf_function)
+    structural_coefs <- .calc_structural_coefs(wimp)
+  }
+  
+  # Select color palette
 
-  plot <- plot_ly(
-    x = alpha_values,
-    y = beta_values,
-    z = t(sim_matrix),
-    type = "heatmap",
-    colorscale = list(c(0, "#F52722"), c(0.5, "white"), c(1, "#A5D610")),
-    zmin = 0,
-    zmax = 1,
-    hovertemplate = paste("<b>Alpha:</b> %{x}<br><b>Beta:</b> %{y}",
-                          "<br><b>Similarity:</b> %{z}<extra></extra>"),
-    colorbar = list(
-      title = "<b>SSI</b>",
-      tickfont = list(size = 16),
-      ticklen = 10
+    if (palette == "Redgreen") {
+      palette <- list(c(0, "#F52722"), c(0.5, "white"), c(1, "#A5D610"))
+    }
+  
+  # Create base heatmap layer with SSI surface
+  plot <- plot_ly() %>%
+    add_heatmap(
+      x = alpha_values,
+      y = beta_values,
+      z = t(sim_matrix),
+      colorscale = palette,
+      zmin = 0,
+      zmax = 1,
+      hovertemplate = paste("<b>Alpha:</b> %{x}<br><b>Beta:</b> %{y}",
+                            "<br><b>SSI:</b> %{z:.3f}<extra></extra>"),
+      colorbar = list(title = "<b>SSI</b>")
     )
-  ) %>%
+  
+  # Add probability density contours if estimation enabled
+  if (estimation && !is.null(pdf_matrix)) {
+    
+    # Normalize probability density to [0, 1] range
+    max_dens <- max(pdf_matrix, na.rm = TRUE)
+    pdf_normalized <- pdf_matrix / max_dens
+    
+    plot <- plot %>%
+      add_contour(
+        x = alpha_values,
+        y = beta_values,
+        z = t(pdf_normalized),
+        showscale = FALSE,
+        contours = list(
+          coloring = 'lines',
+          start = 0.1,
+          end = 0.9,
+          size = 0.15,
+          showlabels = TRUE,
+          labelfont = list(size = 10, color = "black")
+        ),
+        line = list(color = 'black', width = 2),
+        hoverinfo = "skip"
+      ) %>%
+      add_markers(
+        x = params$mu_alpha,
+        y = params$mu_beta,
+        marker = list(
+          color = "#FDE725FF",
+          size = 12, 
+          line = list(width = 1, color = "black"),
+          symbol = "circle"
+        ),
+        customdata = .sim_index(x, y, alpha = params$mu_alpha, beta = params$mu_beta),
+        hovertemplate = paste(
+          "<b>Most Likely Profile</b><br>",
+          "Alpha: %{x:.3f}<br>",
+          "Beta: %{y:.3f}<br>",
+          "SSI: %{customdata:.3f}<extra></extra>"
+        ),
+        showlegend = FALSE
+      )
+  }
+  
+  # Configure plot layout and styling
+  plot <- plot %>%
     layout(
       title = "",
       xaxis = list(
-        title = list(
-          text = "<b>Discrepancy Salience (Alpha)</b>",
-          font = list(size = 25)
-        ),
-        tickfont = list(size = 18)
+        title = list(text = "<b>Discrepancy Salience (Alpha)</b>",
+                     font = list(size = 18)),
+        tickfont = list(size = 14),
+        range = c(0, 1),
+        constrain = "domain"
       ),
       yaxis = list(
-        title = list(
-          text = "<b>Aspiration Salience (Beta)</b>",
-          font = list(size = 25)
-        ),
-        tickfont = list(size = 18)
+        title = list(text = "<b>Aspiration Salience (Beta)</b>",
+                     font = list(size = 18)),
+        tickfont = list(size = 14),
+        range = c(0, 1),
+        scaleanchor = "x",
+        scaleratio = 1
       ),
       shapes = list(
+        # Plot border
+        list(type = "rect", x0 = 0, x1 = 1, y0 = 0, y1 = 1, 
+             line = list(color = "black", width = 2)),
+        # Diagonal line: Alpha + Beta = 1
+        list(type = "line", x0 = 0, y0 = 1, x1 = 1, y1 = 0,
+             line = list(color = "black", width = 1, dash = "dot"))
+      ),
+      annotations = if (!is.null(structural_coefs)) {
+        coef_text <- sprintf(
+          "<b>ω<sub>α</sub>:</b> %.3f<br><b>ω<sub>β</sub>:</b> %.3f",
+          structural_coefs$omega_alpha,
+          structural_coefs$omega_beta
+        )
         list(
-          type = "rect",
-          x0 = -0.005,
-          x1 = 1.005,
-          y0 = -0.005,
-          y1 = 1.005,
-          line = list(color = "black", width = 2)
-        ),
-        list(
-          type = "line",
-          x0 = 0,
-          y0 = 1,
-          x1 = 1,
-          y1 = 0,
-          line = list(
-            color = "black",
-            width = 1,
-            dash = "dot"
+          list(
+            x = 0.5, y = 0.5, text = "+", showarrow = FALSE,
+            font = list(color = "rgba(0,0,0,1)", size = 25)
+          ),
+          list(
+            x = 0.95,
+            y = 0.05,
+            text = coef_text,
+            showarrow = FALSE,
+            xanchor = "right",
+            yanchor = "bottom",
+            font = list(size = 12, color = "black"),
+            bgcolor = "rgba(255, 255, 255, 0.8)",
+            bordercolor = "black",
+            borderwidth = 1,
+            borderpad = 4
           )
         )
-      ),
-      annotations = list(
+      } else {
         list(
-          x = 0.5,
-          y = 0.5,
-          xref = "x",
-          yref = "y",
-          text = "+",
-          showarrow = FALSE,
-          font = list(color = "black", size = 20)
+          list(
+            x = 0.5, y = 0.5, text = "+", showarrow = FALSE,
+            font = list(color = "rgba(0,0,0,1)", size = 25)
+          )
         )
-      )
+      }
     ) %>%
-    style(
-      hoverlabel = list(
-        bgcolor = "rgba(255, 255, 255, 0.8)",
-        bordercolor = "black",
-        font = list(size = 12)
-      )
-    )
+    config(displayModeBar = FALSE)
 
-  plot
+  return(plot)
 }
+
 # Hypothetical Scenarios Plot --------------------------------------------------
 
 #' Hypothetical Scenarios Plot  -- hypo_plot()
