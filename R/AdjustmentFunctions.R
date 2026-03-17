@@ -341,12 +341,13 @@ ssi_heatmap <- function(wimp, estimation = FALSE, palette = "Redgreen") {
   # Estimate probability distribution if requested
   params <- NULL
   pdf_matrix <- NULL
-  structural_coefs <- NULL
+  
+  # Always calculate structural coefficients
+  structural_coefs <- .calc_structural_coefs(wimp)
   
   if (estimation) {
     params <- .estimate_ssi_parameters(wimp)
     pdf_matrix <- outer(alpha_values, beta_values, params$pdf_function)
-    structural_coefs <- .calc_structural_coefs(wimp)
   }
   
   # Select color palette

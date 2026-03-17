@@ -4,7 +4,7 @@
 \alias{monitoring_ssi}
 \title{Monitoring SSI Adjustment -- monitoring_ssi()}
 \usage{
-monitoring_ssi(wimp_t0, wimp_t1)
+monitoring_ssi(wimp_t0, wimp_t1, estimation = FALSE)
 }
 \arguments{
 \item{wimp_t0}{First Subject's WimpGrid (e.g., pre-intervention). It must
@@ -12,6 +12,11 @@ be a "wimp" S3 object.}
 
 \item{wimp_t1}{Second Subject's WimpGrid (e.g., post-intervention). It must
 be a "wimp" S3 object.}
+
+\item{estimation}{Logical. If \code{TRUE}, estimates alpha and beta parameters
+using a probabilistic model based on construct preferences (congruence,
+discrepancy, and aspiration). If \code{FALSE} (default), uses fixed values
+of 0.5 for both parameters.}
 }
 \value{
 A two heatmap made with plotly.
@@ -19,8 +24,11 @@ A two heatmap made with plotly.
 \description{
 This function generates an interactive heatmap to visualize
 and compare the progress of the SSI index across different
-time points (e.g., pre- and post-intervention).
+time points (e.g., pre- and post-intervention). Optionally, it can estimate
+the alpha and beta parameters from the data using a probabilistic bivariate
+normal distribution model based on construct preference weights.
 }
 \examples{
  monitoring_ssi(example_wimp, example_wimp)
+ monitoring_ssi(example_wimp, example_wimp, estimation = TRUE)
 }

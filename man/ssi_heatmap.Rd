@@ -4,11 +4,23 @@
 \alias{ssi_heatmap}
 \title{SSI Heatmap -- ssi_heatmap()}
 \usage{
-ssi_heatmap(wimp)
+ssi_heatmap(wimp, estimation = FALSE, palette = "Redgreen")
 }
 \arguments{
 \item{wimp}{Subject's WimpGrid. It must be a "wimp" S3 object
 imported by the \code{\link{importwimp}} function.}
+
+\item{estimation}{Logical. If \code{TRUE}, estimates alpha and beta parameters
+using a probabilistic model based on construct preferences (congruence,
+discrepancy, and aspiration). If \code{FALSE} (default), uses fixed values
+of 0.5 for both parameters.}
+
+\item{palette}{Character. Color palette for the heatmap. Options: \code{"redgreen"}
+(default, red-white-green), \code{"viridis"} (purple to yellow),
+\code{"plasma"} (purple to yellow), \code{"inferno"} (black to yellow),
+\code{"magma"} (black to white), \code{"cividis"} (blue to yellow),
+\code{"turbo"} (blue to red), \code{"picnic"}, \code{"bluered"},
+or \code{"rdbu"} (red-white-blue diverging).}
 }
 \value{
 A plotly heatmap.
@@ -16,10 +28,14 @@ A plotly heatmap.
 \description{
 Creates a heatmap showing SSI values across different
              alpha (discrepancy salience) and beta (aspiration salience)
-             parameter combinations.
+             parameter combinations. Optionally, estimates alpha and beta
+             parameters from the data using a probabilistic model based on
+             construct preference weights.
 }
 \examples{
 ssi_heatmap(example_wimp)
+ssi_heatmap(example_wimp, estimation = TRUE)
+ssi_heatmap(example_wimp, palette = "viridis")
 
 }
 \author{
