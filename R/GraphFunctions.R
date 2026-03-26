@@ -879,6 +879,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
             });
           }
           nodesDS.update(updates);
+          updatePalette(document.getElementById('palette_sel').value);
           network.fit({animation: true});
         }
       };
