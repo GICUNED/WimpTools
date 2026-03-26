@@ -462,8 +462,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       layouts[["areas"]] <- .scale(cbind(x = v_areas$x, y = v_areas$y))
     }
     
-    # Add "Original" layout (pre-calculate based on parameter)
-    # This ensures we can always return to the initial state
+    # Add the initial layout as 'original' for JS fallback
     init_layout_name <- .convert_layout_name(layout)
     if (init_layout_name == "layout_as_tree") {
        layouts[["original"]] <- .scale(igraph::layout_as_tree(ig, circular = TRUE))
@@ -473,8 +472,9 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
        layouts[["original"]] <- .scale(igraph::layout_with_mds(ig))
     } else if (init_layout_name == "layout_on_grid") {
        layouts[["original"]] <- .scale(igraph::layout_on_grid(ig))
-    } else if (init_layout_name == "areas") {
-       # already handled if areas=TRUE
+    } else if (layout == "areas") {
+       v_areas <- .handle_areas_layout(vertex, area_attr)
+       layouts[["original"]] <- .scale(cbind(x = v_areas$x, y = v_areas$y))
     } else {
        layouts[["original"]] <- .scale(igraph::layout_with_graphopt(ig))
     }
@@ -541,7 +541,8 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       "circle"   = "layout_in_circle",
       "tree"     = "layout_as_tree",
       "mds"      = "layout_with_mds",
-      "grid"     = "layout_on_grid"
+      "grid"     = "layout_on_grid",
+      "rtcircle" = "layout_in_circle" # rtcircle uses layout_in_circle with circular=TRUE
     )
     if (layout %in% names(layout_mapping)) {
       layout_mapping[[layout]]
@@ -759,7 +760,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       header.style.cursor = 'pointer';
       header.style.userSelect = 'none';
       
-      header.innerHTML = '<span style=\"font-weight:bold; color:#2c3e50;\">Options</span>' +
+      header.innerHTML = '<span style=\"font-weight:bold; color:#2c3e50;\">Visualization Options</span>' +
                          '<span id=\"toggle_btn\" style=\"font-weight:bold; color:#95a5a6; font-size:16px; width:20px; textAlign:center;\">+</span>';
       panel.appendChild(header);
 
@@ -781,8 +782,8 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       var paletteDiv = document.createElement('div');
       paletteDiv.style.marginBottom = '15px';
       
-      var pOpts = ['red/green', 'grey scale', 'colorblind', 'pastel', 'dark', 'viridis'];
-      var pLabels = ['Red / Green', 'Grey Scale', 'Colorblind', 'Pastel', 'Dark', 'Viridis'];
+      var pOpts = ['red/green', 'grey scale', 'colorblind', 'viridis', 'pastel', 'dark'];
+      var pLabels = ['Red / Green', 'Grey Scale', 'Colorblind', 'Viridis', 'Pastel', 'Dark'];
       var pSelectHtml = '<div style=\"margin-bottom:5px; font-weight:bold; color:#444;\">Color Palette</div>' +
                          '<select id=\"palette_sel\" style=\"width:100%; padding:4px; font-size:11px;\">';
       
@@ -844,26 +845,31 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       };      // --- Layout Section ---
       var layoutDiv = document.createElement('div');
       layoutDiv.style.marginBottom = '15px';
-      var layoutOptions = '<option value=\"original\">Original</option>' +
-                          '<option value=\"graphopt\">GraphOpt</option>' +
-                          '<option value=\"circle\">Circle</option>' +
-                          '<option value=\"mds\">MDS</option>' +
-                          '<option value=\"grid\">Grid</option>' +
-                          '<option value=\"tree\">Tree (Circular)</option>';
       
+      var lOpts = ['graphopt', 'circle', 'mds', 'grid', 'tree'];
+      var lLabels = ['GraphOpt', 'Circle', 'MDS', 'Grid', 'Reingold-Tilford (Circular)'];
       if (x.layouts.areas) {
-        layoutOptions += '<option value=\"areas\">Areas</option>';
+        lOpts.push('areas');
+        lLabels.push('Areas');
       }
 
-      layoutDiv.innerHTML = '<div style=\"margin-bottom:5px; font-weight:bold; color:#444;\">Layout</div>' +
-                            '<select id=\"layout_sel\" style=\"width:100%; padding:4px; font-size:11px; margin-bottom:5px;\">' +
-                            layoutOptions +
-                            '</select>';
+      var lSelectHtml = '<div style=\"margin-bottom:5px; font-weight:bold; color:#444;\">Layout</div>' +
+                         '<select id=\"layout_sel\" style=\"width:100%; padding:4px; font-size:11px; margin-bottom:5px;\">';
+      
+      for(var i=0; i<lOpts.length; i++){
+        var sel = (lOpts[i] === x.initial_layout) ? ' selected=\"selected\"' : '';
+        lSelectHtml += '<option value=\"' + lOpts[i] + '\"' + sel + '>' + lLabels[i] + '</option>';
+      }
+      lSelectHtml += '</select>';
+      
+      layoutDiv.innerHTML = lSelectHtml;
       content.appendChild(layoutDiv);
       
       layoutDiv.querySelector('#layout_sel').onchange = function() {
         var layoutKey = this.value;
         var layoutData = x.layouts[layoutKey];
+        if (!layoutData && layoutKey === x.initial_layout) layoutData = x.layouts.original;
+        
         if (layoutData) {
           network.setOptions({
             physics: {enabled: false},
@@ -911,7 +917,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
 
       // --- Node Filter Section ---
       var nodeSection = document.createElement('div');
-      nodeSection.innerHTML = '<div style=\"margin-bottom:8px; font-weight:bold; color:#444;\">Constructs Checklist</div>' +
+      nodeSection.innerHTML = '<div style=\"margin-bottom:8px; font-weight:bold; color:#444;\">Visible Constructs</div>' +
                                '<div style=\"margin-bottom:8px; display:flex; gap:5px;\">' +
                                '<button id=\"check_all\" style=\"flex:1; cursor:pointer; font-size:10px; padding:2px;\">All</button>' +
                                '<button id=\"uncheck_all\" style=\"flex:1; cursor:pointer; font-size:10px; padding:2px;\">None</button>' +
