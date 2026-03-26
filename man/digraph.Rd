@@ -20,7 +20,8 @@ digraph(
   pad_side = 50,
   rounding = 10,
   min_weight = 0,
-  weight_slider = FALSE
+  weight_slider = FALSE,
+  node_filter = FALSE
 )
 }
 \arguments{
@@ -76,6 +77,10 @@ an edge to be displayed. Default is 0 (show all edges).}
 \item{weight_slider}{Logical; if \code{TRUE}, adds an interactive slider to 
 the visualization to filter edges by weight dynamically. Default is 
 \code{FALSE}.}
+
+\item{node_filter}{Logical; if \code{TRUE}, adds an interactive checklist to 
+the visualization to show/hide individual constructs dynamically. 
+Default is \code{FALSE}.}
 }
 \value{
 A \code{visNetwork} interactive graph object that can be displayed

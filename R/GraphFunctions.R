@@ -48,6 +48,9 @@
 #' @param weight_slider Logical; if \code{TRUE}, adds an interactive slider to 
 #'        the visualization to filter edges by weight dynamically. Default is 
 #'        \code{FALSE}.
+#' @param node_filter Logical; if \code{TRUE}, adds an interactive checklist to 
+#'        the visualization to show/hide individual constructs dynamically. 
+#'        Default is \code{FALSE}.
 #'
 #' @details
 #' The digraph visualization provides insights into:
@@ -104,7 +107,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
                     show = TRUE, hide_direct = FALSE,
                     areas = FALSE, area_attr = "category", area_color = NA,
                     pad_side = 50, rounding = 10, min_weight = 0,
-                    weight_slider = FALSE) {
+                    weight_slider = FALSE, node_filter = FALSE) {
 
   # ==========================================
   # INPUT VALIDATION
@@ -186,6 +189,9 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
   }
   if (!is.logical(weight_slider) || length(weight_slider) != 1) {
     stop("'weight_slider' must be logical.")
+  }
+  if (!is.logical(node_filter) || length(node_filter) != 1) {
+    stop("'node_filter' must be logical.")
   }
 
   if (inherits(wimp, "wimp") && !is.null(wimp$global$weight_matrix)) {
@@ -669,52 +675,96 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
   }
 
   # ==========================================
-  # DYNAMIC CONTROLS
+  # DYNAMIC CONTROLS (Unified Filter Panel)
   # ==========================================
-
-  if (weight_slider) {
-    js_slider <- "
+  
+  if (weight_slider || node_filter) {
+    js_panel <- "
     function(el, x) {
       var network = this.network;
-      var sliderDiv = document.createElement('div');
-      sliderDiv.style.position = 'absolute';
-      sliderDiv.style.top = '20px';
-      sliderDiv.style.right = '20px';
-      sliderDiv.style.zIndex = '1000';
-      sliderDiv.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
-      sliderDiv.style.padding = '10px';
-      sliderDiv.style.borderRadius = '8px';
-      sliderDiv.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
-      sliderDiv.style.border = '1px solid #ddd';
-      sliderDiv.style.fontFamily = 'Arial, sans-serif';
-      sliderDiv.style.fontSize = '12px';
+      var panel = document.createElement('div');
+      panel.style.position = 'absolute';
+      panel.style.top = '20px';
+      panel.style.right = '20px';
+      panel.style.zIndex = '1000';
+      panel.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+      panel.style.padding = '12px';
+      panel.style.borderRadius = '8px';
+      panel.style.boxShadow = '0 2px 12px rgba(0,0,0,0.2)';
+      panel.style.border = '1px solid #ddd';
+      panel.style.fontFamily = 'Arial, sans-serif';
+      panel.style.fontSize = '12px';
+      panel.style.maxHeight = '85%';
+      panel.style.overflowY = 'auto';
+      panel.style.width = '190px';
+      
+      el.appendChild(panel);
 
-      var maxW = x.max_weight.toFixed(2);
-      sliderDiv.innerHTML = '<div style=\"margin-bottom:5px; font-weight:bold;\">Edge Weight Filter</div>' +
-                            '<input type=\"range\" id=\"min_weight_slider\" min=\"0\" max=\"' + x.max_weight + '\" step=\"0.01\" value=\"' + x.min_weight + '\" style=\"width:150px;\">' +
-                            '<div style=\"margin-top:5px;\">Min: <span id=\"weight_val\">' + x.min_weight.toFixed(2) + '</span> (Max: ' + maxW + ')</div>';
-      
-      el.appendChild(sliderDiv);
-      
-      var slider = el.querySelector('#min_weight_slider');
-      var label = el.querySelector('#weight_val');
-      
-      slider.addEventListener('input', function() {
-        var threshold = parseFloat(this.value);
-        label.innerText = threshold.toFixed(2);
-        var edges = network.body.data.edges;
-        var allEdges = edges.get();
-        var updates = allEdges.map(function(edge) {
-          return {id: edge.id, hidden: Math.abs(edge.weight) < threshold};
+      // --- Weight Slider Section ---
+      if (x.weight_slider) {
+        var sliderDiv = document.createElement('div');
+        sliderDiv.style.marginBottom = '15px';
+        sliderDiv.style.borderBottom = '1px solid #eee';
+        sliderDiv.style.paddingBottom = '12px';
+        
+        var maxW = x.max_weight.toFixed(2);
+        sliderDiv.innerHTML = '<div style=\"margin-bottom:8px; font-weight:bold; color:#555;\">Edge Weight Filter</div>' +
+                              '<input type=\"range\" id=\"min_weight_slider\" min=\"0\" max=\"' + x.max_weight + '\" step=\"0.01\" value=\"' + x.min_weight + '\" style=\"width:100%; cursor:pointer;\">' +
+                              '<div style=\"margin-top:6px; display:flex; justify-content:space-between;\"><span>Min: <b id=\"weight_val\">' + x.min_weight.toFixed(2) + '</b></span> <span style=\"color:#999;\">Max: ' + maxW + '</span></div>';
+        panel.appendChild(sliderDiv);
+        
+        var slider = sliderDiv.querySelector('#min_weight_slider');
+        var label = sliderDiv.querySelector('#weight_val');
+        
+        slider.addEventListener('input', function() {
+          var threshold = parseFloat(this.value);
+          label.innerText = threshold.toFixed(2);
+          var edges = network.body.data.edges;
+          var updates = edges.get().map(function(edge) {
+            return {id: edge.id, hidden: Math.abs(edge.weight) < threshold};
+          });
+          edges.update(updates);
         });
-        edges.update(updates);
-      });
+      }
+
+      // --- Node Filter Section ---
+      if (x.node_filter) {
+        var nodeDiv = document.createElement('div');
+        nodeDiv.innerHTML = '<div style=\"margin-bottom:8px; font-weight:bold; color:#555;\">Constructs Checklist</div>';
+        
+        var list = document.createElement('div');
+        list.style.maxHeight = '250px';
+        list.style.overflowY = 'auto';
+        list.style.paddingRight = '5px';
+        
+        x.nodes.forEach(function(node) {
+           var item = document.createElement('div');
+           item.style.marginBottom = '4px';
+           var checked = node.hidden ? '' : 'checked';
+           item.innerHTML = '<label style=\"cursor:pointer; display:flex; align-items:flex-start; line-height:1.2;\">' +
+                            '<input type=\"checkbox\" class=\"node-check\" data-id=\"' + node.id + '\" ' + checked + ' style=\"margin-top:2px; margin-right:8px;\">' +
+                            '<span style=\"word-break: break-word;\">' + node.label + '</span>' +
+                            '</label>';
+           list.appendChild(item);
+        });
+        nodeDiv.appendChild(list);
+        panel.appendChild(nodeDiv);
+        
+        list.addEventListener('change', function(e) {
+          if (e.target.classList.contains('node-check')) {
+            var nodeId = e.target.getAttribute('data-id');
+            network.body.data.nodes.update({id: nodeId, hidden: !e.target.checked});
+          }
+        });
+      }
     }
     "
     # Pass necessary data to HTML x data
-    g$x$min_weight <- min_weight
-    g$x$max_weight <- max_w
-    g <- g %>% htmlwidgets::onRender(js_slider)
+    g$x$weight_slider <- weight_slider
+    g$x$node_filter   <- node_filter
+    g$x$min_weight    <- min_weight
+    g$x$max_weight    <- max_w
+    g <- g %>% htmlwidgets::onRender(js_panel)
   }
 
   return(g)
