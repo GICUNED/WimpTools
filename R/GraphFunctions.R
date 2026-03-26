@@ -45,12 +45,6 @@
 #'        (0 for sharp corners). Default is 10.
 #' @param min_weight Numeric value specifying the minimum absolute weight for 
 #'        an edge to be displayed. Default is 0 (show all edges).
-#' @param weight_slider Logical; if \code{TRUE}, adds an interactive slider to 
-#'        the visualization to filter edges by weight dynamically. Default is 
-#'        \code{FALSE}.
-#' @param node_filter Logical; if \code{TRUE}, adds an interactive checklist to 
-#'        the visualization to show/hide individual constructs dynamically. 
-#'        Default is \code{FALSE}.
 #' @param interactive_options Logical; if \code{TRUE}, adds a comprehensive 
 #'        options panel to the visualization for real-time adjustments of 
 #'        palettes, layouts, and filters. Default is \code{TRUE}.
@@ -110,7 +104,6 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
                     show = TRUE, hide_direct = FALSE,
                     areas = FALSE, area_attr = "category", area_color = NA,
                     pad_side = 50, rounding = 10, min_weight = 0,
-                    weight_slider = FALSE, node_filter = FALSE,
                     interactive_options = TRUE) {
 
   # ==========================================
@@ -190,12 +183,6 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
   }
   if (!is.numeric(min_weight) || length(min_weight) != 1 || min_weight < 0) {
     stop("'min_weight' must be numeric >= 0.")
-  }
-  if (!is.logical(weight_slider) || length(weight_slider) != 1) {
-    stop("'weight_slider' must be logical.")
-  }
-  if (!is.logical(node_filter) || length(node_filter) != 1) {
-    stop("'node_filter' must be logical.")
   }
   if (!is.logical(interactive_options) || length(interactive_options) != 1) {
     stop("'interactive_options' must be logical.")
@@ -440,6 +427,37 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
   )
   vertex[[area_attr]] <- as.character(area_vec)
 
+  # Internal helper for layout pre-calculation
+  .get_all_layouts <- function(wmatrix, vertex, area_attr) {
+    ig <- igraph::graph_from_adjacency_matrix(wmatrix, weight = TRUE, mode = "directed")
+    
+    # igraph layouts
+    # Scale coordinates to avoid tiny graphs
+    .scale <- function(m) {
+      if (nrow(m) == 0) return(m)
+      m[, 1] <- (m[, 1] - mean(m[, 1])) * 500
+      m[, 2] <- (m[, 2] - mean(m[, 2])) * 500
+      m
+    }
+    
+    layouts <- list(
+      "graphopt" = .scale(igraph::layout_with_graphopt(ig)),
+      "circle"   = .scale(igraph::layout_in_circle(ig)),
+      "mds"      = .scale(igraph::layout_with_mds(ig)),
+      "grid"     = .scale(igraph::layout_on_grid(ig)),
+      "tree"     = .scale(igraph::layout_as_tree(ig, circular = TRUE))
+    )
+    
+    # Custom Areas layout
+    v_areas <- .handle_areas_layout(vertex, area_attr)
+    layouts[["areas"]] <- cbind(x = v_areas$x, y = v_areas$y)
+    
+    # Convert to standard named list for JS
+    lapply(layouts, function(m) {
+      data.frame(x = as.numeric(m[,1]), y = as.numeric(m[,2]))
+    })
+  }
+
   # Apply direct relationship hiding if requested
   if (hide_direct) {
     logical_dilemmatic <- ideal_vector == 0
@@ -454,15 +472,8 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
   
   max_w <- (if (nrow(all_edges_raw) > 0) max(abs(all_edges_raw$weight)) else 1) + 0.01
 
-  # If there's no slider, filter edges statically to reduce payload
-  if (min_weight > 0 && !weight_slider) {
-    keep <- abs(all_edges_raw$weight) >= min_weight
-    edges_raw <- all_edges_raw[keep, ]
-    edge_curved <- all_edge_curved[keep]
-  } else {
-    edges_raw <- all_edges_raw
-    edge_curved <- all_edge_curved
-  }
+  edges_raw <- all_edges_raw
+  edge_curved <- all_edge_curved
 
   if (nrow(edges_raw) == 0) {
     edges <- data.frame(
@@ -485,7 +496,8 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       color = edge_props$color,
       title = round(edges_raw$weight, 2),
       weight = edges_raw$weight,
-      hidden = if (weight_slider) abs(edges_raw$weight) < min_weight else FALSE,
+      orig_dashes = edge_props$dashes,
+      hidden = if (interactive_options) abs(edges_raw$weight) < min_weight else FALSE,
       stringsAsFactors = FALSE
     )
   }
@@ -725,7 +737,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
 
       var content = document.createElement('div');
       content.id = 'panel_content';
-      content.style.display = 'none'; // Default to minimized
+      content.style.display = 'none'; 
       content.style.marginTop = '10px';
       content.style.borderTop = '1px solid #eee';
       content.style.paddingTop = '10px';
@@ -773,29 +785,52 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       paletteDiv.querySelector('#palette_sel').onchange = function() {
         var scheme = this.value;
         var nodesDS = network.body.data.nodes;
-        var updates = nodesDS.get().map(function(node) {
+        var nodesUpdates = nodesDS.get().map(function(node) {
           return {id: node.id, color: getPaletteColor(node.self_val, node.ideal_val, scheme)};
         });
-        nodesDS.update(updates);
+        nodesDS.update(nodesUpdates);
+        
+        var edgesDS = network.body.data.edges;
+        var edgesUpdates = edgesDS.get().map(function(edge) {
+          if(scheme === 'grey scale') {
+             return {id: edge.id, color: 'grey', dashes: edge.weight < 0};
+          } else {
+             return {id: edge.id, dashes: edge.orig_dashes}; // Restore original dashed state
+          }
+        });
+        edgesDS.update(edgesUpdates);
       };
 
       // --- Layout Section ---
       var layoutDiv = document.createElement('div');
       layoutDiv.style.marginBottom = '15px';
-      layoutDiv.innerHTML = '<div style=\"margin-bottom:5px; font-weight:bold; color:#444;\">Physics Layout</div>' +
+      layoutDiv.innerHTML = '<div style=\"margin-bottom:5px; font-weight:bold; color:#444;\">Layout</div>' +
                             '<select id=\"layout_sel\" style=\"width:100%; padding:4px; font-size:11px; margin-bottom:5px;\">' +
-                            '<option value=\"barnesHut\">Fluid (BarnesHut)</option>' +
-                            '<option value=\"forceAtlas2Based\">Force Atlas 2</option>' +
-                            '<option value=\"repulsion\">Repulsion</option>' +
+                            '<option value=\"areas\">Original (Areas)</option>' +
+                            '<option value=\"graphopt\">GraphOpt</option>' +
+                            '<option value=\"circle\">Circle</option>' +
+                            '<option value=\"mds\">MDS</option>' +
+                            '<option value=\"grid\">Grid</option>' +
+                            '<option value=\"tree\">Tree (Circular)</option>' +
                             '</select>' +
-                            '<button id=\"stabilize_btn\" style=\"width:100%; cursor:pointer; font-size:10px; padding:3px;\">Stabilize</button>';
+                            '<button id=\"stabilize_btn\" style=\"width:100%; cursor:pointer; font-size:10px; padding:3px;\">Re-stabilize</button>';
       content.appendChild(layoutDiv);
       
       layoutDiv.querySelector('#layout_sel').onchange = function() {
-        network.setOptions({physics: {solver: this.value}});
-        network.stabilize();
+        var layoutKey = this.value;
+        var layoutData = x.layouts[layoutKey];
+        if (layoutData) {
+          network.setOptions({physics: {enabled: false}});
+          var nodesDS = network.body.data.nodes;
+          var updates = nodesDS.getIds().map(function(id, index) {
+            return {id: id, x: layoutData.x[index], y: layoutData.y[index]};
+          });
+          nodesDS.update(updates);
+          network.fit();
+        }
       };
       layoutDiv.querySelector('#stabilize_btn').onclick = function() {
+        network.setOptions({physics: {enabled: true}});
         network.stabilize();
       };
 
@@ -814,10 +849,9 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       content.appendChild(sliderSection);
       
       var slider = sliderSection.querySelector('#min_weight_slider');
-      var label = sliderSection.querySelector('#weight_val');
       slider.addEventListener('input', function() {
         var threshold = parseFloat(this.value);
-        label.innerText = threshold.toFixed(2);
+        sliderSection.querySelector('#weight_val').innerText = threshold.toFixed(2);
         var edges = network.body.data.edges;
         var updates = edges.get().map(function(edge) {
           return {id: edge.id, hidden: Math.abs(edge.weight) < threshold};
@@ -855,7 +889,6 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       nodeSection.appendChild(list);
       content.appendChild(nodeSection);
       
-      // Unified update function to preserve original styling
       var updateNodeVisibility = function(id, isVisible) {
         var nodeObj = nodesDS.get(id);
         if (nodeObj) {
@@ -873,32 +906,26 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       });
       
       content.querySelector('#check_all').onclick = function() {
-         var checks = list.querySelectorAll('.node-check');
-         checks.forEach(function(c) { 
-           var rawId = c.getAttribute('data-id');
-           var nodeId = isNaN(rawId) ? rawId : parseFloat(rawId);
+         list.querySelectorAll('.node-check').forEach(function(c) { 
+           var nodeId = isNaN(c.getAttribute('data-id')) ? c.getAttribute('data-id') : parseFloat(c.getAttribute('data-id'));
            c.checked = true; 
            updateNodeVisibility(nodeId, true);
          });
       };
 
       content.querySelector('#uncheck_all').onclick = function() {
-         var checks = list.querySelectorAll('.node-check');
-         checks.forEach(function(c) { 
-           var rawId = c.getAttribute('data-id');
-           var nodeId = isNaN(rawId) ? rawId : parseFloat(rawId);
+         list.querySelectorAll('.node-check').forEach(function(c) { 
+           var nodeId = isNaN(c.getAttribute('data-id')) ? c.getAttribute('data-id') : parseFloat(c.getAttribute('data-id'));
            c.checked = false; 
            updateNodeVisibility(nodeId, false);
          });
       };
     }
     "
-    # Pass necessary data to HTML x data
     g$x$interactive_options <- interactive_options
-    g$x$weight_slider <- weight_slider
-    g$x$node_filter   <- node_filter
     g$x$min_weight    <- min_weight
     g$x$max_weight    <- max_w
+    g$x$layouts       <- .get_all_layouts(wmatrix, vertex, area_attr)
     g <- g %>% htmlwidgets::onRender(js_panel)
   }
 
