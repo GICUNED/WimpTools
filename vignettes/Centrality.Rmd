@@ -1,0 +1,146 @@
+---
+title: "Centrality and Structure in WimpTools"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Centralidad: Centrality and Structure in WimpTools}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Introduction
+
+A Weighted Implication Grid (WimpGrid) can be modeled as a directed, weighted graph where psychological constructs are nodes and implications are directional edges. Within Personal Construct Psychology, analyzing the structural topography of this network reveals which constructs are most dominant, isolated, or connective within an individual's meaning system.
+
+This vignette covers the centrality indices available in `WimpTools`, detailing the theoretical purpose, specific arguments, and exact outputs for each function. All functions require a standardized `wimp` object outputted by `importwimp()`. In particular, it details the calculations intrinsic to the PB (Presence-Balance) Space (Sanfeliciano et al., 2025).
+
+### References
+
+*   Sanfeliciano, A., Saúl, L. A., Hurtado-Martínez, C., & Botella, L. (2025). PB Space: A Mathematical Framework for Modeling Presence and Implication Balance in Psychological Change Through Fuzzy Cognitive Maps. *Axioms*.
+
+## Global Network Structure
+
+### `density_index()`
+
+**Purpose:** Calculates the overall interconnectedness of the individual's cognitive system. It represents the proportion of actual implications relative to all possible implications in the network. A highly dense grid implies a tightly knit system where changes in one construct cascade heavily across others, whereas a low-density grid implies more fragmented or independent constructs.
+
+**Usage and Arguments:**
+```{r density}
+library(WimpTools)
+density_index(wimp = example_wimp)
+```
+* **`wimp`**: A valid `wimp` object.
+
+**Output:** A single numeric value between 0 (no connections) and 1 (fully connected network).
+
+## Node-Level Centrality Indices
+
+All single-node indices return their values systematically per construct. 
+
+### `degree_index()`
+
+**Purpose:** Evaluates the sheer volume of connections each construct maintains. In cognitive terms, it identifies the most "active" or "influential" concepts. It specifically separates directional logic into:
+* **Out-Degree**: How much does this construct influence others?
+* **In-Degree**: How much is this construct influenced by the rest of the system?
+* **All-Degree**: Total systemic involvement.
+
+**Usage and Arguments:**
+```{r degree}
+degree_index(wimp = example_wimp, method = "weight")
+```
+* **`wimp`**: A valid `wimp` object.
+* **`method`**: Determines the computational formula. 
+  * `"weight"`: (Default) Sums the absolute values of the edge weights.
+  * `"simple"`: Binarizes the network, simply counting the number of edges regardless of weight.
+  * `"wnorm"`: Normalizes the weighted sum by dividing by $N-1$ (where $N$ is the number of constructs).
+  * `"norm"`: Normalizes the simple edge count by $N-1$.
+  * `"ego"`: Normalizes weights by the total possible bidirectional edges $N \times (N-1)$.
+
+**Output:** A matrix with 3 columns (`Out`, `In`, `All`) and rows named by the constructs.
+
+### `close_index()`
+
+**Purpose:** Closeness Centrality measures how "close" a construct is to all other constructs. It is the inverse of the sum of the shortest paths between the construct and every other node. Constructs with high closeness are structurally central and can easily propagate cognitive changes throughout the system.
+
+**Usage and Arguments:**
+```{r close}
+close_index(wimp = example_wimp, norm = TRUE)
+```
+* **`wimp`**: A valid `wimp` object.
+* **`norm`**: (`logical`) If `TRUE` (default), the result is normalized by multiplying by $N-1$, bounded between 0 and 1. If `FALSE`, it returns the raw inverse sum.
+
+**Output:** A single-column matrix named `Closeness` with values for each construct.
+
+### `betw_index()`
+
+**Purpose:** Betweenness Centrality quantifies how often a construct acts as a "bridge" along the shortest path between two other constructs. Constructs with high betweenness are critical cognitive bottlenecks; removing or altering them fractures the meaning system into disconnected clusters.
+
+**Usage and Arguments:**
+```{r between}
+betw_index(wimp = example_wimp, norm = TRUE)
+```
+* **`wimp`**: A valid `wimp` object.
+* **`norm`**: (`logical`) If `TRUE` (default), normalizes the betweenness score by dividing by the number of pairs of vertices not including the node itself.
+
+**Output:** A single-column matrix named `Betweenness` with values for each construct.
+
+### `eigen_index()`
+
+**Purpose:** Eigenvalue Centrality asserts that a connection to a highly central construct is more important than a connection to an isolated construct. It computes centrality dynamically based on the eigenvalue decomposition of the adjacency/weight matrix.
+
+**Usage and Arguments:**
+```{r eigen}
+eigen_index(wimp = example_wimp, matrix = "weights", num_vectors = 2)
+```
+* **`wimp`**: A valid `wimp` object.
+* **`matrix`**: Specifies which matrix to run decomposition on. In modern schemas, this is restricted exclusively to `"weights"`.
+* **`num_vectors`**: (`numeric`) The number of eigenvectors to use for the centrality computation. Default is `2`. A higher number integrates more dimensions but usually the top 2-3 capture the vast majority of systemic variance.
+
+**Output:** A data frame containing two columns: `Constructs` (names) and `Eigenvalues` (absolute centrality scores).
+
+## Presence and Balance (PB) 
+
+`WimpTools` includes specialized indices native to RepGrid theory, condensing complex in/out logic into dual metrics: Presence and Balance.
+
+### `pb_index()`
+
+**Purpose:** Converts the `In` and `Out` degrees into orthogonally rotated `P` (Presence) and `B` (Balance) vectors via a linear transformation matrix.
+* **Presence (P)**: The absolute frequency of occurrence (combines in + out degrees).
+* **Balance (B)**: The ratio/balance of directional influence (differentiates in vs out degrees). 
+
+**Usage and Arguments:**
+```{r pb_idx}
+pb_index(wimp = example_wimp, method = "wnorm", std = "none")
+```
+* **`wimp`**: A valid `wimp` object.
+* **`method`**: Inherited from `degree_index()`. Dictates how base degrees are calculated (e.g., `"wnorm"`).
+* **`std`**: Standardization methodology. Options:
+  * `"none"`: (Default) No mathematical standardization.
+  * `"vertices"`: Standardizes by maximum possible total degree based on $N$.
+  * `"edges"`: Standardizes strictly by the total number of existing edges.
+  * `"max_edges"`: Standardizes by maximum outgoing edges.
+  * `"density"`: Mathematically adjusts the output by the `density_index()` of the grid.
+
+**Output:** A matrix with two columns (`p` and `b`) corresponding to Presence and Balance.
+
+### `pb_plot()`
+
+**Purpose:** Visually maps the entire construct system simultaneously in the Presence-Balance plane using a 2D scatter plot. The plot is intrinsically structured:
+* The X-axis handles `Presence`, and the Y-axis handles `Balance`.
+* Constructs falling in the shaded areas theoretically represent unviable psychological positions (zones of overwhelming imbalance relative to their presence).
+
+**Usage and Arguments:**
+```{r pb_plot, fig.width=7, fig.height=6}
+pb_plot(wimp = example_wimp, text_size = 1.2, std = "vertices")
+```
+* **`wimp`**: A valid `wimp` object.
+* **`text_size`**: (`numeric`) A scaling multiplier for the text labels. Default is `1`.
+* **`...`**: Any extra arguments are seamlessly passed back to `pb_index()` (such as `std = "vertices"`, `method = "wnorm"`).
+
+**Output:** An interactive `plotly` object. Hovering over a node displays its numeric metrics, and an internal anti-collision algorithm (`.smart_label_positions()`) optimally arranges the textual labels around the scatter points to avoid clutter.

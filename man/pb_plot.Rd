@@ -27,6 +27,9 @@ Creates a scatter plot of constructs in Presence-Balance
 pb_plot(example_wimp)
 
 }
+\references{
+Sanfeliciano, A., Saúl, L. A., Hurtado-Martínez, C., & Botella, L. (2025). PB Space: A Mathematical Framework for Modeling Presence and Implication Balance in Psychological Change Through Fuzzy Cognitive Maps. Axioms.
+}
 \author{
 Carlos Hurtado and Alejandro Sanfeliciano
 }

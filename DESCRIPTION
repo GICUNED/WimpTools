@@ -36,3 +36,7 @@ Imports:
     useful (>= 1.2.6),
     utils,
     visNetwork (>= 2.1.0)
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

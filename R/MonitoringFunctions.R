@@ -23,7 +23,7 @@ utils::globalVariables(c("h", "p", ".merge_wimp",
 
 # Monitoring Adjustment Radar Plot ---------------------------------------------
 
-#' Monitoring Self Adjustment -- monitoring_adj()
+#' Monitoring Self Adjustment -- monitoring_self()
 #'
 #' @description This function generates an interactive radar plot to visualize
 #' and compare the progress of the "self" and "ideal" across different
@@ -41,9 +41,9 @@ utils::globalVariables(c("h", "p", ".merge_wimp",
 #' @export
 #'
 #' @examples
-#'  monitoring_adj(example_wimp, example_wimp)
+#'  monitoring_self(example_wimp, example_wimp)
 
-monitoring_adj <- function(wimp_t0, wimp_t1, legend = TRUE) {
+monitoring_self <- function(wimp_t0, wimp_t1, legend = TRUE) {
 
   wimp_t0 <- .align_wimp(wimp_t0, exclude_dilemmatics = FALSE)
   wimp_t1 <- .align_wimp(wimp_t1, exclude_dilemmatics = FALSE)
@@ -73,15 +73,19 @@ monitoring_adj <- function(wimp_t0, wimp_t1, legend = TRUE) {
 
 
   self_t1 <- wimp_t1$vertices$self[merge$index2]
-  self_t1 <- c(self_t1, self_t1[1])
-
   ideal_t1 <- wimp_t1$vertices$ideal[merge$index2]
+  
+  if (any(merge$reversed_match)) {
+    rev_idx <- merge$reversed_match
+    self_t1[rev_idx] <- -self_t1[rev_idx]
+    ideal_t1[rev_idx] <- -ideal_t1[rev_idx]
+  }
+  
+  self_t1 <- c(self_t1, self_t1[1])
   ideal_t1 <- c(ideal_t1, ideal_t1[1])
 
-  right_poles_t1 <- wimp_t1$vertices$right_pole[merge$index2]
-  left_poles_t1 <- wimp_t1$vertices$left_pole[merge$index2]
-  poles_t1 <- paste(right_poles_t1, " (", left_poles_t1, ")", sep = "")
-  poles_t1 <- c(poles_t1, poles_t1[1])
+  poles_t1 <- poles_t0
+  construct_t1 <- construct_t0
 
   construct_t1 <- paste(wimp_t1$vertices$left_pole[merge$index2], " - ",
                         wimp_t1$vertices$right_pole[merge$index2], sep = "")
@@ -161,8 +165,7 @@ monitoring_adj <- function(wimp_t0, wimp_t1, legend = TRUE) {
       polar = list(
         radialaxis = list(
           visible = TRUE,
-          range = if (!is.null(wimp_t0$global$scale)) sort(wimp_t0$global$scale)
-          else c(-1, 1)
+          range = c(-1, 1)
         )
       )
     )
@@ -301,10 +304,39 @@ monitoring_ssi <- function(wimp_t0, wimp_t1, estimation = FALSE) {
       )
   }
 
+  wimp_t0 <- .align_wimp(wimp_t0, exclude_dilemmatics = FALSE)
+  wimp_t1 <- .align_wimp(wimp_t1, exclude_dilemmatics = FALSE)
+
+  merge <- .merge_wimp(wimp_t0, wimp_t1)
+  if (.compatibility_merge_wimp(wimp_t0, wimp_t1) == "Incompatibility") {
+    stop("WimpGrids have no constructs in common. Monitoring not possible.")
+  }
+
+  wimp_t0_filt <- wimp_t0
+  wimp_t0_filt$vertices <- wimp_t0$vertices[merge$index1, ]
+  if (!is.null(wimp_t0$global$hypo_matrix)) {
+    wimp_t0_filt$global$hypo_matrix <- wimp_t0$global$hypo_matrix[merge$index1, merge$index1, drop = FALSE]
+  }
+  
+  wimp_t1_filt <- wimp_t1
+  wimp_t1_filt$vertices <- wimp_t1$vertices[merge$index2, ]
+  if (!is.null(wimp_t1$global$hypo_matrix)) {
+    wimp_t1_filt$global$hypo_matrix <- wimp_t1$global$hypo_matrix[merge$index2, merge$index2, drop = FALSE]
+  }
+  
+  if (any(merge$reversed_match)) {
+    rev_idx <- merge$reversed_match
+    wimp_t1_filt$vertices$self[rev_idx] <- -wimp_t1_filt$vertices$self[rev_idx]
+    wimp_t1_filt$vertices$ideal[rev_idx] <- -wimp_t1_filt$vertices$ideal[rev_idx]
+    if (!is.null(wimp_t1_filt$global$hypo_matrix)) {
+      wimp_t1_filt$global$hypo_matrix[rev_idx, ] <- -wimp_t1_filt$global$hypo_matrix[rev_idx, ]
+    }
+  }
+
   # Estimate parameters if requested
   if (estimation) {
-    params_t0 <- .estimate_ssi_parameters(wimp_t0)
-    params_t1 <- .estimate_ssi_parameters(wimp_t1)
+    params_t0 <- .estimate_ssi_parameters(wimp_t0_filt)
+    params_t1 <- .estimate_ssi_parameters(wimp_t1_filt)
     alpha_t0 <- params_t0$mu_alpha
     beta_t0 <- params_t0$mu_beta
     alpha_t1 <- params_t1$mu_alpha
@@ -316,12 +348,12 @@ monitoring_ssi <- function(wimp_t0, wimp_t1, estimation = FALSE) {
     beta_t1 <- 0.5
   }
 
-  heatmap1 <- create_heatmap(wimp_t0, show_y_axis_title = TRUE,
+  heatmap1 <- create_heatmap(wimp_t0_filt, show_y_axis_title = TRUE,
                              show_legend = TRUE,
                              alpha_param = alpha_t0,
                              beta_param = beta_t0) %>%
     layout(title = "Pre-Intervention")
-  heatmap2 <- create_heatmap(wimp_t1, show_y_axis_title = FALSE,
+  heatmap2 <- create_heatmap(wimp_t1_filt, show_y_axis_title = FALSE,
                              show_legend = FALSE, hide_y_ticks = TRUE,
                              alpha_param = alpha_t1,
                              beta_param = beta_t1) %>%
@@ -335,20 +367,20 @@ monitoring_ssi <- function(wimp_t0, wimp_t1, estimation = FALSE) {
     )
 }
 
-# Monitoring PH Index
-#' Monitoring PH index -- monitoring_ph()
+# Monitoring PB Index
+#' Monitoring PB index -- monitoring_pb()
 #'
 #' @description This function generates a graphical comparison of constructs
-#'   from two different Weighted Implications Grids plotted in a PH space.
+#'   from two different Weighted Implications Grids plotted in a PB space.
 #'
 #' @param wimp_t0 Data object containing constructs and their respective P and
-#'   H coordinates for the first grid.
+#'   B coordinates for the first grid.
 #' @param wimp_t1 Data object containing constructs and their respective P and
-#'   H coordinates for the second grid.
+#'   B coordinates for the second grid.
 #' @param show_centroid Logical; if TRUE, displays the centroid of construct
-#'   P-H coordinates for both grids on the graph.
+#'   P-B coordinates for both grids on the graph.
 #' @param text_size Size of the text labels. Default is 1.
-#' @param ... additional arguments are passed from \\code{\\link{pb_index}}
+#' @param ... additional arguments are passed from \code{\link{pb_index}}
 #'   function.
 #'
 #' @return A Plotly object representing the comparative graph of constructs
@@ -356,9 +388,9 @@ monitoring_ssi <- function(wimp_t0, wimp_t1, estimation = FALSE) {
 #'
 #' @export
 #' @examples
-#'  monitoring_ph(example_wimp, example_wimp)
+#'  monitoring_pb(example_wimp, example_wimp)
 
-monitoring_ph <- function(wimp_t0, wimp_t1, show_centroid = TRUE,
+monitoring_pb <- function(wimp_t0, wimp_t1, show_centroid = TRUE,
                           text_size = 1, ...) {
 
   wimp_t0 <- .align_wimp(wimp_t0, exclude_dilemmatics = FALSE)
@@ -370,7 +402,7 @@ monitoring_ph <- function(wimp_t0, wimp_t1, show_centroid = TRUE,
   }
 
   # Calculate the Presence-Balance index for wimp_t1
-  phm_mat_ii <- pb_index(wimp = wimp_t1, ...)[merge$index2, ]
+  phm_mat_ii <- pb_index(wimp = wimp_t1, ...)[merge$index2, , drop = FALSE]
   phm_mat_ii_df <- as.data.frame(phm_mat_ii)
   phm_mat_ii_df$construct <- rownames(phm_mat_ii)
   phm_mat_ii_df$self_constr <- if (!is.null(
@@ -383,7 +415,7 @@ monitoring_ph <- function(wimp_t0, wimp_t1, show_centroid = TRUE,
   }
 
   # Calculate the Presence-Balance index for wimp_t0
-  phm_mat_i <- pb_index(wimp = wimp_t0, ...)[merge$index1, ]
+  phm_mat_i <- pb_index(wimp = wimp_t0, ...)[merge$index1, , drop = FALSE]
   phm_mat_i_df <- as.data.frame(phm_mat_i)
   phm_mat_i_df$construct <- rownames(phm_mat_i)
   phm_mat_i_df$self_constr <- if (!is.null(
@@ -396,7 +428,7 @@ monitoring_ph <- function(wimp_t0, wimp_t1, show_centroid = TRUE,
   }
 
   # Define the boundaries of the regions
-  limit <- max(abs(phm_mat_ii_df$p), abs(phm_mat_ii_df$h)) * 1.1
+  limit <- max(abs(phm_mat_ii_df$p), abs(phm_mat_ii_df$b)) * 1.1
 
   # Opacity for wimp_t0 constructs
   wg_i_opacity <- 0.5
@@ -404,6 +436,14 @@ monitoring_ph <- function(wimp_t0, wimp_t1, show_centroid = TRUE,
 
   # Configuring regions
   shapes <- list(
+    list(type = "path",
+         path = paste("M 0,0 L", limit, ",", limit, " L0,", limit, " Z"),
+         fillcolor = "#FFD97D", opacity = 0.2,
+         line = list(color = "#FFD97D")),
+    list(type = "path",
+         path = paste("M 0,0 L", limit, ",", -limit, " L0,", -limit, " Z"),
+         fillcolor = "#FFD97D", opacity = 0.2,
+         line = list(color = "#FFD97D")),
     list(
       type = "line", x0 = 0, y0 = 0, x1 = limit, y1 = limit,
       xref = "x", yref = "y",
@@ -424,7 +464,7 @@ monitoring_ph <- function(wimp_t0, wimp_t1, show_centroid = TRUE,
     layout(
       title = "",
       xaxis = list(title = "Presence"),
-      yaxis = list(title = "Hierarchy"),
+      yaxis = list(title = "Balance"),
       plot_bgcolor = "white",
       font = list(family = "Arial"),
       showlegend = FALSE,
@@ -436,12 +476,12 @@ monitoring_ph <- function(wimp_t0, wimp_t1, show_centroid = TRUE,
   phm_mat_i_df$color <- colors_i[merge$index1, "color"]
   p <- p %>%
     add_markers(
-      data = phm_mat_i_df, x = ~p, y = ~h,
+      data = phm_mat_i_df, x = ~p, y = ~b,
       marker = list(
         color = ~color, size = 4, opacity = wg_i_opacity,
         line = list(color = "black", width = 1, dash = "dot")
       ),
-      text = ~paste("P:", p, "; H:", h), hoverinfo = "text"
+      text = ~paste("P:", p, "; B:", b), hoverinfo = "text"
     )
 
 
@@ -450,12 +490,12 @@ monitoring_ph <- function(wimp_t0, wimp_t1, show_centroid = TRUE,
   phm_mat_ii_df$color <- colors_ii[merge$index2, "color"]
   p <- p %>%
     add_markers(
-      data = phm_mat_ii_df, x = ~p, y = ~h,
+      data = phm_mat_ii_df, x = ~p, y = ~b,
       marker = list(
         color = ~color, size = 9,
         line = list(color = "black", width = 1)
       ),
-      text = ~paste("P:", p, "; H:", h), hoverinfo = "text"
+      text = ~paste("P:", p, "; B:", b), hoverinfo = "text"
     )
 
 
@@ -463,8 +503,8 @@ monitoring_ph <- function(wimp_t0, wimp_t1, show_centroid = TRUE,
   for (i in seq_len(nrow(phm_mat_i_df))) {
     p <- p %>%
       add_segments(
-        x = phm_mat_i_df$p[i], y = phm_mat_i_df$h[i],
-        xend = phm_mat_ii_df$p[i], yend = phm_mat_ii_df$h[i],
+        x = phm_mat_i_df$p[i], y = phm_mat_i_df$b[i],
+        xend = phm_mat_ii_df$p[i], yend = phm_mat_ii_df$b[i],
         line = list(color = wg_i_color, width = 1, dash = "dash")
       )
   }
@@ -472,8 +512,8 @@ monitoring_ph <- function(wimp_t0, wimp_t1, show_centroid = TRUE,
   # Adding construct labels for wimp_t0
   p <- p %>%
     add_annotations(
-      data = phm_mat_i_df, x = ~p, y = ~h, text = "",
-      hovertext = ~paste("Construct:", construct, "\nP:", p, "H:", h),
+      data = phm_mat_i_df, x = ~p, y = ~b, text = "",
+      hovertext = ~paste("Construct:", construct, "\nP:", p, "B:", b),
       hoverinfo = "text",
       font = list(size = 12 * text_size, color = wg_i_color,
                   opacity = wg_i_opacity),
@@ -484,8 +524,8 @@ monitoring_ph <- function(wimp_t0, wimp_t1, show_centroid = TRUE,
   # Adding construct labels for wimp_t1
   p <- p %>%
     add_annotations(
-      data = phm_mat_ii_df, x = ~p, y = ~h, text = ~self_constr,
-      hovertext = ~paste("Construct:", construct, "\nP:", p, "H:", h),
+      data = phm_mat_ii_df, x = ~p, y = ~b, text = ~self_constr,
+      hovertext = ~paste("Construct:", construct, "\nP:", p, "B:", b),
       hoverinfo = "text",
       font = list(size = 12 * text_size, color = "black"),
       showarrow = FALSE, xanchor = "center", yanchor = "bottom",
@@ -494,30 +534,26 @@ monitoring_ph <- function(wimp_t0, wimp_t1, show_centroid = TRUE,
 
   # Drawing of centroids of both construct systems
   if (show_centroid) {
-    centroid_i <- phm_mat_i_df %>%
-      summarise(mean_p = mean(p, na.rm = TRUE),
-                mean_h = mean(h, na.rm = TRUE))
-    centroid_ii <- phm_mat_ii_df %>%
-      summarise(mean_p = mean(p, na.rm = TRUE),
-                mean_h = mean(h, na.rm = TRUE))
+    centroid_i <- colMeans(phm_mat_i_df[, c("p", "b")], na.rm = TRUE)
+    centroid_ii <- colMeans(phm_mat_ii_df[, c("p", "b")], na.rm = TRUE)
 
     p <- p %>%
       add_markers(
-        x = centroid_i$mean_p, y = centroid_i$mean_h,
+        x = centroid_i["p"], y = centroid_i["b"],
         marker = list(color = "#FFD97D", size = 9, symbol = "x",
                       opacity = 0.5,
                       line = list(color = "#FA9D13", width = 1)),
-        text = paste("Centroid Test", "P:", round(centroid_i$mean_p, 5),
-                     "H:", format(centroid_i$mean_h, nsmall = 5)),
+        text = paste("Centroid Test", "P:", round(centroid_i["p"], 5),
+                     "B:", format(centroid_i["b"], nsmall = 5)),
         hoverinfo = "text"
       ) %>%
       add_markers(
-        x = centroid_ii$mean_p, y = centroid_ii$mean_h,
+        x = centroid_ii["p"], y = centroid_ii["b"],
         marker = list(color = "#FFD97D", size = 12, symbol = "x",
                       opacity = 1,
                       line = list(color = "#FA9D13", width = 1)),
-        text = paste("Centroid Retest", "P:", round(centroid_ii$mean_p, 5),
-                     "H:", format(centroid_ii$mean_h, nsmall = 5)),
+        text = paste("Centroid Retest", "P:", round(centroid_ii["p"], 5),
+                     "B:", format(centroid_ii["b"], nsmall = 5)),
         hoverinfo = "text"
       )
   }

@@ -538,7 +538,10 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
   if (use_areas_layout) {
     # Areas layout with fixed positions
     g <- visNetwork(vertex, edges, height = height, width = width) %>%
-      visOptions(highlightNearest = list(enabled = TRUE, degree = 0,
+      visOptions(manipulation = list(enabled = TRUE, addNode = FALSE, addEdge = FALSE, 
+                                     editNode = FALSE, editEdge = FALSE, 
+                                     deleteNode = TRUE, deleteEdge = TRUE),
+                 highlightNearest = list(enabled = TRUE, degree = 0,
                                          labelOnly = TRUE),
                  selectedBy = list(variable = "group", main = "All")) %>%
       visInteraction(navigationButtons = TRUE, multiselect = TRUE) %>%
@@ -547,7 +550,10 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
     # Circular tree layout
     g <- visNetwork(vertex, edges, height = height, width = width) %>%
       visIgraphLayout(layout = "layout_as_tree", circular = TRUE) %>%
-      visOptions(highlightNearest = list(enabled = TRUE, degree = 0,
+      visOptions(manipulation = list(enabled = TRUE, addNode = FALSE, addEdge = FALSE, 
+                                     editNode = FALSE, editEdge = FALSE, 
+                                     deleteNode = TRUE, deleteEdge = TRUE),
+                 highlightNearest = list(enabled = TRUE, degree = 0,
                                          labelOnly = TRUE),
                  selectedBy = list(variable = "group", main = "All")) %>%
       visInteraction(navigationButtons = TRUE, multiselect = TRUE)
@@ -555,7 +561,10 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
     # Standard igraph layouts
     g <- visNetwork(vertex, edges, height = height, width = width) %>%
       visIgraphLayout(layout = layout_name, randomSeed = 33) %>%
-      visOptions(highlightNearest = list(enabled = TRUE, degree = 0,
+      visOptions(manipulation = list(enabled = TRUE, addNode = FALSE, addEdge = FALSE, 
+                                     editNode = FALSE, editEdge = FALSE, 
+                                     deleteNode = TRUE, deleteEdge = TRUE),
+                 highlightNearest = list(enabled = TRUE, degree = 0,
                                          labelOnly = TRUE),
                  selectedBy = list(variable = "group", main = "All")) %>%
       visInteraction(navigationButtons = TRUE, multiselect = TRUE)

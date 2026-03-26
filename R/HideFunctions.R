@@ -329,18 +329,31 @@
 # Merge two wimps --------------------------------------------------------------
 .merge_wimp <- function(wimp1, wimp2) {
   df1 <- data.frame(
-    Construct = .construct_names(wimp1),
     lpoles = wimp1$vertices$left_pole,
     rpoles = wimp1$vertices$right_pole,
-    index1 = seq_len(nrow(wimp1$vertices))
+    index1 = seq_len(nrow(wimp1$vertices)),
+    stringsAsFactors = FALSE
   )
   df2 <- data.frame(
-    Construct = .construct_names(wimp2),
     lpoles = wimp2$vertices$left_pole,
     rpoles = wimp2$vertices$right_pole,
-    index2 = seq_len(nrow(wimp2$vertices))
+    index2 = seq_len(nrow(wimp2$vertices)),
+    stringsAsFactors = FALSE
   )
-  merge(df1, df2, by = 1:3, sort = FALSE)
+  
+  # Forward match
+  m1 <- merge(df1, df2, by = c("lpoles", "rpoles"), sort = FALSE)
+  if (nrow(m1) > 0) m1$reversed_match <- FALSE else m1$reversed_match <- logical(0)
+  
+  # Reverse match
+  df2_rev <- df2
+  colnames(df2_rev)[1:2] <- c("rpoles", "lpoles")
+  m2 <- merge(df1, df2_rev, by = c("lpoles", "rpoles"), sort = FALSE)
+  if (nrow(m2) > 0) m2$reversed_match <- TRUE else m2$reversed_match <- logical(0)
+  
+  res <- rbind(m1, m2)
+  res$Construct <- paste(res$lpoles, "-", res$rpoles)
+  return(res)
 }
 
 # Compatibility merge wimps ----------------------------------------------------

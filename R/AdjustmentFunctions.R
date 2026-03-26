@@ -77,6 +77,9 @@ construct_index <- function(wimp) {
 #'
 #' @author Alejandro Sanfeliciano
 #'
+#' @references
+#' Sanfeliciano, A., Hurtado-Martínez, C., Botella García del Cid, L., & Saúl, L. A. (2025). Similarity Self/Ideal Index (SSI): A Feature-Based Approach to Modeling Psychological Well-Being. Mathematics.
+#'
 #' @export
 #'
 #' @examples
@@ -312,6 +315,9 @@ self_plot <- function(wimp) {
 #' @return A plotly heatmap.
 #'
 #' @author Alejandro Sanfeliciano
+#'
+#' @references
+#' Sanfeliciano, A., Hurtado-Martínez, C., Botella García del Cid, L., & Saúl, L. A. (2025). Similarity Self/Ideal Index (SSI): A Feature-Based Approach to Modeling Psychological Well-Being. Mathematics.
 #'
 #' @import plotly
 #' @export

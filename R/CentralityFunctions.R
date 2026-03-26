@@ -216,6 +216,9 @@ betw_index <- function(wimp, norm = TRUE) {
 #'         containing the indices for each construct. If standardization is
 #'         applied, these values are modified according to the selected method.
 #'
+#' @references
+#' Sanfeliciano, A., Saúl, L. A., Hurtado-Martínez, C., & Botella, L. (2025). PB Space: A Mathematical Framework for Modeling Presence and Implication Balance in Psychological Change Through Fuzzy Cognitive Maps. Axioms.
+#'
 #' @export
 #'
 #' @examples
@@ -351,6 +354,9 @@ eigen_index <- function(wimp, matrix = "weights", num_vectors = 2) {
 #' @author Carlos Hurtado and Alejandro Sanfeliciano
 #'
 #' @return A Plotly object representing the generated scatter plot.
+#'
+#' @references
+#' Sanfeliciano, A., Saúl, L. A., Hurtado-Martínez, C., & Botella, L. (2025). PB Space: A Mathematical Framework for Modeling Presence and Implication Balance in Psychological Change Through Fuzzy Cognitive Maps. Axioms.
 #'
 #' @import plotly
 #' @export

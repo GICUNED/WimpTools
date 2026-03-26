@@ -1,0 +1,105 @@
+---
+title: "Change Implications in WimpTools"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Implicaciones del Cambio: Change Implications in WimpTools}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Introduction
+
+In the context of the Weighted Implication Grid (WimpGrid), we hypothesize that any therapeutic shift—or any psychological change—in a single construct does not occur in a vacuum. Instead, it triggers a ripple of **Impacts** onto other constructs and receives a wave of **Feedbacks** from the surrounding system. 
+
+Analyzing these vectors of implication provides clinicians with critical insights: identifying which beliefs exert toxic influences across the system, or which constructive goals meet the highest systemic resistance.
+
+This vignette details the functions dedicated to calculating and plotting "Impact" and "Feedback" indices.
+
+## The Mathematical Indices
+
+### `if_index()`
+
+**Purpose:** 
+Calculates the systemic Impact and systemic Feedback for every individual construct. 
+* **Impact**: Quantifies the raw capacity of a construct to induce change in others. 
+* **Feedback**: Quantifies how vulnerable or susceptible a specific construct is to changes originating structurally from the rest of the network.
+
+Crucially, the algorithm segregates these overall vectors into **Positive** and **Negative** components based on whether they push the individual *towards* their Ideal Self (Positive) or *away* from their Ideal Self (Negative). Note that dilemmatic constructs (where Ideal = 0) are excluded from being the targets of Impact sums because their directionality cannot be classified.
+
+**Usage and Arguments:**
+```{r if_idx}
+library(WimpTools)
+if_data <- if_index(wimp = example_wimp, std = "adjacent")
+```
+* **`wimp`**: A valid `wimp` object.
+* **`std`**: Defines the normalization/standardization logic applied to the final sums. Can drastically alter interpretation. Options include:
+  * `"none"`: Returns raw weight sums.
+  * `"vertex"`: Standardizes by network size ($N-1$).
+  * `"edges"`: Standardizes strictly by the number of active undirected edges.
+  * `"adjacent"`: (Default). A sophisticated normalization dividing by the local neighborhood degree (number of non-zero connections). Best for comparing constructs mathematically regardless of their raw connection density.
+
+**Output:** 
+A data frame with numeric columns calculating: `Negative Impact`, `Positive Impact`, `Global Impact`, `Negative Feedback`, `Positive Feedback`, and `Global Feedback`. Each row is named by its construct pole.
+
+## Visualizing Impact and Feedback
+
+### `if_plot()`
+
+**Purpose:** 
+An interactive Cartesian scatter plot where the X-axis represents Global Impact and the Y-axis represents Global Feedback. The plot divides the Cartesian plane into colored quadrant zones representing behavioral/systemic archetypes (e.g., highly influential but insensitive nodes, highly sensitive but un-influential nodes).
+
+**Usage and Arguments:**
+```{r if_plt, fig.width=7, fig.height=6}
+if_plot(wimp = example_wimp, show = "all", center = "data", text_size = 1.2)
+```
+* **`wimp`**: A valid `wimp` object.
+* **`show`**: Filtering logic for including constructs. 
+  * `"all"`: Displays everything.
+  * `"nodil"`: Removes dilemmatic constructs (useful since they are systematically excluded from receiving impact).
+  * `"dil"`: Displays *only* dilemmatic constructs.
+* **`center`**: How to draw the intersection of the quadrants.
+  * `"data"`: Crosses axes at coordinates minimizing empty space.
+  * `"origin"`: Strictly crosses at mathematical $[0, 0]$ regardless of data spread.
+* **`text_size`**: Numeric multiplier for annotation sizes.
+
+### `if_barchart()`
+
+**Purpose:** 
+A highly granular, visual decomposition of exactly how much *Positive* versus *Negative* magnitude is contained inside each construct's global indices. It produces a dual-panel horizontal bar chart: the left panel breaks down Impact (stacked green for positive, red for negative), and the right panel breaks down Feedback.
+
+This chart is specifically targeted for clinical formulation—helping therapists immediately spot discrepant cognitive structures causing massive negative impact (psychopathology anchors).
+
+**Usage and Arguments:**
+```{r if_bar, fig.width=8, fig.height=6}
+if_barchart(wimp = example_wimp, show = "all")
+```
+* **`wimp`**: A valid `wimp` object.
+* **`show`**: Filters rendering by construct type (`"all"`, `"nodil"`, `"dil"`). In `"all"`, dilemmatic constructs are rendered with a hatched, yellow pattern to warn the user that they mathematically lack defined ideal directionality.
+* **`...`**: Forwards standardization parameters (e.g., `std = "adjacent"`) directy to `if_index()`.
+
+## Advanced Structural Decomposition
+
+### `wimp_biplot()`
+
+**Purpose:** 
+While not directly calculating Impact and Feedback equations, the `wimp_biplot()` function utilizes Principal Component Analysis (PCA) to spatially represent the grid data. Using the hypothetical scenarios against the actual Self and Ideal, this function plots a biplot of the first two principal components.
+
+By plotting the constructs as directional vectors diverging from the origin, clinicians can analyze which psychological paths lead toward their desired aspirations (Ideal) and which constructs heavily correlate with one another across multiple contextual scenarios.
+
+**Usage:**
+```{r biplot, fig.width=7, fig.height=6}
+wimp_biplot(wimp = example_wimp, text_size = 1)
+```
+
+**Output:** 
+An interactive PCA representation where: 
+* The origin projects dashed lines out to the poles.
+* The Actual `SELF` (Dark Blue) and `IDEAL` (Dark Green) represent static anchor nodes.
+* The explicit Hypothetical scenarios represent cloud points mapping meaning clusters across PC1 and PC2.

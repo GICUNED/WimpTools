@@ -39,3 +39,6 @@ example_wimp <- importwimp(example_path)
 #' }
 
 }
+\references{
+Sanfeliciano, A., et al. (2024). The Weighted Implications Grid: A Graph-Theoretical Approach to Modelling Psychological Change Construction.
+}

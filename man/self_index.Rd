@@ -37,6 +37,9 @@ self_index(example_wimp, method = "pearson")
 self_index(example_wimp, method = "kendall", rc = FALSE)
 
 }
+\references{
+Sanfeliciano, A., Hurtado-Martínez, C., Botella García del Cid, L., & Saúl, L. A. (2025). Similarity Self/Ideal Index (SSI): A Feature-Based Approach to Modeling Psychological Well-Being. Mathematics.
+}
 \author{
 Alejandro Sanfeliciano
 }

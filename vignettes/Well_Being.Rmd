@@ -1,0 +1,138 @@
+---
+title: "Psychological Well-Being and Adjustment"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Bienestar Psicologico: Psychological Well-Being and Adjustment}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Introduction
+
+In the clinical application of Personal Construct Psychology, psychological well-being is strongly associated with the alignment between how a person perceives themselves (Actual Self) and how they wish to be (Ideal Self). `WimpTools` offers specifically tailored indices to calculate and visualize this alignment, accounting for the complex topological nature of the Weighted Implication Grid (Sanfeliciano et al., 2024).
+
+This vignette details the functions used to extract indices of psychological adjustment, map out congruence profiles, and monitor therapeutic progress across time. In particular, the core self-adjustment metrics are based on the Similarity Self/Ideal Index (SSI) (Sanfeliciano et al., 2025).
+
+### References
+
+*   Sanfeliciano, A., et al. (2024). *The Weighted Implications Grid: A Graph-Theoretical Approach to Modelling Psychological Change Construction*.
+*   Sanfeliciano, A., Hurtado-Martínez, C., Botella García del Cid, L., & Saúl, L. A. (2025). Similarity Self/Ideal Index (SSI): A Feature-Based Approach to Modeling Psychological Well-Being. *Mathematics*.
+
+## Adjustment Indices
+
+### `construct_index()`
+
+**Purpose:** 
+Calculates the systemic proportion of construct types based solely on the mathematical relationship between the self and ideal poles. 
+A clinically well-adjusted individual generally exhibits a high proportion of "Congruent" constructs and a low proportion of "Discrepant" or "Dilemmatic" constructs.
+
+**Usage and Arguments:**
+```{r construct_idx}
+library(WimpTools)
+construct_index(wimp = example_wimp)
+```
+* **`wimp`**: A valid `wimp` S3 object.
+
+**Output:** 
+A matrix with two columns: `Frequency` (absolute count) and `Proportion` (percentage of total $N$). It rows correspond to the four core states: `Congruents`, `Discrepants`, `Dilemmatics`, and `Undefined`.
+
+### `self_index()`
+
+**Purpose:** 
+Computes the mathematical similarity between the Actual Self, the Ideal Self, and all generated Hypothetical Scenarios. The core output is the **Self/Ideal correlation**, which serves as the primary numeric proxy for psychological adjustment.
+
+By default, this calculates the **Semantic Similarity Index (SSI)**, a sophisticated algorithm designed specifically for WimpGrids that incorporates two cognitive biases: the salience of self-discrepancy (how much the person notices their flaws) and the salience of ideal aspiration (how much the person notices their desired goals).
+
+**Usage and Arguments:**
+```{r self_idx}
+self_data <- self_index(wimp = example_wimp, method = "ssi", 
+                        rc = TRUE, alpha = 0.5, beta = 0.5)
+```
+* **`wimp`**: A valid `wimp` object.
+* **`method`**: Defaults to `"ssi"`. It can be swapped to `"pearson"`, `"kendall"`, or `"spearman"` if traditional correlational metrics are preferred.
+* **`rc`**: (`logical`) If `TRUE` (default), utilizing Cohen's $r_c$, a reflection-invariant correlation measure crucial in repertory grid analysis because left/right pole orientation is often arbitrary.
+* **`alpha`**: (`numeric`) Discrepancy salience parameter for SSI. Bounded $[0, 1]$. Represents attention allocated to the Actual Self. Default is $0.5$.
+* **`beta`**: (`numeric`) Aspiration salience parameter for SSI. Bounded $[0, 1]$. Represents attention allocated to the Ideal Self. Default is $0.5$.
+
+**Output:** 
+Returns a `self_index` S3 list containing:
+1. `global`: A data frame with three systemic similarities: `Self/Ideal` (Clinical Adjustment), `Self/Hypo`, and `Ideal/Hypo`.
+2. `construct`: A data frame listing every generated hypothetical scenario alongside its structural `Congruence Scenario`, `SHS` (Self-Hypothetical Similarity), and `SHI` (Self-Ideal Similarity).
+3. `structural_coefs`: Output of the SSI structural algorithms (if `method="ssi"`).
+
+## Visualizing the Self
+
+### `self_plot()`
+
+**Purpose:** 
+Produces an interactive radar chart overlaying the individual's "Actual Self" and "Ideal Self" across all constructs in the grid. It offers immediate, intuitive insights into where the major discrepancies exist.
+
+**Usage:**
+```{r self_plt, fig.width=7, fig.height=6}
+self_plot(wimp = example_wimp)
+```
+
+**Output Details:** 
+An interactive Plotly widget. 
+* The **Green Dashed Line** represents the Ideal Self stringently mapped across poles.
+* The **Purple Polygon** represents the Actual Self.
+* Nodes are colored dynamically: Green = Congruent; Red = Discrepant; Yellow = Dilemmatic.
+
+### `hypo_plot()`
+
+**Purpose:** 
+An interactive scatter plot mapping all psychological constructs onto a 2D Cartesian plane defined by their hypothetical similitudes. The X-axis represents the Self-Hypothetical Similarity (SHS) and the Y-axis represents the Self-Ideal Similarity (SHI).
+
+**Usage and Arguments:**
+```{r hypo_plt, fig.width=7, fig.height=6}
+hypo_plot(wimp = example_wimp, text_size = 1.2, show_labels = TRUE)
+```
+* **`text_size`**: Determines the font sizes of text annotations.
+* **`show_labels`**: (`logical`) If `TRUE`, displays construct names using a smart anti-collision algorithm. You can turn this to `FALSE` for highly cluttered grids to rely instead on hover-tooltips.
+* **`...`**: Any extra arguments are passed natively to `self_index()` (e.g., `alpha`, `beta`).
+
+### `ssi_heatmap()`
+
+**Purpose:** 
+Visualizes how the individual's psychological adjustment (Self/Ideal SSI score) varies across the entire theoretical parameter space of $\alpha$ (Discrepancy Salience) and $\beta$ (Aspiration Salience).
+
+**Usage and Arguments:**
+```{r ssi_heat, fig.width=7, fig.height=6}
+ssi_heatmap(wimp = example_wimp, estimation = TRUE, palette = "viridis")
+```
+* **`estimation`**: (`logical`) If `TRUE`, the function calculates the structural preference weights to overlay a 2D probability distribution contour on the heatmap, identifying the most statistically probable psychological posture of the individual.
+* **`palette`**: The color progression applied to the heatmap.
+
+## Monitoring Therapeutic Progress
+
+If multiple WimpGrids have been extracted from an individual across time (e.g., pre-intervention and post-intervention), `WimpTools` provides three robust functions to visualize the psychological change.
+
+*Note: All monitoring functions automatically identify matching constructs between `wimp_t0` and `wimp_t1`. New constructs added in `t1` or constructs deleted from `t0` are omitted from the comparison to maintain mathematical integrity.*
+
+### `monitoring_self()`
+Plots two overlapping radar charts mimicking `self_plot()`. It maps both the Baseline Self and Actual Self, and Baseline Ideal and Actual Ideal, giving visual feedback on longitudinal directional movements.
+
+```{r mon_self, fig.width=7, fig.height=6}
+monitoring_self(wimp_t0 = example_wimp, wimp_t1 = su_wimp)
+```
+
+### `monitoring_ssi()`
+Generates a side-by-side subplot of `ssi_heatmap()` for the pre-intervention and post-intervention evaluations.
+
+```{r mon_ssi, fig.width=10, fig.height=5}
+monitoring_ssi(wimp_t0 = example_wimp, wimp_t1 = su_wimp, estimation = TRUE)
+```
+
+### `monitoring_pb()`
+Plots the longitudinal displacement of each psychological construct within the Presence-Balance index space. Constructs from `t0` are represented as faded gray nodes connected by a trajectory line to their new, brightly colored positions in `t1`. It also calculates and plots the overall centroid movement.
+
+```{r mon_pb, fig.width=7, fig.height=6}
+monitoring_pb(wimp_t0 = example_wimp, wimp_t1 = su_wimp, show_centroid = TRUE)
+```

@@ -38,6 +38,9 @@ pb_index(example_wimp, std = "vertices")
 pb_index(example_wimp, method = "wnorm", std = "none")
 
 }
+\references{
+Sanfeliciano, A., Saúl, L. A., Hurtado-Martínez, C., & Botella, L. (2025). PB Space: A Mathematical Framework for Modeling Presence and Implication Balance in Psychological Change Through Fuzzy Cognitive Maps. Axioms.
+}
 \author{
 Carlos Hurtado and Alejandro Sanfeliciano
 }

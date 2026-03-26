@@ -1,0 +1,89 @@
+---
+title: "Digraph Rendering in WimpTools"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Digraph Rendering in WimpTools}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Introduction
+
+`WimpTools` utilizes the strongly featured `visNetwork` API wrapper to draw physics-based digraph (directed graph) topologies. These functions convert the static implication matrices of WimpGrid datasets into vibrant, interactive canvases. Nodes symbolize psychological constructs, uniquely colored according to their congruence with the Ideal Self, while edges manifest as directional arrows denoting implication magnitude.
+
+For these examples, we will load the package and internal dataset:
+```{r setup}
+library(WimpTools)
+data(example_wimp)
+```
+
+## `digraph()` and Spacing Layouts
+
+The `digraph()` function serves as the foundational topology plotter. Crucially, the argument `layout` dictates the structural geometry algorithm `visNetwork` employs to physically place the nodes on screen. Certain geometries better emphasize hierarchy, whereas others emphasize clustering or sheer connectivity.
+
+### The "graphopt" Layout (Default)
+**Purpose:** Implements an advanced force-directed algorithm. It simulates physical springs between connected edges and electrostatic repulsion between nodes to organically disentangle the network and uncross edges. Visually excellent for most clinical grid analyses.
+```{r layout_opt, fig.width=7, fig.height=5}
+digraph(wimp = example_wimp, layout = "graphopt", color = "red/green")
+```
+
+### The "circle" Layout
+**Purpose:** Forces all constructs onto the perimeter of a strict geometric circle. Excellent for ensuring no node is obscured behind another, but highly dense networks will resemble a chaotic "hairball" internally.
+```{r layout_circ, fig.width=7, fig.height=5}
+digraph(wimp = example_wimp, layout = "circle", color = "red/green")
+```
+
+### The "rtcircle" Layout (Reingold-Tilford Circle)
+**Purpose:** A tree-based circular layout that expands outwards radially from central nodes. Highly advantageous if the system possesses deep hierarchical logic terminating in multiple branch endpoints.
+```{r layout_rtcirc, fig.width=7, fig.height=5}
+digraph(wimp = example_wimp, layout = "rtcircle", color = "red/green")
+```
+
+### The "tree" Layout
+**Purpose:** A top-down hierarchical flow geometry. Constructs that operate as primary root causes (massive Impact, low Feedback) will dominate the peak, trickling downwards to dependent symptomatic consequences.
+```{r layout_tree, fig.width=7, fig.height=5}
+digraph(wimp = example_wimp, layout = "tree", color = "red/green")
+```
+
+### The "grid" Layout
+**Purpose:** An entirely non-relational, orthogonal lattice structure calculating basic grid spacing. Primarily useful only if edges are hidden via `hide_direct = TRUE` allowing singular scrutiny of the isolated nodes.
+```{r layout_grid, fig.width=7, fig.height=5}
+digraph(wimp = example_wimp, layout = "grid", color = "red/green")
+```
+
+*(Note: There is also an "mds" Multi-Dimensional Scaling layout, and "areas" option requiring the input grid to have categorical column attributes established at import time).*
+
+## Alternate Digraph Orientations
+
+### `idealdigraph()`
+
+**Purpose:** 
+A wrapper around `digraph()` that programmatically overrides the `vertex_vector` calculation parameter. Rather than visualizing the *Actual Self's* psychological framework, this calculates and visualizes the system's gravitational orientation based exclusively on the parameters defined by the subject's *Aspirational Ideal.* It is commonly executed through `"circle"` mapping.
+
+```{r idealg, fig.width=7, fig.height=5}
+idealdigraph(wimp = example_wimp, layout = "circle")
+```
+
+### `simdigraph()`
+
+**Purpose:** 
+Intersects the Digraph plotting engine directly with an algorithmic System Dynamics evaluation. Given an `scn` object obtained via `scenariomatrix()`, rendering this digraph sets the psychological base topology values to explicitly mirror the outcome predictions rendered at mathematical time-slice `niter`.
+
+Because the simulation models how construct ratings change contextually into the future, the network's congruency colors dynamically shift over time as well.
+
+```{r simg, fig.width=7, fig.height=5}
+# Creating the required simulation scenario over 10 iterations
+external_change <- rep(0, example_wimp$global$n_constructs) 
+external_change[1] <- 0.5 
+scn_data <- scenariomatrix(wimp = example_wimp, act_vector = external_change, max_iter = 10)
+
+# Rendering the digraph's state identically as it would exist at Time-Step #5
+simdigraph(scn = scn_data, niter = 5)
+```
