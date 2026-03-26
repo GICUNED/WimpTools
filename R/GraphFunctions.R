@@ -407,10 +407,11 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
 
   # Build vertices data frame
   vertex <- data.frame(
-    id = seq_along(vertex_vector),
+    id = as.character(seq_along(vertex_vector)),
     label = vertex_name,
     group = congruency$group,
     category = as.character(area_vec),
+    value = abs(vertex_vector),
     size = 30 * abs(vertex_vector) + 20,
     shape = "dot",
     title = paste("<p><b>", poles, "</b><br>Self:",
@@ -513,8 +514,8 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
     edge_props <- .calculate_edge_properties(edges_raw$weight, color)
     
     edges <- data.frame(
-      from = edges_raw$from,
-      to = edges_raw$to,
+      from = as.character(edges_raw$from),
+      to = as.character(edges_raw$to),
       width = 2 * abs(edges_raw$weight),
       arrows = "to",
       dashes = edge_props$dashes,
