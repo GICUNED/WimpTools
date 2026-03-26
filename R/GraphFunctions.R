@@ -862,7 +862,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
           nodesDS.update(updates);
           network.fit({animation: true});
         }
-      };};
+      };
 
       // --- Weight Filter Section ---
       var sliderSection = document.createElement('div');
