@@ -443,7 +443,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
   all_edges_raw <- .extract_edges(wmatrix)
   all_edge_curved <- .detect_bidirectional_edges(wmatrix)
   
-  max_w <- if (nrow(all_edges_raw) > 0) max(abs(all_edges_raw$weight)) else 1
+  max_w <- (if (nrow(all_edges_raw) > 0) max(abs(all_edges_raw$weight)) else 1) + 0.01
 
   # If there's no slider, filter edges statically to reduce payload
   if (min_weight > 0 && !weight_slider) {
