@@ -432,15 +432,20 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
     ig <- igraph::graph_from_adjacency_matrix(wmatrix, weight = TRUE, mode = "directed")
     
     # igraph layouts
-    # Scale coordinates to avoid tiny graphs
+    # Normalize coordinates to a consistent range [-500, 500]
     .scale <- function(m) {
       if (nrow(m) == 0) return(m)
-      m[, 1] <- (m[, 1] - mean(m[, 1])) * 250
-      m[, 2] <- (m[, 2] - mean(m[, 2])) * 250
-      m
+      # Normalize to [0, 1] then to [-500, 500]
+      for (i in 1:2) {
+        rng <- range(m[, i])
+        span <- rng[2] - rng[1]
+        if (span < 1e-9) span <- 1
+        m[, i] <- (m[, i] - rng[1]) / span - 0.5
+      }
+      m * 1000
     }
     
-    node_ids <- vertex$id
+    node_ids <- as.character(vertex$id)
     
     layouts <- list(
       "graphopt" = .scale(igraph::layout_with_graphopt(ig)),
@@ -451,10 +456,29 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
     )
     
     # Custom Areas layout
-    v_areas <- .handle_areas_layout(vertex, area_attr)
-    layouts[["areas"]] <- cbind(x = v_areas$x, y = v_areas$y)
+    if (areas) {
+      v_areas <- .handle_areas_layout(vertex, area_attr)
+      layouts[["areas"]] <- .scale(cbind(x = v_areas$x, y = v_areas$y))
+    }
     
-    # Convert to standard named list for JS with IDs
+    # Add "Original" layout (pre-calculate based on parameter)
+    # This ensures we can always return to the initial state
+    init_layout_name <- .convert_layout_name(layout)
+    if (init_layout_name == "layout_as_tree") {
+       layouts[["original"]] <- .scale(igraph::layout_as_tree(ig, circular = TRUE))
+    } else if (init_layout_name == "layout_in_circle") {
+       layouts[["original"]] <- .scale(igraph::layout_in_circle(ig))
+    } else if (init_layout_name == "layout_with_mds") {
+       layouts[["original"]] <- .scale(igraph::layout_with_mds(ig))
+    } else if (init_layout_name == "layout_on_grid") {
+       layouts[["original"]] <- .scale(igraph::layout_on_grid(ig))
+    } else if (init_layout_name == "areas") {
+       # already handled if areas=TRUE
+    } else {
+       layouts[["original"]] <- .scale(igraph::layout_with_graphopt(ig))
+    }
+
+    # Convert to standard named list for JS with character IDs
     lapply(layouts, function(m) {
       data.frame(id = node_ids, x = as.numeric(m[,1]), y = as.numeric(m[,2]), stringsAsFactors = FALSE)
     })
@@ -801,19 +825,23 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
           }
         });
         edgesDS.update(edgesUpdates);
-      };
-
-      // --- Layout Section ---
+      };      // --- Layout Section ---
       var layoutDiv = document.createElement('div');
       layoutDiv.style.marginBottom = '15px';
+      var layoutOptions = '<option value=\"original\">Original</option>' +
+                          '<option value=\"graphopt\">GraphOpt</option>' +
+                          '<option value=\"circle\">Circle</option>' +
+                          '<option value=\"mds\">MDS</option>' +
+                          '<option value=\"grid\">Grid</option>' +
+                          '<option value=\"tree\">Tree (Circular)</option>';
+      
+      if (x.layouts.areas) {
+        layoutOptions += '<option value=\"areas\">Areas</option>';
+      }
+
       layoutDiv.innerHTML = '<div style=\"margin-bottom:5px; font-weight:bold; color:#444;\">Layout</div>' +
                             '<select id=\"layout_sel\" style=\"width:100%; padding:4px; font-size:11px; margin-bottom:5px;\">' +
-                            '<option value=\"areas\">Original (Areas)</option>' +
-                            '<option value=\"graphopt\">GraphOpt</option>' +
-                            '<option value=\"circle\">Circle</option>' +
-                            '<option value=\"mds\">MDS</option>' +
-                            '<option value=\"grid\">Grid</option>' +
-                            '<option value=\"tree\">Tree (Circular)</option>' +
+                            layoutOptions +
                             '</select>';
       content.appendChild(layoutDiv);
       
@@ -826,15 +854,15 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
           var updates = [];
           for (var i = 0; i < layoutData.id.length; i++) {
             updates.push({
-              id: layoutData.id[i], 
+              id: String(layoutData.id[i]), 
               x: layoutData.x[i], 
               y: layoutData.y[i]
             });
           }
           nodesDS.update(updates);
-          network.fit();
+          network.fit({animation: true});
         }
-      };
+      };};
 
       // --- Weight Filter Section ---
       var sliderSection = document.createElement('div');
