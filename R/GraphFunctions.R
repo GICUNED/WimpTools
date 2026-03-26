@@ -808,23 +808,24 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         return p[3];
       };
 
-      paletteDiv.querySelector('#palette_sel').onchange = function() {
-        var scheme = this.value;
-        var nodesDS = network.body.data.nodes;
-        var nodesUpdates = nodesDS.get().map(function(node) {
-          return {id: node.id, color: getPaletteColor(node.self_val, node.ideal_val, scheme)};
-        });
         nodesDS.update(nodesUpdates);
         
         var edgesDS = network.body.data.edges;
         var edgesUpdates = edgesDS.get().map(function(edge) {
           if(scheme === 'grey scale') {
-             return {id: edge.id, color: 'grey', dashes: edge.weight < 0};
+             return {id: edge.id, color: '#999999', dashes: edge.weight < 0};
           } else {
-             return {id: edge.id, dashes: edge.orig_dashes}; // Restore original dashed state
+             return {id: edge.id, dashes: edge.orig_dashes}; 
           }
         });
         edgesDS.update(edgesUpdates);
+      };
+      
+      // Initialize with current selection
+      updatePalette(paletteDiv.querySelector('#palette_sel').value);
+
+      paletteDiv.querySelector('#palette_sel').onchange = function() {
+        updatePalette(this.value);
       };      // --- Layout Section ---
       var layoutDiv = document.createElement('div');
       layoutDiv.style.marginBottom = '15px';
@@ -849,7 +850,10 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         var layoutKey = this.value;
         var layoutData = x.layouts[layoutKey];
         if (layoutData) {
-          network.setOptions({physics: {enabled: false}});
+          network.setOptions({
+            physics: {enabled: false},
+            edges: {smooth: {type: 'curvedCW', roundness: 0.15}}
+          });
           var nodesDS = network.body.data.nodes;
           var updates = [];
           for (var i = 0; i < layoutData.id.length; i++) {
@@ -929,15 +933,14 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
 
       list.addEventListener('change', function(e) {
         if (e.target.classList.contains('node-check')) {
-          var rawId = e.target.getAttribute('data-id');
-          var nodeId = isNaN(rawId) ? rawId : parseFloat(rawId);
+          var nodeId = String(e.target.getAttribute('data-id'));
           updateNodeVisibility(nodeId, e.target.checked);
         }
       });
       
       content.querySelector('#check_all').onclick = function() {
          list.querySelectorAll('.node-check').forEach(function(c) { 
-           var nodeId = isNaN(c.getAttribute('data-id')) ? c.getAttribute('data-id') : parseFloat(c.getAttribute('data-id'));
+           var nodeId = String(c.getAttribute('data-id'));
            c.checked = true; 
            updateNodeVisibility(nodeId, true);
          });
@@ -945,7 +948,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
 
       content.querySelector('#uncheck_all').onclick = function() {
          list.querySelectorAll('.node-check').forEach(function(c) { 
-           var nodeId = isNaN(c.getAttribute('data-id')) ? c.getAttribute('data-id') : parseFloat(c.getAttribute('data-id'));
+           var nodeId = String(c.getAttribute('data-id'));
            c.checked = false; 
            updateNodeVisibility(nodeId, false);
          });
