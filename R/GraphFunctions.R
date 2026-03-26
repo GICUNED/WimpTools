@@ -425,14 +425,6 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
   )
   vertex[[area_attr]] <- as.character(area_vec)
 
-  # Process weight matrix
-  wmatrix <- .reorient_weight_matrix(wmatrix, vertex_vector)
-
-  # Filter edges by minimum absolute weight
-  if (min_weight > 0) {
-    wmatrix[abs(wmatrix) < min_weight] <- 0
-  }
-
   # Apply direct relationship hiding if requested
   if (hide_direct) {
     logical_dilemmatic <- ideal_vector == 0
@@ -443,27 +435,48 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
 
   # Extract and process edges
   edges_raw <- .extract_edges(wmatrix)
+  
+  max_w <- if (nrow(edges_raw) > 0) max(abs(edges_raw$weight)) else 1
+
+  # If there's no slider, filter edges statically to reduce payload
+  if (min_weight > 0 && !weight_slider) {
+    edges_raw <- edges_raw[abs(edges_raw$weight) >= min_weight, ]
+  }
+
   if (nrow(edges_raw) == 0) {
     edges <- data.frame(
       from = integer(0), to = integer(0), width = numeric(0),
       arrows = character(0), dashes = logical(0), smooth = logical(0),
-      color = character(0), title = numeric(0),
+      color = character(0), title = numeric(0), weight = numeric(0),
+      hidden = logical(0),
       stringsAsFactors = FALSE
     )
   } else {
     edge_props <- .calculate_edge_properties(edges_raw$weight, color)
-    edge_curved <- .detect_bidirectional_edges(wmatrix)
-
+    # Re-calculate curved state based on filtered matrix if static, 
+    # or full matrix if dynamic
+    edge_curved <- .detect_bidirectional_edges(wmatrix)[match(
+      paste(edges_raw$from, edges_raw$to), 
+      paste(rep(1:nrow(wmatrix), each=nrow(wmatrix)), 
+            rep(1:nrow(wmatrix), times=nrow(wmatrix)))[wmatrix != 0]
+    )]
+    # Actually, .detect_bidirectional_edges expects the full matrix. 
+    # Let's simplify and just use the raw weights logic.
+    
     edges <- data.frame(
       from = edges_raw$from,
       to = edges_raw$to,
       width = 2 * abs(edges_raw$weight),
       arrows = "to",
       dashes = edge_props$dashes,
-      smooth = edge_curved,
+      smooth = .detect_bidirectional_edges(wmatrix)[wmatrix != 0][
+        match(paste(edges_raw$from, edges_raw$to), 
+              paste(row(wmatrix)[wmatrix != 0], col(wmatrix)[wmatrix != 0]))
+      ],
       color = edge_props$color,
       title = round(edges_raw$weight, 2),
       weight = edges_raw$weight,
+      hidden = if (weight_slider) abs(edges_raw$weight) < min_weight else FALSE,
       stringsAsFactors = FALSE
     )
   }
@@ -668,7 +681,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
   if (weight_slider) {
     js_slider <- "
     function(el, x) {
-      var instance = this;
+      var network = this.network;
       var sliderDiv = document.createElement('div');
       sliderDiv.style.position = 'absolute';
       sliderDiv.style.bottom = '20px';
@@ -682,9 +695,10 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       sliderDiv.style.fontFamily = 'Arial, sans-serif';
       sliderDiv.style.fontSize = '12px';
 
+      var maxW = x.max_weight.toFixed(2);
       sliderDiv.innerHTML = '<div style=\"margin-bottom:5px; font-weight:bold;\">Edge Weight Filter</div>' +
-                            '<input type=\"range\" id=\"min_weight_slider\" min=\"0\" max=\"1\" step=\"0.01\" value=\"' + x.min_weight + '\" style=\"width:150px;\">' +
-                            '<div style=\"margin-top:5px;\">Min: <span id=\"weight_val\">' + x.min_weight.toFixed(2) + '</span></div>';
+                            '<input type=\"range\" id=\"min_weight_slider\" min=\"0\" max=\"' + x.max_weight + '\" step=\"0.01\" value=\"' + x.min_weight + '\" style=\"width:150px;\">' +
+                            '<div style=\"margin-top:5px;\">Min: <span id=\"weight_val\">' + x.min_weight.toFixed(2) + '</span> (Max: ' + maxW + ')</div>';
       
       el.appendChild(sliderDiv);
       
@@ -694,7 +708,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       slider.addEventListener('input', function() {
         var threshold = parseFloat(this.value);
         label.innerText = threshold.toFixed(2);
-        var edges = instance.body.data.edges;
+        var edges = network.body.data.edges;
         var allEdges = edges.get();
         var updates = allEdges.map(function(edge) {
           return {id: edge.id, hidden: Math.abs(edge.weight) < threshold};
@@ -703,8 +717,9 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       });
     }
     "
-    # Pass initial min_weight to HTML x data
+    # Pass necessary data to HTML x data
     g$x$min_weight <- min_weight
+    g$x$max_weight <- max_w
     g <- g %>% htmlwidgets::onRender(js_slider)
   }
 
