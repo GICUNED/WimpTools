@@ -766,10 +766,11 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         nodeSection.appendChild(list);
         panel.appendChild(nodeSection);
         
-        // Listeners
+        // Listeners with ID type fixing
         list.addEventListener('change', function(e) {
           if (e.target.classList.contains('node-check')) {
-            var nodeId = e.target.getAttribute('data-id');
+            var rawId = e.target.getAttribute('data-id');
+            var nodeId = isNaN(rawId) ? rawId : parseFloat(rawId);
             network.body.data.nodes.update({id: nodeId, hidden: !e.target.checked});
           }
         });
@@ -778,8 +779,10 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
            var checks = list.querySelectorAll('.node-check');
            var updates = [];
            checks.forEach(function(c) { 
+             var rawId = c.getAttribute('data-id');
+             var nodeId = isNaN(rawId) ? rawId : parseFloat(rawId);
              c.checked = true; 
-             updates.push({id: c.getAttribute('data-id'), hidden: false});
+             updates.push({id: nodeId, hidden: false});
            });
            network.body.data.nodes.update(updates);
         };
@@ -788,8 +791,10 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
            var checks = list.querySelectorAll('.node-check');
            var updates = [];
            checks.forEach(function(c) { 
+             var rawId = c.getAttribute('data-id');
+             var nodeId = isNaN(rawId) ? rawId : parseFloat(rawId);
              c.checked = false; 
-             updates.push({id: c.getAttribute('data-id'), hidden: true});
+             updates.push({id: nodeId, hidden: true});
            });
            network.body.data.nodes.update(updates);
         };
