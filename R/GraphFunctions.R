@@ -808,6 +808,11 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         return p[3];
       };
 
+      var updatePalette = function(scheme) {
+        var nodesDS = network.body.data.nodes;
+        var nodesUpdates = nodesDS.get().map(function(node) {
+          return {id: node.id, color: getPaletteColor(node.self_val, node.ideal_val, scheme)};
+        });
         nodesDS.update(nodesUpdates);
         
         var edgesDS = network.body.data.edges;
