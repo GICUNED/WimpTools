@@ -433,14 +433,20 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
     wmatrix[, logical_dilemmatic] <- 0
   }
 
-  # Extract and process edges
-  edges_raw <- .extract_edges(wmatrix)
+  # Extract all potential edges and their bidirectional status
+  all_edges_raw <- .extract_edges(wmatrix)
+  all_edge_curved <- .detect_bidirectional_edges(wmatrix)
   
-  max_w <- if (nrow(edges_raw) > 0) max(abs(edges_raw$weight)) else 1
+  max_w <- if (nrow(all_edges_raw) > 0) max(abs(all_edges_raw$weight)) else 1
 
   # If there's no slider, filter edges statically to reduce payload
   if (min_weight > 0 && !weight_slider) {
-    edges_raw <- edges_raw[abs(edges_raw$weight) >= min_weight, ]
+    keep <- abs(all_edges_raw$weight) >= min_weight
+    edges_raw <- all_edges_raw[keep, ]
+    edge_curved <- all_edge_curved[keep]
+  } else {
+    edges_raw <- all_edges_raw
+    edge_curved <- all_edge_curved
   }
 
   if (nrow(edges_raw) == 0) {
@@ -453,15 +459,6 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
     )
   } else {
     edge_props <- .calculate_edge_properties(edges_raw$weight, color)
-    # Re-calculate curved state based on filtered matrix if static, 
-    # or full matrix if dynamic
-    edge_curved <- .detect_bidirectional_edges(wmatrix)[match(
-      paste(edges_raw$from, edges_raw$to), 
-      paste(rep(1:nrow(wmatrix), each=nrow(wmatrix)), 
-            rep(1:nrow(wmatrix), times=nrow(wmatrix)))[wmatrix != 0]
-    )]
-    # Actually, .detect_bidirectional_edges expects the full matrix. 
-    # Let's simplify and just use the raw weights logic.
     
     edges <- data.frame(
       from = edges_raw$from,
@@ -469,10 +466,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       width = 2 * abs(edges_raw$weight),
       arrows = "to",
       dashes = edge_props$dashes,
-      smooth = .detect_bidirectional_edges(wmatrix)[wmatrix != 0][
-        match(paste(edges_raw$from, edges_raw$to), 
-              paste(row(wmatrix)[wmatrix != 0], col(wmatrix)[wmatrix != 0]))
-      ],
+      smooth = edge_curved,
       color = edge_props$color,
       title = round(edges_raw$weight, 2),
       weight = edges_raw$weight,
@@ -684,8 +678,8 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       var network = this.network;
       var sliderDiv = document.createElement('div');
       sliderDiv.style.position = 'absolute';
-      sliderDiv.style.bottom = '20px';
-      sliderDiv.style.left = '20px';
+      sliderDiv.style.top = '20px';
+      sliderDiv.style.right = '20px';
       sliderDiv.style.zIndex = '1000';
       sliderDiv.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
       sliderDiv.style.padding = '10px';
