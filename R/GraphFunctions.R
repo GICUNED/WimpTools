@@ -417,6 +417,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
                   round(vertex_vector, 2), "<br>Ideal:",
                   round(ideal_vector, 2), "</p>"),
     color = congruency$color,
+    orig_color = congruency$color,
     self_val = as.numeric(vertex_vector),
     ideal_val = as.numeric(ideal_vector),
     shadow = TRUE,
@@ -523,6 +524,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       title = round(edges_raw$weight, 2),
       weight = edges_raw$weight,
       orig_dashes = edge_props$dashes,
+      orig_color = edge_props$color,
       hidden = if (interactive_options) abs(edges_raw$weight) < min_weight else FALSE,
       stringsAsFactors = FALSE
     )
@@ -775,24 +777,26 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         header.querySelector('#toggle_btn').innerText = isHidden ? '−' : '+';
         panel.style.width = isHidden ? '220px' : '100px';
         panel.style.padding = isHidden ? '12px' : '10px';
-      };
-
-      // --- Palette Section ---
+      };      // --- Palette Section ---
       var paletteDiv = document.createElement('div');
       paletteDiv.style.marginBottom = '15px';
-      paletteDiv.innerHTML = '<div style=\"margin-bottom:5px; font-weight:bold; color:#444;\">Color Palette</div>' +
-                             '<select id=\"palette_sel\" style=\"width:100%; padding:4px; font-size:11px;\">' +
-                             '<option value=\"red/green\">Red / Green</option>' +
-                             '<option value=\"grey scale\">Grey Scale</option>' +
-                             '<option value=\"colorblind\">Colorblind</option>' +
-                             '<option value=\"pastel\">Pastel</option>' +
-                             '<option value=\"dark\">Dark</option>' +
-                             '<option value=\"viridis\">Viridis</option>' +
-                             '</select>';
+      
+      var pOpts = ['red/green', 'grey scale', 'colorblind', 'pastel', 'dark', 'viridis'];
+      var pLabels = ['Red / Green', 'Grey Scale', 'Colorblind', 'Pastel', 'Dark', 'Viridis'];
+      var pSelectHtml = '<div style=\"margin-bottom:5px; font-weight:bold; color:#444;\">Color Palette</div>' +
+                         '<select id=\"palette_sel\" style=\"width:100%; padding:4px; font-size:11px;\">';
+      
+      for(var i=0; i<pOpts.length; i++){
+        var sel = (pOpts[i] === x.initial_palette) ? ' selected=\"selected\"' : '';
+        pSelectHtml += '<option value=\"' + pOpts[i] + '\"' + sel + '>' + pLabels[i] + '</option>';
+      }
+      pSelectHtml += '</select>';
+      
+      paletteDiv.innerHTML = pSelectHtml;
       content.appendChild(paletteDiv);
       
       var getPaletteColor = function(v, i, scheme) {
-        var x = v / i;
+        var x_val = v / i;
         var colors = {
           'red/green':  [\"#F52722\", \"#A5D610\", \"#999999\", \"#FFFF00\"],
           'grey scale': [\"#808080\", \"#ffffff\", \"#f2f2f2\", \"#e5e5e5\"],
@@ -802,22 +806,34 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
           'viridis':    [\"#440154\", \"#35b779\", \"#31688e\", \"#fde725\"]
         };
         var p = colors[scheme] || colors['red/green'];
-        if (x < 0 && x !== -Infinity) return p[0];
-        if (x > 0 && x !== Infinity) return p[1];
-        if (x === 0) return p[2];
+        if (x_val < 0 && x_val !== -Infinity) return p[0];
+        if (x_val > 0 && x_val !== Infinity) return p[1];
+        if (x_val === 0) return p[2];
         return p[3];
       };
-
+ 
       var updatePalette = function(scheme) {
         var nodesDS = network.body.data.nodes;
         var nodesUpdates = nodesDS.get().map(function(node) {
-          return {id: node.id, color: getPaletteColor(node.self_val, node.ideal_val, scheme)};
+          var c;
+          if (scheme === x.initial_palette) {
+            c = node.orig_color;
+          } else {
+            c = getPaletteColor(node.self_val, node.ideal_val, scheme);
+          }
+          return {id: node.id, color: c};
         });
         nodesDS.update(nodesUpdates);
         
         var edgesDS = network.body.data.edges;
         var edgesUpdates = edgesDS.get().map(function(edge) {
           if(scheme === 'grey scale') {
+             return {id: edge.id, color: '#999999', dashes: edge.weight < 0};
+          } else {
+             return {id: edge.id, color: edge.orig_color, dashes: edge.orig_dashes}; 
+          }
+        });
+        edgesDS.update(edgesUpdates);
              return {id: edge.id, color: '#999999', dashes: edge.weight < 0};
           } else {
              return {id: edge.id, dashes: edge.orig_dashes}; 
