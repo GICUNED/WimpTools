@@ -683,38 +683,42 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
     function(el, x) {
       var network = this.network;
       var panel = document.createElement('div');
+      panel.className = 'wimp-filter-panel';
       panel.style.position = 'absolute';
-      panel.style.top = '20px';
-      panel.style.right = '20px';
+      panel.style.top = '10px';
+      panel.style.right = '10px';
       panel.style.zIndex = '1000';
-      panel.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+      panel.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
       panel.style.padding = '12px';
       panel.style.borderRadius = '8px';
-      panel.style.boxShadow = '0 2px 12px rgba(0,0,0,0.2)';
+      panel.style.boxShadow = '0 2px 15px rgba(0,0,0,0.15)';
       panel.style.border = '1px solid #ddd';
-      panel.style.fontFamily = 'Arial, sans-serif';
+      panel.style.fontFamily = 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif';
       panel.style.fontSize = '12px';
-      panel.style.maxHeight = '85%';
+      panel.style.maxHeight = '90%';
       panel.style.overflowY = 'auto';
-      panel.style.width = '190px';
+      panel.style.width = '200px';
+      panel.style.transition = 'all 0.3s ease';
       
       el.appendChild(panel);
 
       // --- Weight Slider Section ---
       if (x.weight_slider) {
-        var sliderDiv = document.createElement('div');
-        sliderDiv.style.marginBottom = '15px';
-        sliderDiv.style.borderBottom = '1px solid #eee';
-        sliderDiv.style.paddingBottom = '12px';
+        var sliderSection = document.createElement('div');
+        sliderSection.style.marginBottom = '15px';
+        sliderSection.style.borderBottom = '1px solid #eee';
+        sliderSection.style.paddingBottom = '12px';
         
         var maxW = x.max_weight.toFixed(2);
-        sliderDiv.innerHTML = '<div style=\"margin-bottom:8px; font-weight:bold; color:#555;\">Edge Weight Filter</div>' +
-                              '<input type=\"range\" id=\"min_weight_slider\" min=\"0\" max=\"' + x.max_weight + '\" step=\"0.01\" value=\"' + x.min_weight + '\" style=\"width:100%; cursor:pointer;\">' +
-                              '<div style=\"margin-top:6px; display:flex; justify-content:space-between;\"><span>Min: <b id=\"weight_val\">' + x.min_weight.toFixed(2) + '</b></span> <span style=\"color:#999;\">Max: ' + maxW + '</span></div>';
-        panel.appendChild(sliderDiv);
+        sliderSection.innerHTML = '<div style=\"margin-bottom:8px; font-weight:bold; color:#444;\">Edge Weight Filter</div>' +
+                                  '<input type=\"range\" id=\"min_weight_slider\" min=\"0\" max=\"' + x.max_weight + '\" step=\"0.01\" value=\"' + (x.min_weight || 0) + '\" style=\"width:100%; cursor:pointer;\">' +
+                                  '<div style=\"margin-top:6px; display:flex; justify-content:space-between; font-family:monospace;\">' +
+                                  '<span>Min: <b id=\"weight_val\" style=\"color:#2c3e50;\">' + (x.min_weight || 0).toFixed(2) + '</b></span>' +
+                                  '<span style=\"color:#7f8c8d;\">Max: ' + maxW + '</span></div>';
+        panel.appendChild(sliderSection);
         
-        var slider = sliderDiv.querySelector('#min_weight_slider');
-        var label = sliderDiv.querySelector('#weight_val');
+        var slider = sliderSection.querySelector('#min_weight_slider');
+        var label = sliderSection.querySelector('#weight_val');
         
         slider.addEventListener('input', function() {
           var threshold = parseFloat(this.value);
@@ -729,33 +733,66 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
 
       // --- Node Filter Section ---
       if (x.node_filter) {
-        var nodeDiv = document.createElement('div');
-        nodeDiv.innerHTML = '<div style=\"margin-bottom:8px; font-weight:bold; color:#555;\">Constructs Checklist</div>';
+        var nodeSection = document.createElement('div');
+        nodeSection.innerHTML = '<div style=\"margin-bottom:8px; font-weight:bold; color:#444;\">Constructs Checklist</div>' +
+                                 '<div style=\"margin-bottom:8px; display:flex; gap:5px;\">' +
+                                 '<button id=\"check_all\" style=\"flex:1; cursor:pointer; font-size:10px; padding:2px;\">All</button>' +
+                                 '<button id=\"uncheck_all\" style=\"flex:1; cursor:pointer; font-size:10px; padding:2px;\">None</button>' +
+                                 '</div>';
         
         var list = document.createElement('div');
-        list.style.maxHeight = '250px';
+        list.id = 'node_list_container';
+        list.style.maxHeight = '300px';
         list.style.overflowY = 'auto';
         list.style.paddingRight = '5px';
+        list.style.borderTop = '1px solid #f0f0f0';
+        list.style.paddingTop = '8px';
         
-        x.nodes.forEach(function(node) {
+        // Use live network data to ensure robustness
+        var nodesDS = network.body.data.nodes;
+        var allNodes = nodesDS.get();
+        
+        allNodes.forEach(function(node) {
            var item = document.createElement('div');
-           item.style.marginBottom = '4px';
+           item.style.marginBottom = '6px';
            var checked = node.hidden ? '' : 'checked';
-           item.innerHTML = '<label style=\"cursor:pointer; display:flex; align-items:flex-start; line-height:1.2;\">' +
-                            '<input type=\"checkbox\" class=\"node-check\" data-id=\"' + node.id + '\" ' + checked + ' style=\"margin-top:2px; margin-right:8px;\">' +
-                            '<span style=\"word-break: break-word;\">' + node.label + '</span>' +
+           item.innerHTML = '<label style=\"cursor:pointer; display:flex; align-items:flex-start; line-height:1.2; font-size:11px;\">' +
+                            '<input type=\"checkbox\" class=\"node-check\" data-id=\"' + node.id + '\" ' + checked + ' style=\"margin-top:1px; margin-right:8px;\">' +
+                            '<span style=\"word-break: break-word;\">' + (node.label || 'Node ' + node.id) + '</span>' +
                             '</label>';
            list.appendChild(item);
         });
-        nodeDiv.appendChild(list);
-        panel.appendChild(nodeDiv);
         
+        nodeSection.appendChild(list);
+        panel.appendChild(nodeSection);
+        
+        // Listeners
         list.addEventListener('change', function(e) {
           if (e.target.classList.contains('node-check')) {
             var nodeId = e.target.getAttribute('data-id');
             network.body.data.nodes.update({id: nodeId, hidden: !e.target.checked});
           }
         });
+        
+        panel.querySelector('#check_all').onclick = function() {
+           var checks = list.querySelectorAll('.node-check');
+           var updates = [];
+           checks.forEach(function(c) { 
+             c.checked = true; 
+             updates.push({id: c.getAttribute('data-id'), hidden: false});
+           });
+           network.body.data.nodes.update(updates);
+        };
+
+        panel.querySelector('#uncheck_all').onclick = function() {
+           var checks = list.querySelectorAll('.node-check');
+           var updates = [];
+           checks.forEach(function(c) { 
+             c.checked = false; 
+             updates.push({id: c.getAttribute('data-id'), hidden: true});
+           });
+           network.body.data.nodes.update(updates);
+        };
       }
     }
     "
