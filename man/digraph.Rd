@@ -21,7 +21,8 @@ digraph(
   rounding = 10,
   min_weight = 0,
   weight_slider = FALSE,
-  node_filter = FALSE
+  node_filter = FALSE,
+  interactive_options = TRUE
 )
 }
 \arguments{
@@ -81,6 +82,10 @@ the visualization to filter edges by weight dynamically. Default is
 \item{node_filter}{Logical; if \code{TRUE}, adds an interactive checklist to 
 the visualization to show/hide individual constructs dynamically. 
 Default is \code{FALSE}.}
+
+\item{interactive_options}{Logical; if \code{TRUE}, adds a comprehensive 
+options panel to the visualization for real-time adjustments of 
+palettes, layouts, and filters. Default is \code{TRUE}.}
 }
 \value{
 A \code{visNetwork} interactive graph object that can be displayed

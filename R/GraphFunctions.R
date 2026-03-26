@@ -51,6 +51,9 @@
 #' @param node_filter Logical; if \code{TRUE}, adds an interactive checklist to 
 #'        the visualization to show/hide individual constructs dynamically. 
 #'        Default is \code{FALSE}.
+#' @param interactive_options Logical; if \code{TRUE}, adds a comprehensive 
+#'        options panel to the visualization for real-time adjustments of 
+#'        palettes, layouts, and filters. Default is \code{TRUE}.
 #'
 #' @details
 #' The digraph visualization provides insights into:
@@ -107,7 +110,8 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
                     show = TRUE, hide_direct = FALSE,
                     areas = FALSE, area_attr = "category", area_color = NA,
                     pad_side = 50, rounding = 10, min_weight = 0,
-                    weight_slider = FALSE, node_filter = FALSE) {
+                    weight_slider = FALSE, node_filter = FALSE,
+                    interactive_options = TRUE) {
 
   # ==========================================
   # INPUT VALIDATION
@@ -192,6 +196,9 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
   }
   if (!is.logical(node_filter) || length(node_filter) != 1) {
     stop("'node_filter' must be logical.")
+  }
+  if (!is.logical(interactive_options) || length(interactive_options) != 1) {
+    stop("'interactive_options' must be logical.")
   }
 
   if (inherits(wimp, "wimp") && !is.null(wimp$global$weight_matrix)) {
@@ -423,6 +430,8 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
                   round(vertex_vector, 2), "<br>Ideal:",
                   round(ideal_vector, 2), "</p>"),
     color = congruency$color,
+    self_val = as.numeric(vertex_vector),
+    ideal_val = as.numeric(ideal_vector),
     shadow = TRUE,
     hidden = !show,
     font.size = 20,
@@ -675,21 +684,21 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
   }
 
   # ==========================================
-  # DYNAMIC CONTROLS (Unified Filter Panel)
+  # DYNAMIC CONTROLS (Unified Graph Options Panel)
   # ==========================================
   
-  if (weight_slider || node_filter) {
+  if (interactive_options) {
     js_panel <- "
     function(el, x) {
       var network = this.network;
       var panel = document.createElement('div');
-      panel.className = 'wimp-filter-panel';
+      panel.className = 'wimp-options-panel';
       panel.style.position = 'absolute';
       panel.style.top = '10px';
       panel.style.right = '10px';
       panel.style.zIndex = '1000';
       panel.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
-      panel.style.padding = '12px';
+      panel.style.padding = '10px';
       panel.style.borderRadius = '8px';
       panel.style.boxShadow = '0 2px 15px rgba(0,0,0,0.15)';
       panel.style.border = '1px solid #ddd';
@@ -697,7 +706,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       panel.style.fontSize = '12px';
       panel.style.maxHeight = '90%';
       panel.style.overflowY = 'auto';
-      panel.style.width = '200px';
+      panel.style.width = '100px';
       panel.style.transition = 'all 0.3s ease';
       
       el.appendChild(panel);
@@ -708,132 +717,184 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       header.style.justifyContent = 'space-between';
       header.style.alignItems = 'center';
       header.style.cursor = 'pointer';
-      header.style.marginBottom = '10px';
-      header.style.borderBottom = '1px solid #eee';
-      header.style.paddingBottom = '5px';
       header.style.userSelect = 'none';
       
-      header.innerHTML = '<span style=\"font-weight:bold; color:#2c3e50;\">Graph Filters</span>' +
-                         '<span id=\"toggle_btn\" style=\"font-weight:bold; color:#95a5a6; font-size:16px; width:20px; textAlign:center;\">−</span>';
+      header.innerHTML = '<span style=\"font-weight:bold; color:#2c3e50;\">Options</span>' +
+                         '<span id=\"toggle_btn\" style=\"font-weight:bold; color:#95a5a6; font-size:16px; width:20px; textAlign:center;\">+</span>';
       panel.appendChild(header);
 
       var content = document.createElement('div');
       content.id = 'panel_content';
+      content.style.display = 'none'; // Default to minimized
+      content.style.marginTop = '10px';
+      content.style.borderTop = '1px solid #eee';
+      content.style.paddingTop = '10px';
       panel.appendChild(content);
 
       header.onclick = function() {
         var isHidden = content.style.display === 'none';
         content.style.display = isHidden ? 'block' : 'none';
         header.querySelector('#toggle_btn').innerText = isHidden ? '−' : '+';
-        panel.style.width = isHidden ? '200px' : '100px';
-        panel.style.boxShadow = isHidden ? '0 2px 15px rgba(0,0,0,0.15)' : 'none';
+        panel.style.width = isHidden ? '220px' : '100px';
+        panel.style.padding = isHidden ? '12px' : '10px';
       };
 
-      // --- Weight Slider Section ---
-      if (x.weight_slider) {
-        var sliderSection = document.createElement('div');
-        sliderSection.style.marginBottom = '15px';
-        sliderSection.style.borderBottom = '1px solid #eee';
-        sliderSection.style.paddingBottom = '12px';
-        
-        var maxW = x.max_weight.toFixed(2);
-        sliderSection.innerHTML = '<div style=\"margin-bottom:8px; font-weight:bold; color:#444;\">Edge Weight Filter</div>' +
-                                  '<input type=\"range\" id=\"min_weight_slider\" min=\"0\" max=\"' + x.max_weight + '\" step=\"0.01\" value=\"' + (x.min_weight || 0) + '\" style=\"width:100%; cursor:pointer;\">' +
-                                  '<div style=\"margin-top:6px; display:flex; justify-content:space-between; font-family:monospace;\">' +
-                                  '<span>Min: <b id=\"weight_val\" style=\"color:#2c3e50;\">' + (x.min_weight || 0).toFixed(2) + '</b></span>' +
-                                  '<span style=\"color:#7f8c8d;\">Max: ' + maxW + '</span></div>';
-        content.appendChild(sliderSection);
-        
-        var slider = sliderSection.querySelector('#min_weight_slider');
-        var label = sliderSection.querySelector('#weight_val');
-        
-        slider.addEventListener('input', function() {
-          var threshold = parseFloat(this.value);
-          label.innerText = threshold.toFixed(2);
-          var edges = network.body.data.edges;
-          var updates = edges.get().map(function(edge) {
-            return {id: edge.id, hidden: Math.abs(edge.weight) < threshold};
-          });
-          edges.update(updates);
+      // --- Palette Section ---
+      var paletteDiv = document.createElement('div');
+      paletteDiv.style.marginBottom = '15px';
+      paletteDiv.innerHTML = '<div style=\"margin-bottom:5px; font-weight:bold; color:#444;\">Color Palette</div>' +
+                             '<select id=\"palette_sel\" style=\"width:100%; padding:4px; font-size:11px;\">' +
+                             '<option value=\"red/green\">Red / Green</option>' +
+                             '<option value=\"grey scale\">Grey Scale</option>' +
+                             '<option value=\"colorblind\">Colorblind</option>' +
+                             '<option value=\"pastel\">Pastel</option>' +
+                             '<option value=\"dark\">Dark</option>' +
+                             '<option value=\"viridis\">Viridis</option>' +
+                             '</select>';
+      content.appendChild(paletteDiv);
+      
+      var getPaletteColor = function(v, i, scheme) {
+        var x = v / i;
+        var colors = {
+          'red/green':  [\"#F52722\", \"#A5D610\", \"grey\", \"yellow\"],
+          'grey scale': [\"#808080\", \"#ffffff\", \"#f2f2f2\", \"#e5e5e5\"],
+          'colorblind': [\"#D55E00\", \"#0173B2\", \"#CC79A7\", \"#F0E442\"],
+          'pastel':     [\"#f1677c\", \"#98FB98\", \"#F0F8FF\", \"#fcf087\"],
+          'dark':       [\"#8B0000\", \"#006400\", \"#696969\", \"#DAA520\"],
+          'viridis':    [\"#440154\", \"#35b779\", \"#31688e\", \"#fde725\"]
+        };
+        var p = colors[scheme] || colors['red/green'];
+        if (x < 0 && x !== -Infinity) return p[0];
+        if (x > 0 && x !== Infinity) return p[1];
+        if (x === 0) return p[2];
+        return p[3];
+      };
+
+      paletteDiv.querySelector('#palette_sel').onchange = function() {
+        var scheme = this.value;
+        var nodesDS = network.body.data.nodes;
+        var updates = nodesDS.get().map(function(node) {
+          return {id: node.id, color: getPaletteColor(node.self_val, node.ideal_val, scheme)};
         });
-      }
+        nodesDS.update(updates);
+      };
+
+      // --- Layout Section ---
+      var layoutDiv = document.createElement('div');
+      layoutDiv.style.marginBottom = '15px';
+      layoutDiv.innerHTML = '<div style=\"margin-bottom:5px; font-weight:bold; color:#444;\">Physics Layout</div>' +
+                            '<select id=\"layout_sel\" style=\"width:100%; padding:4px; font-size:11px; margin-bottom:5px;\">' +
+                            '<option value=\"barnesHut\">Fluid (BarnesHut)</option>' +
+                            '<option value=\"forceAtlas2Based\">Force Atlas 2</option>' +
+                            '<option value=\"repulsion\">Repulsion</option>' +
+                            '</select>' +
+                            '<button id=\"stabilize_btn\" style=\"width:100%; cursor:pointer; font-size:10px; padding:3px;\">Stabilize</button>';
+      content.appendChild(layoutDiv);
+      
+      layoutDiv.querySelector('#layout_sel').onchange = function() {
+        network.setOptions({physics: {solver: this.value}});
+        network.stabilize();
+      };
+      layoutDiv.querySelector('#stabilize_btn').onclick = function() {
+        network.stabilize();
+      };
+
+      // --- Weight Filter Section ---
+      var sliderSection = document.createElement('div');
+      sliderSection.style.marginBottom = '15px';
+      sliderSection.style.borderTop = '1px solid #eee';
+      sliderSection.style.paddingTop = '10px';
+      
+      var maxW = x.max_weight.toFixed(2);
+      sliderSection.innerHTML = '<div style=\"margin-bottom:8px; font-weight:bold; color:#444;\">Edge Weight Filter</div>' +
+                                '<input type=\"range\" id=\"min_weight_slider\" min=\"0\" max=\"' + x.max_weight + '\" step=\"0.01\" value=\"' + (x.min_weight || 0) + '\" style=\"width:100%; cursor:pointer;\">' +
+                                '<div style=\"margin-top:6px; display:flex; justify-content:space-between; font-family:monospace;\">' +
+                                '<span>Min: <b id=\"weight_val\" style=\"color:#2c3e50;\">' + (x.min_weight || 0).toFixed(2) + '</b></span>' +
+                                '<span style=\"color:#7f8c8d;\">M: ' + maxW + '</span></div>';
+      content.appendChild(sliderSection);
+      
+      var slider = sliderSection.querySelector('#min_weight_slider');
+      var label = sliderSection.querySelector('#weight_val');
+      slider.addEventListener('input', function() {
+        var threshold = parseFloat(this.value);
+        label.innerText = threshold.toFixed(2);
+        var edges = network.body.data.edges;
+        var updates = edges.get().map(function(edge) {
+          return {id: edge.id, hidden: Math.abs(edge.weight) < threshold};
+        });
+        edges.update(updates);
+      });
 
       // --- Node Filter Section ---
-      if (x.node_filter) {
-        var nodeSection = document.createElement('div');
-        nodeSection.innerHTML = '<div style=\"margin-bottom:8px; font-weight:bold; color:#444;\">Constructs Checklist</div>' +
-                                 '<div style=\"margin-bottom:8px; display:flex; gap:5px;\">' +
-                                 '<button id=\"check_all\" style=\"flex:1; cursor:pointer; font-size:10px; padding:2px;\">All</button>' +
-                                 '<button id=\"uncheck_all\" style=\"flex:1; cursor:pointer; font-size:10px; padding:2px;\">None</button>' +
-                                 '</div>';
-        
-        var list = document.createElement('div');
-        list.id = 'node_list_container';
-        list.style.maxHeight = '300px';
-        list.style.overflowY = 'auto';
-        list.style.paddingRight = '5px';
-        list.style.borderTop = '1px solid #f0f0f0';
-        list.style.paddingTop = '8px';
-        
-        // Use live network data to ensure robustness
-        var nodesDS = network.body.data.nodes;
-        var allNodes = nodesDS.get();
-        
-        allNodes.forEach(function(node) {
-           var item = document.createElement('div');
-           item.style.marginBottom = '6px';
-           var checked = node.hidden ? '' : 'checked';
-           item.innerHTML = '<label style=\"cursor:pointer; display:flex; align-items:flex-start; line-height:1.2; font-size:11px;\">' +
-                            '<input type=\"checkbox\" class=\"node-check\" data-id=\"' + node.id + '\" ' + checked + ' style=\"margin-top:1px; margin-right:8px;\">' +
-                            '<span style=\"word-break: break-word;\">' + (node.label || 'Node ' + node.id) + '</span>' +
-                            '</label>';
-           list.appendChild(item);
-        });
-        
-        nodeSection.appendChild(list);
-        content.appendChild(nodeSection);
-        
-        // Unified update function to preserve original styling
-        var updateNodeVisibility = function(id, isVisible) {
-          var nodeObj = nodesDS.get(id);
-          if (nodeObj) {
-            nodeObj.hidden = !isVisible;
-            nodesDS.update(nodeObj);
-          }
-        };
+      var nodeSection = document.createElement('div');
+      nodeSection.innerHTML = '<div style=\"margin-bottom:8px; font-weight:bold; color:#444;\">Constructs Checklist</div>' +
+                               '<div style=\"margin-bottom:8px; display:flex; gap:5px;\">' +
+                               '<button id=\"check_all\" style=\"flex:1; cursor:pointer; font-size:10px; padding:2px;\">All</button>' +
+                               '<button id=\"uncheck_all\" style=\"flex:1; cursor:pointer; font-size:10px; padding:2px;\">None</button>' +
+                               '</div>';
+      
+      var list = document.createElement('div');
+      list.style.maxHeight = '200px';
+      list.style.overflowY = 'auto';
+      list.style.paddingRight = '5px';
+      list.style.borderTop = '1px solid #f0f0f0';
+      list.style.paddingTop = '8px';
+      
+      var nodesDS = network.body.data.nodes;
+      nodesDS.get().forEach(function(node) {
+         var item = document.createElement('div');
+         item.style.marginBottom = '6px';
+         var checked = node.hidden ? '' : 'checked';
+         item.innerHTML = '<label style=\"cursor:pointer; display:flex; align-items:flex-start; line-height:1.2; font-size:11px;\">' +
+                          '<input type=\"checkbox\" class=\"node-check\" data-id=\"' + node.id + '\" ' + checked + ' style=\"margin-top:1px; margin-right:8px;\">' +
+                          '<span style=\"word-break: break-word;\">' + (node.label || 'Node ' + node.id) + '</span>' +
+                          '</label>';
+         list.appendChild(item);
+      });
+      
+      nodeSection.appendChild(list);
+      content.appendChild(nodeSection);
+      
+      // Unified update function to preserve original styling
+      var updateNodeVisibility = function(id, isVisible) {
+        var nodeObj = nodesDS.get(id);
+        if (nodeObj) {
+          nodeObj.hidden = !isVisible;
+          nodesDS.update(nodeObj);
+        }
+      };
 
-        // Listeners with styling preservation
-        list.addEventListener('change', function(e) {
-          if (e.target.classList.contains('node-check')) {
-            var rawId = e.target.getAttribute('data-id');
-            var nodeId = isNaN(rawId) ? rawId : parseFloat(rawId);
-            updateNodeVisibility(nodeId, e.target.checked);
-          }
-        });
-        
-        panel.querySelector('#check_all').onclick = function() {
-           var checks = list.querySelectorAll('.node-check');
-           checks.forEach(function(c) { 
-             var rawId = c.getAttribute('data-id');
-             var nodeId = isNaN(rawId) ? rawId : parseFloat(rawId);
-             c.checked = true; 
-             updateNodeVisibility(nodeId, true);
-           });
-        };
+      list.addEventListener('change', function(e) {
+        if (e.target.classList.contains('node-check')) {
+          var rawId = e.target.getAttribute('data-id');
+          var nodeId = isNaN(rawId) ? rawId : parseFloat(rawId);
+          updateNodeVisibility(nodeId, e.target.checked);
+        }
+      });
+      
+      content.querySelector('#check_all').onclick = function() {
+         var checks = list.querySelectorAll('.node-check');
+         checks.forEach(function(c) { 
+           var rawId = c.getAttribute('data-id');
+           var nodeId = isNaN(rawId) ? rawId : parseFloat(rawId);
+           c.checked = true; 
+           updateNodeVisibility(nodeId, true);
+         });
+      };
 
-        panel.querySelector('#uncheck_all').onclick = function() {
-           var checks = list.querySelectorAll('.node-check');
-           checks.forEach(function(c) { 
-             var rawId = c.getAttribute('data-id');
-             var nodeId = isNaN(rawId) ? rawId : parseFloat(rawId);
-             c.checked = false; 
-             updateNodeVisibility(nodeId, false);
-           });
-        };
-      }
+      content.querySelector('#uncheck_all').onclick = function() {
+         var checks = list.querySelectorAll('.node-check');
+         checks.forEach(function(c) { 
+           var rawId = c.getAttribute('data-id');
+           var nodeId = isNaN(rawId) ? rawId : parseFloat(rawId);
+           c.checked = false; 
+           updateNodeVisibility(nodeId, false);
+         });
+      };
     }
     "
     # Pass necessary data to HTML x data
+    g$x$interactive_options <- interactive_options
     g$x$weight_slider <- weight_slider
     g$x$node_filter   <- node_filter
     g$x$min_weight    <- min_weight
