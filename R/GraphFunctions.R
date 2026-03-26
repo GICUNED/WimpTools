@@ -435,10 +435,12 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
     # Scale coordinates to avoid tiny graphs
     .scale <- function(m) {
       if (nrow(m) == 0) return(m)
-      m[, 1] <- (m[, 1] - mean(m[, 1])) * 500
-      m[, 2] <- (m[, 2] - mean(m[, 2])) * 500
+      m[, 1] <- (m[, 1] - mean(m[, 1])) * 250
+      m[, 2] <- (m[, 2] - mean(m[, 2])) * 250
       m
     }
+    
+    node_ids <- vertex$id
     
     layouts <- list(
       "graphopt" = .scale(igraph::layout_with_graphopt(ig)),
@@ -452,9 +454,9 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
     v_areas <- .handle_areas_layout(vertex, area_attr)
     layouts[["areas"]] <- cbind(x = v_areas$x, y = v_areas$y)
     
-    # Convert to standard named list for JS
+    # Convert to standard named list for JS with IDs
     lapply(layouts, function(m) {
-      data.frame(x = as.numeric(m[,1]), y = as.numeric(m[,2]))
+      data.frame(id = node_ids, x = as.numeric(m[,1]), y = as.numeric(m[,2]), stringsAsFactors = FALSE)
     })
   }
 
@@ -812,8 +814,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
                             '<option value=\"mds\">MDS</option>' +
                             '<option value=\"grid\">Grid</option>' +
                             '<option value=\"tree\">Tree (Circular)</option>' +
-                            '</select>' +
-                            '<button id=\"stabilize_btn\" style=\"width:100%; cursor:pointer; font-size:10px; padding:3px;\">Re-stabilize</button>';
+                            '</select>';
       content.appendChild(layoutDiv);
       
       layoutDiv.querySelector('#layout_sel').onchange = function() {
@@ -822,16 +823,17 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         if (layoutData) {
           network.setOptions({physics: {enabled: false}});
           var nodesDS = network.body.data.nodes;
-          var updates = nodesDS.getIds().map(function(id, index) {
-            return {id: id, x: layoutData.x[index], y: layoutData.y[index]};
-          });
+          var updates = [];
+          for (var i = 0; i < layoutData.id.length; i++) {
+            updates.push({
+              id: layoutData.id[i], 
+              x: layoutData.x[i], 
+              y: layoutData.y[i]
+            });
+          }
           nodesDS.update(updates);
           network.fit();
         }
-      };
-      layoutDiv.querySelector('#stabilize_btn').onclick = function() {
-        network.setOptions({physics: {enabled: true}});
-        network.stabilize();
       };
 
       // --- Weight Filter Section ---
