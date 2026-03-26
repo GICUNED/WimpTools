@@ -45,6 +45,9 @@
 #'        (0 for sharp corners). Default is 10.
 #' @param min_weight Numeric value specifying the minimum absolute weight for 
 #'        an edge to be displayed. Default is 0 (show all edges).
+#' @param weight_slider Logical; if \code{TRUE}, adds an interactive slider to 
+#'        the visualization to filter edges by weight dynamically. Default is 
+#'        \code{FALSE}.
 #'
 #' @details
 #' The digraph visualization provides insights into:
@@ -77,7 +80,7 @@
 #' \code{\link{inout_digraph}} for construct relationship analysis
 #'
 #' @import visNetwork
-#' @importFrom htmlwidgets JS
+#' @importFrom htmlwidgets JS onRender
 #' @importFrom jsonlite toJSON
 #' @importFrom magrittr %>%
 #' @importFrom visNetwork visNetwork visOptions visInteraction visPhysics
@@ -100,7 +103,8 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
                     height = "700px", color = "red/green", layout = "graphopt",
                     show = TRUE, hide_direct = FALSE,
                     areas = FALSE, area_attr = "category", area_color = NA,
-                    pad_side = 50, rounding = 10, min_weight = 0) {
+                    pad_side = 50, rounding = 10, min_weight = 0,
+                    weight_slider = FALSE) {
 
   # ==========================================
   # INPUT VALIDATION
@@ -179,6 +183,9 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
   }
   if (!is.numeric(min_weight) || length(min_weight) != 1 || min_weight < 0) {
     stop("'min_weight' must be numeric >= 0.")
+  }
+  if (!is.logical(weight_slider) || length(weight_slider) != 1) {
+    stop("'weight_slider' must be logical.")
   }
 
   if (inherits(wimp, "wimp") && !is.null(wimp$global$weight_matrix)) {
@@ -456,6 +463,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       smooth = edge_curved,
       color = edge_props$color,
       title = round(edges_raw$weight, 2),
+      weight = edges_raw$weight,
       stringsAsFactors = FALSE
     )
   }
@@ -651,6 +659,53 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
                                    strokes)
       g <- g %>% visEvents(afterDrawing = htmlwidgets::JS(js_hulls))
     }
+  }
+
+  # ==========================================
+  # DYNAMIC CONTROLS
+  # ==========================================
+
+  if (weight_slider) {
+    js_slider <- "
+    function(el, x) {
+      var instance = this;
+      var sliderDiv = document.createElement('div');
+      sliderDiv.style.position = 'absolute';
+      sliderDiv.style.bottom = '20px';
+      sliderDiv.style.left = '20px';
+      sliderDiv.style.zIndex = '1000';
+      sliderDiv.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+      sliderDiv.style.padding = '10px';
+      sliderDiv.style.borderRadius = '8px';
+      sliderDiv.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+      sliderDiv.style.border = '1px solid #ddd';
+      sliderDiv.style.fontFamily = 'Arial, sans-serif';
+      sliderDiv.style.fontSize = '12px';
+
+      sliderDiv.innerHTML = '<div style=\"margin-bottom:5px; font-weight:bold;\">Edge Weight Filter</div>' +
+                            '<input type=\"range\" id=\"min_weight_slider\" min=\"0\" max=\"1\" step=\"0.01\" value=\"' + x.min_weight + '\" style=\"width:150px;\">' +
+                            '<div style=\"margin-top:5px;\">Min: <span id=\"weight_val\">' + x.min_weight.toFixed(2) + '</span></div>';
+      
+      el.appendChild(sliderDiv);
+      
+      var slider = el.querySelector('#min_weight_slider');
+      var label = el.querySelector('#weight_val');
+      
+      slider.addEventListener('input', function() {
+        var threshold = parseFloat(this.value);
+        label.innerText = threshold.toFixed(2);
+        var edges = instance.body.data.edges;
+        var allEdges = edges.get();
+        var updates = allEdges.map(function(edge) {
+          return {id: edge.id, hidden: Math.abs(edge.weight) < threshold};
+        });
+        edges.update(updates);
+      });
+    }
+    "
+    # Pass initial min_weight to HTML x data
+    g$x$min_weight <- min_weight
+    g <- g %>% htmlwidgets::onRender(js_slider)
   }
 
   return(g)
