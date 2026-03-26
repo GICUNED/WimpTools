@@ -766,37 +766,42 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         nodeSection.appendChild(list);
         panel.appendChild(nodeSection);
         
-        // Listeners with ID type fixing
+        // Unified update function to preserve original styling
+        var updateNodeVisibility = function(id, isVisible) {
+          var nodeObj = nodesDS.get(id);
+          if (nodeObj) {
+            nodeObj.hidden = !isVisible;
+            nodesDS.update(nodeObj);
+          }
+        };
+
+        // Listeners with styling preservation
         list.addEventListener('change', function(e) {
           if (e.target.classList.contains('node-check')) {
             var rawId = e.target.getAttribute('data-id');
             var nodeId = isNaN(rawId) ? rawId : parseFloat(rawId);
-            network.body.data.nodes.update({id: nodeId, hidden: !e.target.checked});
+            updateNodeVisibility(nodeId, e.target.checked);
           }
         });
         
         panel.querySelector('#check_all').onclick = function() {
            var checks = list.querySelectorAll('.node-check');
-           var updates = [];
            checks.forEach(function(c) { 
              var rawId = c.getAttribute('data-id');
              var nodeId = isNaN(rawId) ? rawId : parseFloat(rawId);
              c.checked = true; 
-             updates.push({id: nodeId, hidden: false});
+             updateNodeVisibility(nodeId, true);
            });
-           network.body.data.nodes.update(updates);
         };
 
         panel.querySelector('#uncheck_all').onclick = function() {
            var checks = list.querySelectorAll('.node-check');
-           var updates = [];
            checks.forEach(function(c) { 
              var rawId = c.getAttribute('data-id');
              var nodeId = isNaN(rawId) ? rawId : parseFloat(rawId);
              c.checked = false; 
-             updates.push({id: nodeId, hidden: true});
+             updateNodeVisibility(nodeId, false);
            });
-           network.body.data.nodes.update(updates);
         };
       }
     }
