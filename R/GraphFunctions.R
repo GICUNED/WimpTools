@@ -43,6 +43,8 @@
 #'        around nodes. Default is 50.
 #' @param rounding Numeric value specifying radius for rounding area corners
 #'        (0 for sharp corners). Default is 10.
+#' @param min_weight Numeric value specifying the minimum absolute weight for 
+#'        an edge to be displayed. Default is 0 (show all edges).
 #'
 #' @details
 #' The digraph visualization provides insights into:
@@ -98,7 +100,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
                     height = "700px", color = "red/green", layout = "graphopt",
                     show = TRUE, hide_direct = FALSE,
                     areas = FALSE, area_attr = "category", area_color = NA,
-                    pad_side = 50, rounding = 10) {
+                    pad_side = 50, rounding = 10, min_weight = 0) {
 
   # ==========================================
   # INPUT VALIDATION
@@ -174,6 +176,9 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
   }
   if (!is.numeric(rounding) || length(rounding) != 1 || rounding < 0) {
     stop("'rounding' must be numeric >= 0.")
+  }
+  if (!is.numeric(min_weight) || length(min_weight) != 1 || min_weight < 0) {
+    stop("'min_weight' must be numeric >= 0.")
   }
 
   if (inherits(wimp, "wimp") && !is.null(wimp$global$weight_matrix)) {
@@ -415,6 +420,11 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
 
   # Process weight matrix
   wmatrix <- .reorient_weight_matrix(wmatrix, vertex_vector)
+
+  # Filter edges by minimum absolute weight
+  if (min_weight > 0) {
+    wmatrix[abs(wmatrix) < min_weight] <- 0
+  }
 
   # Apply direct relationship hiding if requested
   if (hide_direct) {

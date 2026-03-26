@@ -18,7 +18,8 @@ digraph(
   area_attr = "category",
   area_color = NA,
   pad_side = 50,
-  rounding = 10
+  rounding = 10,
+  min_weight = 0
 )
 }
 \arguments{
@@ -67,6 +68,9 @@ around nodes. Default is 50.}
 
 \item{rounding}{Numeric value specifying radius for rounding area corners
 (0 for sharp corners). Default is 10.}
+
+\item{min_weight}{Numeric value specifying the minimum absolute weight for 
+an edge to be displayed. Default is 0 (show all edges).}
 }
 \value{
 A \code{visNetwork} interactive graph object that can be displayed
