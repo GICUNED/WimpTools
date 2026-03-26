@@ -34,7 +34,7 @@ from the wimp object.}
 If \code{NA} (default), uses the normalized ideal values from the
 wimp object.}
 
-\item{width}{Character string specifying the graph width. Default is "100%".}
+\item{width}{Character string specifying the graph width. Default is "100\%".}
 
 \item{height}{Character string specifying the graph height. Default is
 "700px".}

@@ -20,7 +20,7 @@
 #' @param ideal_vector Numeric vector defining the ideal value of each vertex.
 #'        If \code{NA} (default), uses the normalized ideal values from the
 #'        wimp object.
-#' @param width Character string specifying the graph width. Default is "100%".
+#' @param width Character string specifying the graph width. Default is "100\%".
 #' @param height Character string specifying the graph height. Default is
 #'        "700px".
 #' @param color Character string specifying the color palette. Options are
