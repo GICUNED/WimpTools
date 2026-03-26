@@ -834,12 +834,6 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
           }
         });
         edgesDS.update(edgesUpdates);
-             return {id: edge.id, color: '#999999', dashes: edge.weight < 0};
-          } else {
-             return {id: edge.id, dashes: edge.orig_dashes}; 
-          }
-        });
-        edgesDS.update(edgesUpdates);
       };
       
       // Initialize with current selection
