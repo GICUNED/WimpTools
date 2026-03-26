@@ -411,7 +411,6 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
     label = vertex_name,
     group = congruency$group,
     category = as.character(area_vec),
-    value = abs(vertex_vector),
     size = 30 * abs(vertex_vector) + 20,
     shape = "dot",
     title = paste("<p><b>", poles, "</b><br>Self:",
@@ -443,7 +442,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         if (span < 1e-9) span <- 1
         m[, i] <- (m[, i] - rng[1]) / span - 0.5
       }
-      m * 1000
+      m * 850
     }
     
     node_ids <- as.character(vertex$id)
@@ -795,7 +794,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       var getPaletteColor = function(v, i, scheme) {
         var x = v / i;
         var colors = {
-          'red/green':  [\"#F52722\", \"#A5D610\", \"grey\", \"yellow\"],
+          'red/green':  [\"#F52722\", \"#A5D610\", \"#999999\", \"#FFFF00\"],
           'grey scale': [\"#808080\", \"#ffffff\", \"#f2f2f2\", \"#e5e5e5\"],
           'colorblind': [\"#D55E00\", \"#0173B2\", \"#CC79A7\", \"#F0E442\"],
           'pastel':     [\"#f1677c\", \"#98FB98\", \"#F0F8FF\", \"#fcf087\"],
