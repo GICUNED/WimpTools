@@ -702,6 +702,33 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       
       el.appendChild(panel);
 
+      // --- Header and Minimize Logic ---
+      var header = document.createElement('div');
+      header.style.display = 'flex';
+      header.style.justifyContent = 'space-between';
+      header.style.alignItems = 'center';
+      header.style.cursor = 'pointer';
+      header.style.marginBottom = '10px';
+      header.style.borderBottom = '1px solid #eee';
+      header.style.paddingBottom = '5px';
+      header.style.userSelect = 'none';
+      
+      header.innerHTML = '<span style=\"font-weight:bold; color:#2c3e50;\">Graph Filters</span>' +
+                         '<span id=\"toggle_btn\" style=\"font-weight:bold; color:#95a5a6; font-size:16px; width:20px; textAlign:center;\">−</span>';
+      panel.appendChild(header);
+
+      var content = document.createElement('div');
+      content.id = 'panel_content';
+      panel.appendChild(content);
+
+      header.onclick = function() {
+        var isHidden = content.style.display === 'none';
+        content.style.display = isHidden ? 'block' : 'none';
+        header.querySelector('#toggle_btn').innerText = isHidden ? '−' : '+';
+        panel.style.width = isHidden ? '200px' : '100px';
+        panel.style.boxShadow = isHidden ? '0 2px 15px rgba(0,0,0,0.15)' : 'none';
+      };
+
       // --- Weight Slider Section ---
       if (x.weight_slider) {
         var sliderSection = document.createElement('div');
@@ -715,7 +742,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
                                   '<div style=\"margin-top:6px; display:flex; justify-content:space-between; font-family:monospace;\">' +
                                   '<span>Min: <b id=\"weight_val\" style=\"color:#2c3e50;\">' + (x.min_weight || 0).toFixed(2) + '</b></span>' +
                                   '<span style=\"color:#7f8c8d;\">Max: ' + maxW + '</span></div>';
-        panel.appendChild(sliderSection);
+        content.appendChild(sliderSection);
         
         var slider = sliderSection.querySelector('#min_weight_slider');
         var label = sliderSection.querySelector('#weight_val');
@@ -764,7 +791,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         });
         
         nodeSection.appendChild(list);
-        panel.appendChild(nodeSection);
+        content.appendChild(nodeSection);
         
         // Unified update function to preserve original styling
         var updateNodeVisibility = function(id, isVisible) {
