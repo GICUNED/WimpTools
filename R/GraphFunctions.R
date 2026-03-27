@@ -21,8 +21,7 @@
 #'        If \code{NA} (default), uses the normalized ideal values from the
 #'        wimp object.
 #' @param width Character string specifying the graph width. Default is "100\%".
-#' @param height Character string specifying the graph height. Default is
-#'        "700px".
+#' @param height Height of the digraph. Default is "90vh".
 #' @param color Character string specifying the color palette. Options are
 #'        "red/green" (default) and "grey scale".
 #' @param layout Character string specifying the layout algorithm. Options are:
@@ -100,7 +99,7 @@
 #'
 
 digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
-                    height = "700px", color = "red/green", layout = "graphopt",
+                    height = "90vh", color = "red/green", layout = "graphopt",
                     show = TRUE, hide_direct = FALSE,
                     areas = FALSE, area_attr = "category", area_color = NA,
                     pad_side = 50, rounding = 10, min_weight = 0,
@@ -738,6 +737,10 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
   if (interactive_options) {
     js_panel <- "
     function(el, x) {
+      // Use 90vh for robust vertical responsiveness
+      el.style.height = '90vh';
+      el.style.minHeight = '600px';
+      
       var network = this.network;
       var panel = document.createElement('div');
       panel.className = 'wimp-options-panel';
@@ -1033,6 +1036,20 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
            updateNodeVisibility(nodeId, false);
          });
       };
+
+      // Aggressive fit and resize handling
+      var forceFit = function() {
+        network.setSize('100%', el.style.height);
+        network.redraw();
+        network.fit();
+      };
+
+      window.addEventListener('resize', forceFit);
+      
+      // Multi-step initialization to catch the final container size
+      setTimeout(forceFit, 100);
+      setTimeout(forceFit, 500);
+      setTimeout(forceFit, 1500);
     }
     "
     g$x$interactive_options <- interactive_options
