@@ -2,7 +2,7 @@
 % Please edit documentation in R/CentralityFunctions.R
 \name{pb_plot}
 \alias{pb_plot}
-\title{PB Space Scatter Plot -- ph_plot()}
+\title{PB Space Scatter Plot -- pb_plot()}
 \usage{
 pb_plot(wimp, text_size = 1, ...)
 }

@@ -4,29 +4,13 @@
 \alias{idealdigraph}
 \title{Ideal digraph -- idealdigraph()}
 \usage{
-idealdigraph(wimp, hide_direct = FALSE, layout = "circle", ...)
+idealdigraph(wimp, ...)
 }
 \arguments{
-\item{wimp}{Subject's WimpGrid. It must be a "wimp" S3 object
-imported by the \\code{\\link{importwimp}} function.}
+\item{wimp}{Subject's WimpGrid}
 
-\item{hide_direct}{If TRUE, hide direct relationships between nodes. Default is
-FALSE.}
-
-\item{layout}{Layout for the digraph. Options: "circle", "rtcircle", "tree",
-"graphopt", "mds", "grid" or "areas". Default is "circle".}
-
-\item{...}{Additional arguments passed to \\code{\\link{digraph}}.}
-}
-\value{
-A visNetwork graph
+\item{...}{Additional arguments}
 }
 \description{
 Plot the ideal self based on the constructs and their relations.
-}
-\examples{
-idealdigraph(example_wimp)
-}
-\author{
-Alejandro Sanfeliciano
 }

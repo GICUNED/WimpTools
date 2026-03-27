@@ -340,7 +340,7 @@ eigen_index <- function(wimp, matrix = "weights", num_vectors = 2) {
 
 # PB Plot ----------------------------------------------------------------------
 
-#' PB Space Scatter Plot -- ph_plot()
+#' PB Space Scatter Plot -- pb_plot()
 #'
 #' @description Creates a scatter plot of constructs in Presence-Balance
 #'              space. P represents construct frequency, B represents
