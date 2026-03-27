@@ -632,7 +632,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
                  highlightNearest = list(enabled = TRUE, degree = 0,
                                          labelOnly = TRUE),
                  selectedBy = list(variable = "group", main = "All")) %>%
-      visInteraction(navigationButtons = TRUE, multiselect = TRUE) %>%
+      visInteraction(navigationButtons = FALSE, multiselect = TRUE) %>%
       visPhysics(enabled = FALSE)
   } else if (layout == "rtcircle") {
     # Circular tree layout
@@ -644,7 +644,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
                  highlightNearest = list(enabled = TRUE, degree = 0,
                                          labelOnly = TRUE),
                  selectedBy = list(variable = "group", main = "All")) %>%
-      visInteraction(navigationButtons = TRUE, multiselect = TRUE)
+      visInteraction(navigationButtons = FALSE, multiselect = TRUE)
   } else {
     # Standard igraph layouts
     g <- visNetwork(vertex, edges, height = height, width = width) %>%
@@ -655,7 +655,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
                  highlightNearest = list(enabled = TRUE, degree = 0,
                                          labelOnly = TRUE),
                  selectedBy = list(variable = "group", main = "All")) %>%
-      visInteraction(navigationButtons = TRUE, multiselect = TRUE)
+      visInteraction(navigationButtons = FALSE, multiselect = TRUE)
   }
 
   # ==========================================
@@ -758,6 +758,57 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       panel.style.transition = 'all 0.3s ease';
       
       el.appendChild(panel);
+
+      // --- Export Button (Bottom Left) ---
+      var exportBtn = document.createElement('button');
+      exportBtn.id = 'export_png_btn';
+      exportBtn.innerText = '📷 Export PNG';
+      exportBtn.title = 'Download graph as high-resolution PNG';
+      exportBtn.style.position = 'absolute';
+      exportBtn.style.bottom = '15px';
+      exportBtn.style.left = '15px';
+      exportBtn.style.zIndex = '999';
+      exportBtn.style.padding = '8px 16px';
+      exportBtn.style.fontSize = '12px';
+      exportBtn.style.fontWeight = 'bold';
+      exportBtn.style.color = '#555';
+      exportBtn.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
+      exportBtn.style.border = '1px solid #ccc';
+      exportBtn.style.borderRadius = '25px';
+      exportBtn.style.cursor = 'pointer';
+      exportBtn.style.boxShadow = '0 3px 10px rgba(0,0,0,0.15)';
+      exportBtn.style.transition = 'all 0.2s ease';
+      
+      exportBtn.onmouseover = function() { 
+        this.style.backgroundColor = '#fff'; 
+        this.style.boxShadow = '0 5px 15px rgba(0,0,0,0.2)';
+        this.style.transform = 'translateY(-1px)';
+      };
+      exportBtn.onmouseout = function() { 
+        this.style.backgroundColor = 'rgba(255, 255, 255, 0.95)'; 
+        this.style.boxShadow = '0 3px 10px rgba(0,0,0,0.15)';
+        this.style.transform = 'translateY(0)';
+      };
+
+      exportBtn.onclick = function() {
+        var canvas = el.getElementsByTagName('canvas')[0];
+        if (!canvas) {
+          alert('Canvas not found!');
+          return;
+        }
+        
+        // Use a hidden canvas to potentially scale if needed, 
+        // but toDataURL with 1.0 quality is a good start.
+        var dataURL = canvas.toDataURL(\"image/png\", 1.0);
+        var link = document.createElement('a');
+        link.download = 'WimpTools_Digraph_' + new Date().getTime() + '.png';
+        link.href = dataURL;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      };
+      
+      el.appendChild(exportBtn);
 
       // --- Header and Minimize Logic ---
       var header = document.createElement('div');
