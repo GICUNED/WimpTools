@@ -399,6 +399,13 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
   vertex_vector <- sapply(vertex_vector, .thr)
   if (is.na(ideal_vector[1])) ideal_vector <- ideal
 
+  # Fix: Adjust weights relative to the displayed pole
+  # If we show the left pole (sign < 0), we must flip the incident edges
+  # to keep the relationship consistent with the visible label.
+  signs <- sign(vertex_vector)
+  signs[signs == 0] <- 1 # Default to positive if neutral
+  wmatrix <- diag(signs, nrow = length(signs)) %*% wmatrix %*% diag(signs, nrow = length(signs))
+
   # Create vertex properties
   vertex_name <- .create_vertex_names(vertex_vector, lpoles, rpoles)
   congruency <- .calculate_congruency(vertex_vector, ideal_vector, color)
