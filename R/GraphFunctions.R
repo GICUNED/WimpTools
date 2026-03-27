@@ -62,6 +62,12 @@
 #'
 #' @return A \code{visNetwork} interactive graph object.
 #'
+#' @import visNetwork
+#' @importFrom htmlwidgets JS onRender
+#' @importFrom jsonlite toJSON
+#' @importFrom magrittr %>%
+#' @importFrom visNetwork visNetwork visOptions visInteraction visPhysics
+#'             visIgraphLayout visEvents
 #' @export
 digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
                     height = "90vh", color = "red/green", layout = "graphopt",
@@ -177,9 +183,9 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
     )
   }
 
-  g <- visNetwork(vertex, edges, height = height, width = width) %>%
-    visIgraphLayout(layout = ifelse(layout=="graphopt","layout_with_graphopt","layout_in_circle"), randomSeed = 33) %>%
-    visOptions(highlightNearest = list(enabled=TRUE, degree=0), selectedBy = "group")
+  g <- visNetwork::visNetwork(vertex, edges, height = height, width = width) %>%
+    visNetwork::visIgraphLayout(layout = ifelse(layout=="graphopt","layout_with_graphopt","layout_in_circle"), randomSeed = 33) %>%
+    visNetwork::visOptions(highlightNearest = list(enabled=TRUE, degree=0), selectedBy = "group")
 
   if (interactive_options) {
     js_panel <- "
