@@ -4,13 +4,26 @@
 \alias{simdigraph}
 \title{Simulation digraph -- simdigraph()}
 \usage{
-simdigraph(scn, ...)
+simdigraph(scn, niter = 0, ...)
 }
 \arguments{
-\item{scn}{A scenario matrix or wimp object.}
+\item{scn}{A scenario matrix ("scn" S3 object) from
+\code{\link{scenariomatrix}}.}
 
-\item{...}{Additional arguments}
+\item{niter}{Iteration index to display (0-based). Default is 0.}
+
+\item{...}{Additional arguments passed to \code{\link{digraph}}.}
+}
+\value{
+A visNetwork graph
 }
 \description{
 Plot the hypothetical self for a given scenario iteration.
+}
+\examples{
+scn <- scenariomatrix(example_wimp, rep(1,5))
+simdigraph(scn, niter = 2)
+}
+\author{
+Alejandro Sanfeliciano
 }

@@ -38,7 +38,7 @@ from the wimp object.}
 If \code{NA} (default), uses the normalized ideal values from the
 wimp object.}
 
-\item{width}{Character string specifying the graph width. Default is "100%".}
+\item{width}{Character string specifying the graph width. Default is "100\%".}
 
 \item{height}{Height of the digraph. Default is "90vh".}
 
@@ -79,7 +79,8 @@ options panel to the visualization for real-time adjustments of
 palettes, layouts, and filters. Default is \code{TRUE}.}
 }
 \value{
-A \code{visNetwork} interactive graph object.
+A \code{visNetwork} interactive graph object that can be displayed
+        in R Viewer, R Markdown documents, or Shiny applications.
 }
 \description{
 Creates a directed graph (digraph) visualization representing the self of
@@ -93,10 +94,36 @@ The digraph visualization provides insights into:
 \itemize{
   \item \strong{Node colors}: Reflect congruency between self and ideal
   values
+    \itemize{
+      \item Red/green palette: Green (congruent), red (discrepant),
+            grey (undefined), yellow (dilemmatic)
+    }
   \item \strong{Node sizes}: Proportional to absolute self values
   \item \strong{Edge colors}: Represent relationship types
+  (positive/negative)
   \item \strong{Edge directions}: Show influence flow between constructs
 }
+}
+\note{
+The function automatically reorients the weight matrix based on vertex signs
+to ensure proper directionality. For reproducible layouts, the function uses
+a fixed random seed (33) for graph layout algorithms.
+}
+\examples{
+# Basic digraph with default settings
+digraph(example_wimp)
+
+# Custom layout and colors
+digraph(example_wimp, layout = "circle", color = "grey scale")
+
+# Show areas grouped by category
+digraph(example_wimp, areas = TRUE, area.attr = "category")
+
+}
+\seealso{
+\code{\link{idealdigraph}} for ideal self visualization,
+\code{\link{simdigraph}} for scenario-based digraphs,
+\code{\link{inout_digraph}} for construct relationship analysis
 }
 \author{
 Alejandro Sanfeliciano
