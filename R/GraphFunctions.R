@@ -778,61 +778,120 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
       };
 
-      var refreshNodes = function() {
+      var refreshNodes = function(simVals) {
         var scheme = visContent.querySelector('#palette_sel').value;
         var currentIdx = (window._simCurrentI !== undefined) ? window._simCurrentI : 0;
+        var vals = simVals || (window._simHistory && window._simHistory[currentIdx]);
         var nodesDS = network.body.data.nodes;
         
         var updates = nodesDS.get().map(function(node, i) {
-          var val = (window._simHistory && window._simHistory[currentIdx]) ? window._simHistory[currentIdx][i] : node.self_val;
+          var val = (vals && vals[i] !== undefined) ? vals[i] : (node.self_val || 0);
           var ideal = (x.sim_data) ? x.sim_data.initial_ideal[i] : node.ideal_val;
           var c = getPaletteColor(val, ideal, scheme);
-          
           var label = node.label;
           if (x.sim_data && window._simHistory) {
-             label = (val < 0) ? x.sim_data.lpoles[i] : (val > 0 ? x.sim_data.rpoles[i] : x.sim_data.lpoles[i] + ' - ' + x.sim_data.rpoles[i]);
+            label = (val < 0) ? x.sim_data.lpoles[i] : (val > 0 ? x.sim_data.rpoles[i] : x.sim_data.lpoles[i] + ' - ' + x.sim_data.rpoles[i]);
           }
-
           var baseSize = (x.sim_data && window._simHistory) ? (20 + (30 * Math.abs(val))) : (node.raw_size || 20);
           var finalSize = baseSize * currentSizeMult;
-          
-          // Golden Center linear formula for 1-line labels
-          // Balances V1.0 history (large nodes) with modern precision (small nodes)
-          var x_abs = (x.sim_data && window._simHistory) ? Math.abs(val) : (node.self_val ? Math.abs(node.self_val) : 0.5);
           var vadjust = - (finalSize * 1.1 + currentTextSize * 0.8);
-          
           return {
             id: node.id,
-            color: { 
-              background: c, 
-              border: darkenColor(c, 0.4),
-              highlight: { background: c, border: darkenColor(c, 0.6) }
-            },
-            size: finalSize,
-            label: label,
-            shape: 'dot',
-            font: { 
-              vadjust: vadjust, 
-              size: currentTextSize, 
-              face: 'Segoe UI', 
-              color: '#000000',
-              strokeWidth: 3,
-              strokeColor: '#ffffff'
-            }
+            color: { background: c, border: darkenColor(c, 0.4), highlight: { background: c, border: darkenColor(c, 0.6) } },
+            size: finalSize, label: label, shape: 'dot',
+            font: { vadjust: vadjust, size: currentTextSize, face: 'Segoe UI', color: '#000000', strokeWidth: 3, strokeColor: '#ffffff' }
           };
         });
         nodesDS.update(updates);
         
         var edgesDS = network.body.data.edges;
+        var scheme2 = visContent.querySelector('#palette_sel').value;
         var edgeUpdates = edgesDS.get().map(function(edge) {
-          if(scheme === 'grey scale') {
-             return {id: edge.id, color: '#999999', dashes: edge.weight < 0};
-          } else {
-             return {id: edge.id, color: edge.orig_color, dashes: edge.orig_dashes}; 
-          }
+          if(scheme2 === 'grey scale') return {id: edge.id, color: '#999999', dashes: edge.weight < 0};
+          return {id: edge.id, color: edge.orig_color, dashes: edge.orig_dashes};
         });
         edgesDS.update(edgeUpdates);
       };
+
+      // ── Edge flow flash: color edges by activation contribution ──────────
+      var flashEdgeFlow = function(fromIdx, toIdx) {
+        if(!window._simHistory || !window._simHistory[fromIdx] || !window._simHistory[toIdx]) return;
+        var prevVals = window._simHistory[fromIdx];
+        var nextVals = window._simHistory[toIdx];
+        var deltas   = nextVals.map(function(v, i) { return v - prevVals[i]; });
+        var weights  = x.sim_data.weights; // weights[from][to]
+        var THRESHOLD = 0.04;
+        var edgesDS  = network.body.data.edges;
+        var flowUpdates = edgesDS.get().map(function(edge) {
+          // edge.from / edge.to are node IDs (strings); find their index
+          var nodesDS = network.body.data.nodes;
+          var allNodes = nodesDS.get();
+          var srcIdx = allNodes.findIndex(function(n) { return n.id === edge.from; });
+          var dstIdx = allNodes.findIndex(function(n) { return n.id === edge.to;   });
+          if(srcIdx < 0 || dstIdx < 0) return {id: edge.id};
+          var flow = (weights[srcIdx] && weights[srcIdx][dstIdx] !== undefined)
+            ? weights[srcIdx][dstIdx] * deltas[srcIdx]
+            : 0;
+          var color;
+          if     (flow >  THRESHOLD) color = {color: '#4CAF50', highlight: '#4CAF50', hover: '#4CAF50'};
+          else if(flow < -THRESHOLD) color = {color: '#E53935', highlight: '#E53935', hover: '#E53935'};
+          else                       color = edge.orig_color;
+          return {id: edge.id, color: color};
+        });
+        edgesDS.update(flowUpdates);
+      };
+
+      // ── Smooth tween between two iteration states ─────────────────────────
+      var _tweenRAF = null;
+      var tweenToIteration = function(fromIdx, toIdx, durationMs) {
+        if(_tweenRAF) { cancelAnimationFrame(_tweenRAF); _tweenRAF = null; }
+        if(!window._simHistory || !window._simHistory[fromIdx] || !window._simHistory[toIdx]) {
+          window._simCurrentI = toIdx;
+          refreshNodes();
+          return;
+        }
+        var prevVals = window._simHistory[fromIdx].slice();
+        var nextVals = window._simHistory[toIdx];
+        var nodesDS  = network.body.data.nodes;
+        var allNodes = nodesDS.get();
+        var scheme   = visContent.querySelector('#palette_sel').value;
+        var t0 = null;
+        // Flash edge flow at start of tween
+        flashEdgeFlow(fromIdx, toIdx);
+        var step = function(ts) {
+          if(!t0) t0 = ts;
+          var t = Math.min((ts - t0) / durationMs, 1);
+          // Ease-in-out cubic
+          var ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+          // Interpolate node values and render
+          var interpVals = nextVals.map(function(nv, i) { return prevVals[i] + ease * (nv - prevVals[i]); });
+          var updates = allNodes.map(function(node, i) {
+            var val   = interpVals[i] !== undefined ? interpVals[i] : (node.self_val || 0);
+            var ideal = x.sim_data ? x.sim_data.initial_ideal[i] : node.ideal_val;
+            var c     = getPaletteColor(val, ideal, scheme);
+            var baseSize = 20 + 30 * Math.abs(val);
+            var finalSize = baseSize * currentSizeMult;
+            var vadjust   = -(finalSize * 1.1 + currentTextSize * 0.8);
+            var label = (val < 0) ? x.sim_data.lpoles[i] : (val > 0 ? x.sim_data.rpoles[i] : x.sim_data.lpoles[i] + ' - ' + x.sim_data.rpoles[i]);
+            return {
+              id: node.id,
+              color: { background: c, border: darkenColor(c, 0.4), highlight: { background: c, border: darkenColor(c, 0.6) } },
+              size: finalSize, label: label, shape: 'dot',
+              font: { vadjust: vadjust, size: currentTextSize, face: 'Segoe UI', color: '#000000', strokeWidth: 3, strokeColor: '#ffffff' }
+            };
+          });
+          nodesDS.update(updates);
+          if(t < 1) {
+            _tweenRAF = requestAnimationFrame(step);
+          } else {
+            _tweenRAF = null;
+            window._simCurrentI = toIdx;
+            refreshNodes(); // snap to exact final state + restore edge colors
+          }
+        };
+        _tweenRAF = requestAnimationFrame(step);
+      };
+
 
       // --- Export Logic ---
       var exportPNG = function() {
@@ -1123,17 +1182,31 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         timelineEl.querySelector('#sim_slider').oninput = function() { updateIteration(parseInt(this.value)); };
 
         var simTimer = null;
-        timelineEl.querySelector('#play_btn').onclick = function() {
-          if(simTimer) clearInterval(simTimer);
-          var m = parseInt(simSettingsContent.querySelector('#sim_depth_input').value) || simMaxIter;
-          simTimer = setInterval(function() {
-            if(window._simCurrentI < m) updateIteration(window._simCurrentI + 1);
-            else clearInterval(simTimer);
-          }, 600);
+        var _playStep = function(m) {
+          if(window._simCurrentI >= m) { simTimer = null; return; }
+          var from = window._simCurrentI;
+          var to   = from + 1;
+          // Update slider + label immediately
+          timelineEl.querySelector('#sim_slider').value = to;
+          timelineEl.querySelector('#iter_label').innerText = to + '/' + m;
+          // Animate the transition
+          tweenToIteration(from, to, 450);
+          window._simCurrentI = to;
+          simTimer = setTimeout(function() { _playStep(m); }, 550);
         };
-        timelineEl.querySelector('#pause_btn').onclick = function() { if(simTimer) clearInterval(simTimer); };
+        timelineEl.querySelector('#play_btn').onclick = function() {
+          if(simTimer) { clearTimeout(simTimer); simTimer = null; }
+          if(_tweenRAF) { cancelAnimationFrame(_tweenRAF); _tweenRAF = null; }
+          var m = parseInt(simSettingsContent.querySelector('#sim_depth_input').value) || simMaxIter;
+          if(window._simCurrentI >= m) { window._simCurrentI = 0; refreshNodes(); }
+          _playStep(m);
+        };
+        timelineEl.querySelector('#pause_btn').onclick = function() {
+          if(simTimer) { clearTimeout(simTimer); simTimer = null; }
+          if(_tweenRAF) { cancelAnimationFrame(_tweenRAF); _tweenRAF = null; }
+        };
         simSettingsContent.querySelector('#reset_sim').onclick = function() {
-          if(simTimer) clearInterval(simTimer);
+          if(simTimer) clearTimeout(simTimer);
           targetSelf = [...sim.initial_self];
           actList.querySelectorAll('.target-slider').forEach(function(s, idx) {
             var initV  = parseFloat(s.getAttribute('data-init'));
