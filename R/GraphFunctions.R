@@ -814,18 +814,20 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       };
 
       // ── Edge flow flash: color edges by activation contribution ──────────
+      window._activePulses = [];
       var flashEdgeFlow = function(fromIdx, toIdx) {
+        window._activePulses = [];
         if(!window._simHistory || !window._simHistory[fromIdx] || !window._simHistory[toIdx]) return;
         var prevVals = window._simHistory[fromIdx];
         var nextVals = window._simHistory[toIdx];
         var deltas   = nextVals.map(function(v, i) { return v - prevVals[i]; });
-        var weights  = x.sim_data.weights; // weights[from][to]
+        var weights  = x.sim_data.weights;
         var THRESHOLD = 0.04;
         var edgesDS  = network.body.data.edges;
+        var nodesDS  = network.body.data.nodes;
+        var allNodes = nodesDS.get();
+        
         var flowUpdates = edgesDS.get().map(function(edge) {
-          // edge.from / edge.to are node IDs (strings); find their index
-          var nodesDS = network.body.data.nodes;
-          var allNodes = nodesDS.get();
           var srcIdx = allNodes.findIndex(function(n) { return n.id === edge.from; });
           var dstIdx = allNodes.findIndex(function(n) { return n.id === edge.to;   });
           if(srcIdx < 0 || dstIdx < 0) return {id: edge.id};
@@ -833,15 +835,40 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
             ? weights[srcIdx][dstIdx] * deltas[srcIdx]
             : 0;
           var color;
-          if     (flow >  THRESHOLD) color = {color: '#4CAF50', highlight: '#4CAF50', hover: '#4CAF50'};
-          else if(flow < -THRESHOLD) color = {color: '#E53935', highlight: '#E53935', hover: '#E53935'};
-          else                       color = edge.orig_color;
-          return {id: edge.id, color: color};
+          if (Math.abs(flow) > THRESHOLD) {
+            color = (flow > 0) ? '#4CAF50' : '#E53935';
+            window._activePulses.push({ from: edge.from, to: edge.to, color: color, t: 0 });
+            return {id: edge.id, color: {color: color, highlight: color, hover: color}};
+          }
+          return {id: edge.id, color: edge.orig_color};
         });
         edgesDS.update(flowUpdates);
       };
 
-      // ── Smooth tween between two iteration states ─────────────────────────
+      // ── Pulse Renderer: Drawing glowing balls on afterDrawing ────────────
+      network.on(\"afterDrawing\", function(ctx) {
+        if (!window._activePulses || window._activePulses.length === 0) return;
+        var positions = network.getPositions();
+        window._activePulses.forEach(function(p) {
+          var start = positions[p.from];
+          var end   = positions[p.to];
+          if (!start || !end) return;
+          var posX = start.x + (end.x - start.x) * p.t;
+          var posY = start.y + (end.y - start.y) * p.t;
+          ctx.beginPath();
+          ctx.arc(posX, posY, 6, 0, 2 * Math.PI, false);
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = p.color;
+          ctx.fillStyle = p.color;
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(posX, posY, 3, 0, 2 * Math.PI, false);
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+        });
+      });
+
       var _tweenRAF = null;
       var tweenToIteration = function(fromIdx, toIdx, durationMs) {
         if(_tweenRAF) { cancelAnimationFrame(_tweenRAF); _tweenRAF = null; }
@@ -856,14 +883,17 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         var allNodes = nodesDS.get();
         var scheme   = visContent.querySelector('#palette_sel').value;
         var t0 = null;
-        // Flash edge flow at start of tween
         flashEdgeFlow(fromIdx, toIdx);
         var step = function(ts) {
           if(!t0) t0 = ts;
           var t = Math.min((ts - t0) / durationMs, 1);
-          // Ease-in-out cubic
           var ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
-          // Interpolate node values and render
+          
+          // Update pulse t for edge flow visualization
+          if(window._activePulses) {
+            window._activePulses.forEach(function(p) { p.t = ease; });
+          }
+
           var interpVals = nextVals.map(function(nv, i) { return prevVals[i] + ease * (nv - prevVals[i]); });
           var updates = allNodes.map(function(node, i) {
             var val   = interpVals[i] !== undefined ? interpVals[i] : (node.self_val || 0);
@@ -880,13 +910,14 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
               font: { vadjust: vadjust, size: currentTextSize, face: 'Segoe UI', color: '#000000', strokeWidth: 3, strokeColor: '#ffffff' }
             };
           });
-          nodesDS.update(updates);
+          nodesDS.update(updates); // This triggers a redraw which calls afterDrawing
           if(t < 1) {
             _tweenRAF = requestAnimationFrame(step);
           } else {
             _tweenRAF = null;
             window._simCurrentI = toIdx;
-            refreshNodes(); // snap to exact final state + restore edge colors
+            window._activePulses = []; // Clear pulses
+            refreshNodes();
           }
         };
         _tweenRAF = requestAnimationFrame(step);
@@ -1189,10 +1220,11 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
           // Update slider + label immediately
           timelineEl.querySelector('#sim_slider').value = to;
           timelineEl.querySelector('#iter_label').innerText = to + '/' + m;
-          // Animate the transition
-          tweenToIteration(from, to, 450);
+          // Animate the transition - slower: 1500ms tween
+          tweenToIteration(from, to, 1500);
           window._simCurrentI = to;
-          simTimer = setTimeout(function() { _playStep(m); }, 550);
+          // Step interval slower: 1800ms
+          simTimer = setTimeout(function() { _playStep(m); }, 1800);
         };
         timelineEl.querySelector('#play_btn').onclick = function() {
           if(simTimer) { clearTimeout(simTimer); simTimer = null; }
