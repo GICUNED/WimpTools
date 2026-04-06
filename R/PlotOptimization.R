@@ -29,8 +29,8 @@
   )
 
   # Enhanced text dimension estimation with better precision
-  char_width <- 0.006   # More conservative character width
-  char_height <- 0.012  # More conservative character height
+  char_width <- 0.007   # More conservative character width (was 0.006)
+  char_height <- 0.013  # More conservative character height (was 0.012)
 
   # Calculate text box dimensions with character analysis
   text_widths <- sapply(result$label, function(txt) {
@@ -53,21 +53,21 @@
   point_density <- n / (diff(range(x_coords)) * diff(range(y_coords)))
   density_factor <- min(1.2, 0.8 / sqrt(point_density + 0.1))  # Less expansion
 
-  base_distance <- distance * density_factor
-  min_distance <- max(1.5, base_distance * 0.1)  # Stay much closer
-  max_distance <- base_distance * 0.4  # Significantly reduced max distance
+  base_distance <- distance * 1.5 * density_factor # Increased base distance multiplier
+  min_distance <- max(2.5, base_distance * 0.1)  # Increased min distance
+  max_distance <- base_distance * 0.6  # Increased max distance
 
   # Enhanced positioning with iterative force-based improvement (ggrepel-style)
-  max_iterations <- min(35, n * 3)  # More iterations for better results
+  max_iterations <- min(50, n * 4)  # Increased iterations
   convergence_threshold <- 0.98  # Higher threshold (98% good positions)
 
   # System to lock excellent positions and prevent degradation
   locked_positions <- rep(FALSE, n)
 
   # Force-based parameters for spring system
-  repulsion_force <- 0.02  # Base repulsion between labels
-  attraction_force <- 0.01  # Attraction to original position
-  damping <- 0.85  # Velocity damping for convergence
+  repulsion_force <- 0.03  # Increased repulsion (was 0.02)
+  attraction_force <- 0.01
+  damping <- 0.8  # Reduced damping for more movement (was 0.85)
 
   for (iteration in 1:max_iterations) {
     improved_count <- 0
@@ -202,7 +202,7 @@
           jitter_y <- rnorm(1, 0, jitter_amount)
 
           # Improved distance calculation - adaptive for edge positions
-          base_dist <- ifelse(is_orthogonal, 0.02, 0.015)
+          base_dist <- ifelse(is_orthogonal, 0.03, 0.025) # Increased from 0.02, 0.015
 
           # Reduce distance for points near boundaries to avoid violations
           distance_from_edges <- min(
@@ -1002,7 +1002,7 @@
     if(x_overlap > 0 && y_overlap > 0) {
       # Massive penalty for any overlap - make this prohibitively expensive
       overlap_area <- x_overlap * y_overlap
-      penalty <- penalty + overlap_area * 20000 * (3.0 ^ (overlap_area * 500))
+      penalty <- penalty + overlap_area * 50000 * (4.0 ^ (overlap_area * 600))
     }
 
     # Progressive proximity penalty with larger minimum distances
@@ -1019,7 +1019,7 @@
     marker_dist <- sqrt((current_x - x_coords[j])^2 + (current_y - y_coords[j])^2)
 
     # Dynamic minimum distance based on label size
-    min_marker_distance <- max(current_w, current_h) * 0.7 + 0.018  # Slightly larger buffer
+    min_marker_distance <- max(current_w, current_h) * 0.8 + 0.025  # Increased buffer
 
     if(marker_dist < min_marker_distance) {
       if(j != index) {  # Other markers
