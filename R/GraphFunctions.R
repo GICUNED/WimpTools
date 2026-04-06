@@ -784,13 +784,17 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         var vals = simVals || (window._simHistory && window._simHistory[currentIdx]);
         var nodesDS = network.body.data.nodes;
         
-        var updates = nodesDS.get().map(function(node, i) {
-          var val = (vals && vals[i] !== undefined) ? vals[i] : (node.self_val || 0);
-          var ideal = (x.sim_data) ? x.sim_data.initial_ideal[i] : node.ideal_val;
+        var updates = nodesDS.get().map(function(node) {
+          var idx = (parseInt(node.id) - 1);
+          if (isNaN(idx)) return node;
+          var val = (vals && vals[idx] !== undefined) ? vals[idx] : (node.self_val || 0);
+          var ideal = (x.sim_data && x.sim_data.initial_ideal) ? x.sim_data.initial_ideal[idx] : node.ideal_val;
           var c = getPaletteColor(val, ideal, scheme);
           var label = node.label;
-          if (x.sim_data && window._simHistory) {
-            label = (val < 0) ? x.sim_data.lpoles[i] : (val > 0 ? x.sim_data.rpoles[i] : x.sim_data.lpoles[i] + ' - ' + x.sim_data.rpoles[i]);
+          if (x.sim_data && window._simHistory && x.sim_data.lpoles && x.sim_data.rpoles) {
+            var lp = x.sim_data.lpoles[idx] || 'L';
+            var rp = x.sim_data.rpoles[idx] || 'R';
+            label = (val < -0.1) ? lp : (val > 0.1 ? rp : lp + ' - ' + rp);
           }
           var baseSize = (x.sim_data && window._simHistory) ? (20 + (30 * Math.abs(val))) : (node.raw_size || 20);
           var finalSize = baseSize * currentSizeMult;
@@ -813,39 +817,53 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         edgesDS.update(edgeUpdates);
       };
 
-      // ── Edge flow flash: color edges by activation contribution ──────────
-      window._activePulses = [];
+      // ── Semantic Edge flow flash: arrows showing activation quality ───────
       var flashEdgeFlow = function(fromIdx, toIdx) {
         window._activePulses = [];
-        if(!window._simHistory || !window._simHistory[fromIdx] || !window._simHistory[toIdx]) return;
-        var prevVals = window._simHistory[fromIdx];
-        var nextVals = window._simHistory[toIdx];
-        var deltas   = nextVals.map(function(v, i) { return v - prevVals[i]; });
+        if(fromIdx === 0) return; // Step 0->1 is static setup
+        
+        // Ripple Effect: Pulse based on the change that happened in the PREVIOUS step (n-1 to n)
+        if(!window._simHistory || !window._simHistory[fromIdx-1] || !window._simHistory[fromIdx] || !x.sim_data) return;
+        var prevHistory = window._simHistory[fromIdx - 1]; 
+        var currHistory = window._simHistory[fromIdx];     
+        var deltas = currHistory.map(function(v, i) { return v - prevHistory[i]; });
+        
         var weights  = x.sim_data.weights;
+        var ideals   = x.sim_data.initial_ideal || [];
         var THRESHOLD = 0.04;
         var edgesDS  = network.body.data.edges;
-        var nodesDS  = network.body.data.nodes;
-        var allNodes = nodesDS.get();
         
         var flowUpdates = edgesDS.get().map(function(edge) {
-          var srcIdx = allNodes.findIndex(function(n) { return n.id === edge.from; });
-          var dstIdx = allNodes.findIndex(function(n) { return n.id === edge.to;   });
-          if(srcIdx < 0 || dstIdx < 0) return {id: edge.id};
-          var flow = (weights[srcIdx] && weights[srcIdx][dstIdx] !== undefined)
-            ? weights[srcIdx][dstIdx] * deltas[srcIdx]
-            : 0;
-          var color;
+          var srcIdx = parseInt(edge.from) - 1;
+          var dstIdx = parseInt(edge.to) - 1;
+          if(isNaN(srcIdx) || isNaN(dstIdx)) return {id: edge.id};
+          
+          var flow = 0;
+          if(weights && weights[srcIdx]) {
+             if (Array.isArray(weights[srcIdx])) flow = weights[srcIdx][dstIdx] * deltas[srcIdx];
+             else flow = weights[srcIdx * ideals.length + dstIdx] * deltas[srcIdx]; 
+          }
+          
           if (Math.abs(flow) > THRESHOLD) {
-            color = (flow > 0) ? '#4CAF50' : '#E53935';
-            window._activePulses.push({ from: edge.from, to: edge.to, color: color, t: 0 });
+            var idealVal = ideals[dstIdx] || 0;
+            var type, color;
+            if (idealVal !== 0) {
+              var isToward = (Math.sign(flow) === Math.sign(idealVal));
+              type  = isToward ? 'up' : 'down';
+              color = isToward ? '#4CAF50' : '#E53935';
+            } else {
+              type  = (flow > 0) ? 'right' : 'left';
+              color = '#FBC02D';
+            }
+            window._activePulses.push({ from: edge.from, to: edge.to, color: color, type: type, t: 0 });
             return {id: edge.id, color: {color: color, highlight: color, hover: color}};
           }
-          return {id: edge.id, color: edge.orig_color};
+          return {id: edge.id, color: edge.orig_color || '#cccccc'};
         });
         edgesDS.update(flowUpdates);
       };
 
-      // ── Pulse Renderer: Drawing glowing balls on afterDrawing ────────────
+      // ── Arrow Pulse Renderer: Drawing glowing arrows ────────────────────
       network.on(\"afterDrawing\", function(ctx) {
         if (!window._activePulses || window._activePulses.length === 0) return;
         var positions = network.getPositions();
@@ -855,17 +873,35 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
           if (!start || !end) return;
           var posX = start.x + (end.x - start.x) * p.t;
           var posY = start.y + (end.y - start.y) * p.t;
-          ctx.beginPath();
-          ctx.arc(posX, posY, 6, 0, 2 * Math.PI, false);
-          ctx.shadowBlur = 15;
+          
+          ctx.save();
+          ctx.translate(posX, posY);
+          ctx.shadowBlur = 20; // Thicker glow
           ctx.shadowColor = p.color;
           ctx.fillStyle = p.color;
-          ctx.fill();
-          ctx.beginPath();
-          ctx.arc(posX, posY, 3, 0, 2 * Math.PI, false);
+          
+          var sz = 9; // Slightly larger
+          var drawArrowShape = function(s) {
+            ctx.beginPath();
+            var sw = s/1.8; // slightly thicker stem
+            if(p.type === 'up') {
+              ctx.moveTo(-sw/2, s); ctx.lineTo(sw/2, s); ctx.lineTo(sw/2, 0); ctx.lineTo(s, 0); ctx.lineTo(0, -s); ctx.lineTo(-s, 0); ctx.lineTo(-sw/2, 0);
+            } else if(p.type === 'down') {
+              ctx.moveTo(-sw/2, -s); ctx.lineTo(sw/2, -s); ctx.lineTo(sw/2, 0); ctx.lineTo(s, 0); ctx.lineTo(0, s); ctx.lineTo(-s, 0); ctx.lineTo(-sw/2, 0);
+            } else if(p.type === 'right') {
+              ctx.moveTo(-s, -sw/2); ctx.lineTo(-s, sw/2); ctx.lineTo(0, sw/2); ctx.lineTo(0, s); ctx.lineTo(s, 0); ctx.lineTo(0, -s); ctx.lineTo(0, -sw/2);
+            } else { // left
+              ctx.moveTo(s, -sw/2); ctx.lineTo(s, sw/2); ctx.lineTo(0, sw/2); ctx.lineTo(0, s); ctx.lineTo(-s, 0); ctx.lineTo(0, -s); ctx.lineTo(0, -sw/2);
+            }
+            ctx.closePath();
+            ctx.fill();
+          };
+          
+          drawArrowShape(sz);
           ctx.shadowBlur = 0;
           ctx.fillStyle = '#ffffff';
-          ctx.fill();
+          drawArrowShape(sz/2); // inner core relative to size
+          ctx.restore();
         });
       });
 
@@ -887,22 +923,36 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         var step = function(ts) {
           if(!t0) t0 = ts;
           var t = Math.min((ts - t0) / durationMs, 1);
-          var ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+          var isInit = fromIdx === 0;
           
-          // Update pulse t for edge flow visualization
+          // Phase 1: Arrows travel (only if not init Step 0->1)
+          var pulseDur = isInit ? 0 : 0.7;
+          var pulseT = (pulseDur === 0) ? 0 : Math.min(t / pulseDur, 1);
           if(window._activePulses) {
-            window._activePulses.forEach(function(p) { p.t = ease; });
+            window._activePulses.forEach(function(p) { p.t = pulseT; });
           }
 
-          var interpVals = nextVals.map(function(nv, i) { return prevVals[i] + ease * (nv - prevVals[i]); });
-          var updates = allNodes.map(function(node, i) {
-            var val   = interpVals[i] !== undefined ? interpVals[i] : (node.self_val || 0);
-            var ideal = x.sim_data ? x.sim_data.initial_ideal[i] : node.ideal_val;
+          // Phase 2: Nodes update (starts after arrows if not init)
+          var nodeStart = isInit ? 0 : 0.7;
+          var nodeT = t < nodeStart ? 0 : (t - nodeStart) / (1 - nodeStart);
+          var easeUpdate = nodeT < 0.5 ? 4*nodeT*nodeT*nodeT : 1 - Math.pow(-2*nodeT+2, 3)/2;
+          
+          var interpVals = nextVals.map(function(nv, i) { return prevVals[i] + easeUpdate * (nv - prevVals[i]); });
+          var updates = allNodes.map(function(node) {
+            var idx   = parseInt(node.id) - 1;
+            if (isNaN(idx)) return node;
+            var val   = (interpVals && interpVals[idx] !== undefined) ? interpVals[idx] : (node.self_val || 0);
+            var ideal = (x.sim_data && x.sim_data.initial_ideal) ? x.sim_data.initial_ideal[idx] : node.ideal_val;
             var c     = getPaletteColor(val, ideal, scheme);
             var baseSize = 20 + 30 * Math.abs(val);
             var finalSize = baseSize * currentSizeMult;
             var vadjust   = -(finalSize * 1.1 + currentTextSize * 0.8);
-            var label = (val < 0) ? x.sim_data.lpoles[i] : (val > 0 ? x.sim_data.rpoles[i] : x.sim_data.lpoles[i] + ' - ' + x.sim_data.rpoles[i]);
+            var label = node.label;
+            if (x.sim_data && x.sim_data.lpoles && x.sim_data.rpoles) {
+               var lp = x.sim_data.lpoles[idx] || 'L';
+               var rp = x.sim_data.rpoles[idx] || 'R';
+               label = (val < -0.1) ? lp : (val > 0.1 ? rp : lp + ' - ' + rp);
+            }
             return {
               id: node.id,
               color: { background: c, border: darkenColor(c, 0.4), highlight: { background: c, border: darkenColor(c, 0.6) } },
