@@ -1123,6 +1123,11 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
             '<input type=\"number\" id=\"sim_depth_input\" min=\"1\" max=\"50\" value=\"' + simMaxIter + '\"' +
               ' style=\"width:100%; padding:4px; border-radius:4px; border:1px solid #ccc;\">' +
           '</div>' +
+          '<div style=\"margin-bottom:12px; border-top:1px solid #eee; padding-top:10px;\">' +
+            '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444;\">Playback Speed</label>' +
+            '<input type=\"range\" id=\"speed_slider\" min=\"0.25\" max=\"2\" step=\"0.25\" value=\"1\" style=\"width:100%; accent-color:#3498db;\">' +
+            '<div id=\"speed_txt\" style=\"text-align:right; font-size:10px; color:#888; margin-top:2px;\">1.00x</div>' +
+          '</div>' +
           '<div style=\"border-top:1px solid #eee; padding-top:10px;\">' +
             '<b style=\"color:#444; display:block; margin-bottom:8px;\">Scenario</b>' +
             '<div id=\"act_list\" style=\"max-height:220px; overflow-y:auto; border:1px solid #f8f9fa; padding:5px; background:#fafafa;\"></div>' +
@@ -1149,6 +1154,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
           '<div style=\"display:flex; align-items:center; gap:7px; width:100%;\">' +
             '<button id=\"play_btn\" title=\"Play\" style=\"width:26px;height:26px;flex-shrink:0;border:none;border-radius:50%;background:#3498db;color:#fff;font-size:12px;cursor:pointer;padding:0;line-height:1;\">&#9654;</button>' +
             '<button id=\"pause_btn\" title=\"Pause\" style=\"width:26px;height:26px;flex-shrink:0;border:1px solid #ccc;border-radius:50%;background:#f5f5f5;color:#555;font-size:10px;cursor:pointer;padding:0;line-height:1;\">&#9646;&#9646;</button>' +
+            '<button id=\"stop_btn\" title=\"Stop (Reset)\" style=\"width:26px;height:26px;flex-shrink:0;border:1px solid #ccc;border-radius:50%;background:#f5f5f5;color:#e74c3c;font-size:12px;cursor:pointer;padding:0;line-height:1;\">&#9632;</button>' +
             '<input type=\"range\" id=\"sim_slider\" min=\"0\" max=\"' + simMaxIter + '\" value=\"0\"' +
               ' style=\"flex:1;accent-color:#3498db;cursor:pointer;margin:0;\">' +
             '<span id=\"iter_label\" style=\"flex-shrink:0;font-size:11px;font-weight:bold;color:#3498db;white-space:nowrap;min-width:38px;text-align:right;\">0/' + simMaxIter + '</span>' +
@@ -1260,6 +1266,13 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         simSettingsContent.querySelector('#sim_thr_sel').onchange = runSimulation;
         simSettingsContent.querySelector('#sim_depth_input').onchange = runSimulation;
 
+        var playbackSpeed = 1.0;
+        simSettingsContent.querySelector('#speed_slider').oninput = function() {
+          playbackSpeed = parseFloat(this.value);
+          if (playbackSpeed <= 0) playbackSpeed = 0.25;
+          simSettingsContent.querySelector('#speed_txt').innerText = playbackSpeed.toFixed(2) + 'x';
+        };
+
         timelineEl.querySelector('#sim_slider').oninput = function() { updateIteration(parseInt(this.value)); };
 
         var simTimer = null;
@@ -1267,18 +1280,20 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
           if(window._simCurrentI >= m) { simTimer = null; return; }
           var from = window._simCurrentI;
           var to   = from + 1;
-          // Update slider + label immediately
+          
           timelineEl.querySelector('#sim_slider').value = to;
           timelineEl.querySelector('#iter_label').innerText = to + '/' + m;
-          // Animate the transition - slower: 1500ms tween
-          tweenToIteration(from, to, 1500);
+          
+          var tweenDur = 1500 / playbackSpeed;
+          var stepInt  = 1800 / playbackSpeed;
+          
+          tweenToIteration(from, to, tweenDur);
           window._simCurrentI = to;
-          // Step interval slower: 1800ms
-          simTimer = setTimeout(function() { _playStep(m); }, 1800);
+          simTimer = setTimeout(function() { _playStep(m); }, stepInt);
         };
+
         timelineEl.querySelector('#play_btn').onclick = function() {
-          if(simTimer) { clearTimeout(simTimer); simTimer = null; }
-          if(_tweenRAF) { cancelAnimationFrame(_tweenRAF); _tweenRAF = null; }
+          if(simTimer) return;
           var m = parseInt(simSettingsContent.querySelector('#sim_depth_input').value) || simMaxIter;
           if(window._simCurrentI >= m) { window._simCurrentI = 0; refreshNodes(); }
           _playStep(m);
@@ -1286,6 +1301,12 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         timelineEl.querySelector('#pause_btn').onclick = function() {
           if(simTimer) { clearTimeout(simTimer); simTimer = null; }
           if(_tweenRAF) { cancelAnimationFrame(_tweenRAF); _tweenRAF = null; }
+        };
+        timelineEl.querySelector('#stop_btn').onclick = function() {
+          if(simTimer) { clearTimeout(simTimer); simTimer = null; }
+          if(_tweenRAF) { cancelAnimationFrame(_tweenRAF); _tweenRAF = null; }
+          window._activePulses = [];
+          updateIteration(0);
         };
         simSettingsContent.querySelector('#reset_sim').onclick = function() {
           if(simTimer) clearTimeout(simTimer);
@@ -1295,7 +1316,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
             var idealV = parseFloat(s.getAttribute('data-ideal'));
             s.value = targetSelf[idx];
             s.parentNode.querySelector('.val-badge').innerText = targetSelf[idx].toFixed(2);
-            updateSliderTrack(s, initV, idealV); // reset fill color to grey
+            updateSliderTrack(s, initV, idealV);
           });
           runSimulation();
           updateIteration(0);
