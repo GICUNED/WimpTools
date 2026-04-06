@@ -79,6 +79,7 @@
 #' \code{\link{inout_digraph}} for construct relationship analysis
 #'
 #' @import visNetwork
+#' @import plotly
 #' @importFrom htmlwidgets JS onRender
 #' @importFrom jsonlite toJSON
 #' @importFrom magrittr %>%
@@ -1551,4 +1552,157 @@ simdigraph <- function(scn, niter = 0, ...) {
   } else {
     stop("Input must be a 'wimp' or 'scn' object.")
   }
+}
+
+# Weight Matrix Heatmap --------------------------------------------------------
+
+#' Weight Matrix Heatmap -- weight_heatmap()
+#'
+#' @description Creates an interactive plotly heatmap of the weight matrix, 
+#'              reoriented towards the ideal self poles.
+#'
+#' @param wimp Subject's WimpGrid object. It must be a "wimp" S3 object
+#'        imported by the \code{\link{importwimp}} function.
+#' @param palette Character. Color palette for the heatmap. Options: \code{"Redgreen"}
+#'   (default, red-white-green), \code{"viridis"}, \code{"plasma"}, etc.
+#'
+#' @return A plotly heatmap object.
+#'
+#' @author Alejandro Sanfeliciano
+#'
+#' @import plotly
+#' @export
+#'
+#' @examples
+#' weight_heatmap(example_wimp)
+#'
+weight_heatmap <- function(wimp, palette = "Redgreen") {
+  
+  # 1. Extract data
+  if (!inherits(wimp, "wimp")) {
+    stop("'wimp' must be an object of class 'wimp'.")
+  }
+  
+  wmatrix <- as.matrix(wimp$global$weight_matrix)
+  ideal_vector <- wimp$vertices$ideal
+  l_poles <- wimp$vertices$left_pole
+  r_poles <- wimp$vertices$right_pole
+  
+  # 2. Reorient matrix
+  # Use signs of ideal vector to reorient relations towards the "desired" direction
+  signs <- sign(ideal_vector)
+  signs[signs == 0] <- 1
+  
+  # Structural reorientation: diag(signs) %*% W %*% diag(signs)
+  wmatrix_ideal <- diag(signs, nrow = length(signs)) %*% wmatrix %*% diag(signs, nrow = length(signs))
+  
+  # 3. Prepare labels (pole towards ideal)
+  labels <- sapply(seq_along(ideal_vector), function(i) {
+    if (ideal_vector[i] > 0) {
+      r_poles[i]
+    } else if (ideal_vector[i] < 0) {
+      l_poles[i]
+    } else {
+      r_poles[i]
+    }
+  })
+  
+  # 4. Palette management
+  if (palette == "Redgreen") {
+    palette <- list(c(0, "#F52722"), c(0.5, "white"), c(1, "#A5D610"))
+  }
+  
+  # 5. Create Heatmap
+  p <- plot_ly(
+    x = labels,
+    y = labels,
+    z = wmatrix_ideal,
+    type = "heatmap",
+    colorscale = palette,
+    zmin = -2,
+    zmax = 2,
+    xgap = 0,
+    ygap = 0,
+    hovertemplate = paste(
+      "<b>From:</b> %{y}<br>",
+      "<b>To:</b> %{x}<br>",
+      "<b>Weight:</b> %{z:.3f}<extra></extra>"
+    ),
+    colorbar = list(title = "")
+  )
+  
+  # 6. Add dotted grid lines and dilemmatic highlighting
+  n_con <- length(labels)
+  shapes <- list()
+  is_dilemmatic <- ideal_vector == 0
+  
+  # Color/style for dilemmatic highlighting
+  d_line_color <- "#FFC107" # Orange-Yellow
+  d_fill_color <- "rgba(255, 193, 7, 0.10)" # More subtle transparent tint
+  
+  # A. Add Tinted Rectangles for Dilemmatic rows/columns
+  for (i in seq_along(is_dilemmatic)) {
+    if (is_dilemmatic[i]) {
+      # Column tint
+      shapes[[length(shapes) + 1]] <- list(
+        type = "rect", x0 = i - 1.5, x1 = i - 0.5, y0 = -0.5, y1 = n_con - 0.5,
+        fillcolor = d_fill_color, line = list(width = 0), layer = "above"
+      )
+      # Row tint
+      shapes[[length(shapes) + 1]] <- list(
+        type = "rect", x0 = -0.5, x1 = n_con - 0.5, y0 = i - 1.5, y1 = i - 0.5,
+        fillcolor = d_fill_color, line = list(width = 0), layer = "above"
+      )
+    }
+  }
+
+  # B. Add dotted grid lines (between cells)
+  if (n_con > 1) {
+    for (i in 1:(n_con - 1)) {
+      # Highlight vertical line if either adjacent construct is dilemmatic
+      use_strong <- is_dilemmatic[i] | is_dilemmatic[i+1]
+      l_color <- if (use_strong) d_line_color else "rgba(0,0,0,0.15)"
+      l_width <- if (use_strong) 2 else 1
+      
+      shapes[[length(shapes) + 1]] <- list(
+        type = "line", x0 = i - 0.5, x1 = i - 0.5, y0 = -0.5, y1 = n_con - 0.5,
+        line = list(color = l_color, width = l_width, dash = "dot"), layer = "above"
+      )
+    }
+    for (i in 1:(n_con - 1)) {
+      # Highlight horizontal line if either adjacent construct is dilemmatic
+      use_strong <- is_dilemmatic[i] | is_dilemmatic[i+1]
+      l_color <- if (use_strong) d_line_color else "rgba(0,0,0,0.15)"
+      l_width <- if (use_strong) 2 else 1
+      
+      shapes[[length(shapes) + 1]] <- list(
+        type = "line", x0 = -0.5, x1 = n_con - 0.5, y0 = i - 0.5, y1 = i - 0.5,
+        line = list(color = l_color, width = l_width, dash = "dot"), layer = "above"
+      )
+    }
+  }
+
+  p <- p %>%
+  layout(
+    title = "",
+    xaxis = list(
+      title = list(text = "<b>Effect on (To)</b>", font = list(size = 14), standoff = 25),
+      tickangle = -45,
+      tickfont = list(size = 10),
+      showline = TRUE, mirror = TRUE, linecolor = "black", linewidth = 1,
+      showgrid = FALSE, zeroline = FALSE
+    ),
+    yaxis = list(
+      title = list(text = "<b>Influence of (From)</b>", font = list(size = 14), standoff = 25),
+      autorange = "reversed",
+      tickfont = list(size = 10),
+      showline = TRUE, mirror = TRUE, linecolor = "black", linewidth = 1,
+      showgrid = FALSE, zeroline = FALSE
+    ),
+    shapes = shapes,
+    margin = list(l = 100, r = 50, b = 100, t = 40)
+  ) %>%
+  config(displayModeBar = FALSE)
+  
+  return(p)
 }
