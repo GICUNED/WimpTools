@@ -497,7 +497,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
   }
 
   # Apply direct relationship hiding if requested
-  if (hide_direct) {
+  if (hide_direct && !interactive_options) {
     logical_dilemmatic <- ideal_vector == 0
     wmatrix[wmatrix > 0] <- 0
     wmatrix[logical_dilemmatic, ] <- 0
@@ -507,6 +507,8 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
   # Extract all potential edges and their bidirectional status
   all_edges_raw <- .extract_edges(wmatrix)
   all_edge_curved <- .detect_bidirectional_edges(wmatrix)
+  
+  logical_dilemmatic <- ideal_vector == 0
   
   max_w <- (if (nrow(all_edges_raw) > 0) max(abs(all_edges_raw$weight)) else 1) + 0.01
 
@@ -518,7 +520,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       from = integer(0), to = integer(0), width = numeric(0),
       arrows = character(0), dashes = logical(0), smooth = logical(0),
       color = character(0), title = numeric(0), weight = numeric(0),
-      hidden = logical(0),
+      hidden = logical(0), is_dilemmatic = logical(0),
       stringsAsFactors = FALSE
     )
   } else {
@@ -528,6 +530,8 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
     smooth_list <- lapply(edge_curved, function(sc) {
       if (sc) list(enabled = TRUE, type = "curvedCW", roundness = 0.15) else list(enabled = FALSE)
     })
+
+    is_dilemmatic_edge <- logical_dilemmatic[edges_raw$from] | logical_dilemmatic[edges_raw$to]
 
     edges <- data.frame(
       from = as.character(edges_raw$from),
@@ -541,7 +545,9 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       weight = edges_raw$weight,
       orig_dashes = edge_props$dashes,
       orig_color = edge_props$color,
-      hidden = if (interactive_options) abs(edges_raw$weight) < min_weight else FALSE,
+      is_direct = edges_raw$weight > 0,
+      is_dilemmatic = is_dilemmatic_edge,
+      hidden = if (interactive_options) (abs(edges_raw$weight) < min_weight | (hide_direct & (edges_raw$weight > 0 | is_dilemmatic_edge))) else FALSE,
       stringsAsFactors = FALSE
     )
   }
@@ -780,8 +786,8 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
 
       var refreshNodes = function(simVals) {
         var scheme = visContent.querySelector('#palette_sel').value;
-        var currentIdx = (window._simCurrentI !== undefined) ? window._simCurrentI : 0;
-        var vals = simVals || (window._simHistory && window._simHistory[currentIdx]);
+        var currentIdx = (network._simCurrentI !== undefined) ? network._simCurrentI : 0;
+        var vals = simVals || (network._simHistory && network._simHistory[currentIdx]);
         var nodesDS = network.body.data.nodes;
         
         var updates = nodesDS.get().map(function(node) {
@@ -791,12 +797,12 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
           var ideal = (x.sim_data && x.sim_data.initial_ideal) ? x.sim_data.initial_ideal[idx] : node.ideal_val;
           var c = getPaletteColor(val, ideal, scheme);
           var label = node.label;
-          if (x.sim_data && window._simHistory && x.sim_data.lpoles && x.sim_data.rpoles) {
+          if (x.sim_data && network._simHistory && x.sim_data.lpoles && x.sim_data.rpoles) {
             var lp = x.sim_data.lpoles[idx] || 'L';
             var rp = x.sim_data.rpoles[idx] || 'R';
             label = (val < -0.1) ? lp : (val > 0.1 ? rp : lp + ' - ' + rp);
           }
-          var baseSize = (x.sim_data && window._simHistory) ? (20 + (30 * Math.abs(val))) : (node.raw_size || 20);
+          var baseSize = (x.sim_data && network._simHistory) ? (20 + (30 * Math.abs(val))) : (node.raw_size || 20);
           var finalSize = baseSize * currentSizeMult;
           var vadjust = - (finalSize * 1.1 + currentTextSize * 0.8);
           return {
@@ -819,13 +825,13 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
 
       // ── Semantic Edge flow flash: arrows showing activation quality ───────
       var flashEdgeFlow = function(fromIdx, toIdx) {
-        window._activePulses = [];
+        network._activePulses = [];
         if(fromIdx === 0) return; // Step 0->1 is static setup
         
         // Ripple Effect: Pulse based on the change that happened in the PREVIOUS step (n-1 to n)
-        if(!window._simHistory || !window._simHistory[fromIdx-1] || !window._simHistory[fromIdx] || !x.sim_data) return;
-        var prevHistory = window._simHistory[fromIdx - 1]; 
-        var currHistory = window._simHistory[fromIdx];     
+        if(!network._simHistory || !network._simHistory[fromIdx-1] || !network._simHistory[fromIdx] || !x.sim_data) return;
+        var prevHistory = network._simHistory[fromIdx - 1]; 
+        var currHistory = network._simHistory[fromIdx];     
         var deltas = currHistory.map(function(v, i) { return v - prevHistory[i]; });
         
         var weights  = x.sim_data.weights;
@@ -855,7 +861,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
               type  = (flow > 0) ? 'right' : 'left';
               color = '#FBC02D';
             }
-            window._activePulses.push({ from: edge.from, to: edge.to, color: color, type: type, t: 0 });
+            network._activePulses.push({ from: edge.from, to: edge.to, color: color, type: type, t: 0 });
             return {id: edge.id, color: {color: color, highlight: color, hover: color}};
           }
           return {id: edge.id, color: edge.orig_color || '#cccccc'};
@@ -865,9 +871,9 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
 
       // ── Arrow Pulse Renderer: Drawing glowing arrows ────────────────────
       network.on(\"afterDrawing\", function(ctx) {
-        if (!window._activePulses || window._activePulses.length === 0) return;
+        if (!network._activePulses || network._activePulses.length === 0) return;
         var positions = network.getPositions();
-        window._activePulses.forEach(function(p) {
+        network._activePulses.forEach(function(p) {
           var start = positions[p.from];
           var end   = positions[p.to];
           if (!start || !end) return;
@@ -908,13 +914,13 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       var _tweenRAF = null;
       var tweenToIteration = function(fromIdx, toIdx, durationMs) {
         if(_tweenRAF) { cancelAnimationFrame(_tweenRAF); _tweenRAF = null; }
-        if(!window._simHistory || !window._simHistory[fromIdx] || !window._simHistory[toIdx]) {
-          window._simCurrentI = toIdx;
+        if(!network._simHistory || !network._simHistory[fromIdx] || !network._simHistory[toIdx]) {
+          network._simCurrentI = toIdx;
           refreshNodes();
           return;
         }
-        var prevVals = window._simHistory[fromIdx].slice();
-        var nextVals = window._simHistory[toIdx];
+        var prevVals = network._simHistory[fromIdx].slice();
+        var nextVals = network._simHistory[toIdx];
         var nodesDS  = network.body.data.nodes;
         var allNodes = nodesDS.get();
         var scheme   = visContent.querySelector('#palette_sel').value;
@@ -928,8 +934,8 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
           // Phase 1: Arrows travel (only if not init Step 0->1)
           var pulseDur = isInit ? 0 : 0.7;
           var pulseT = (pulseDur === 0) ? 0 : Math.min(t / pulseDur, 1);
-          if(window._activePulses) {
-            window._activePulses.forEach(function(p) { p.t = pulseT; });
+          if(network._activePulses) {
+            network._activePulses.forEach(function(p) { p.t = pulseT; });
           }
 
           // Phase 2: Nodes update (starts after arrows if not init)
@@ -965,8 +971,8 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
             _tweenRAF = requestAnimationFrame(step);
           } else {
             _tweenRAF = null;
-            window._simCurrentI = toIdx;
-            window._activePulses = []; // Clear pulses
+            network._simCurrentI = toIdx;
+            network._activePulses = []; // Clear pulses
             refreshNodes();
           }
         };
@@ -1066,6 +1072,8 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       visHTML += '<div style=\"margin-bottom:15px; border-top:1px solid #eee; padding-top:10px;\">' +
                  '<div style=\"display:flex; justify-content:space-between; margin-bottom:5px;\"><b style=\"color:#444;\">Edge Filter</b><span id=\"weight_val_txt\" style=\"font-family:monospace;\">0.00</span></div>' +
                  '<input type=\"range\" id=\"weight_slider\" min=\"0\" max=\"' + x.max_weight + '\" step=\"0.01\" value=\"0\" style=\"width:100%;\">' +
+                 '<label style=\"display:flex; align-items:center; margin-top:8px; font-size:11px; cursor:pointer; color:#555;\">' +
+                 '<input type=\"checkbox\" id=\"hide_direct_check\" ' + (x.hide_direct ? 'checked' : '') + ' style=\"margin-right:6px;\"> Hide Direct (Positive)</label>' +
                  '</div>';
 
       visHTML += '<div style=\"margin-bottom:15px; border-top:1px solid #f0f0f0; padding-top:10px;\">' +
@@ -1099,8 +1107,8 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       // --- Simulation Panel ---
       if (x.sim_data) {
         var sim = x.sim_data;
-        window._simHistory = [];
-        window._simCurrentI = 0;
+        network._simHistory = [];
+        network._simCurrentI = 0;
         var targetSelf = [...sim.initial_self];
         var simMaxIter = sim.max_iter || 10;
         var simThreshold = sim.threshold || 'saturation';
@@ -1246,17 +1254,17 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
             a = newA;
             h.push([...s]);
           }
-          window._simHistory = h;
+          network._simHistory = h;
           // Sync slider range
           var sliderEl = timelineEl.querySelector('#sim_slider');
           sliderEl.max = m;
-          if(window._simCurrentI > m) window._simCurrentI = m;
+          if(network._simCurrentI > m) network._simCurrentI = m;
           refreshNodes();
         };
 
         var updateIteration = function(idx) {
-          window._simCurrentI = idx;
-          if(!window._simHistory[idx]) return;
+          network._simCurrentI = idx;
+          if(!network._simHistory[idx]) return;
           timelineEl.querySelector('#sim_slider').value = idx;
           timelineEl.querySelector('#iter_label').innerText = idx + '/' + (parseInt(simSettingsContent.querySelector('#sim_depth_input').value) || simMaxIter);
           refreshNodes();
@@ -1277,8 +1285,8 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
 
         var simTimer = null;
         var _playStep = function(m) {
-          if(window._simCurrentI >= m) { simTimer = null; return; }
-          var from = window._simCurrentI;
+          if(network._simCurrentI >= m) { simTimer = null; return; }
+          var from = network._simCurrentI;
           var to   = from + 1;
           
           timelineEl.querySelector('#sim_slider').value = to;
@@ -1288,14 +1296,14 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
           var stepInt  = 1800 / playbackSpeed;
           
           tweenToIteration(from, to, tweenDur);
-          window._simCurrentI = to;
+          network._simCurrentI = to;
           simTimer = setTimeout(function() { _playStep(m); }, stepInt);
         };
 
         timelineEl.querySelector('#play_btn').onclick = function() {
           if(simTimer) return;
           var m = parseInt(simSettingsContent.querySelector('#sim_depth_input').value) || simMaxIter;
-          if(window._simCurrentI >= m) { window._simCurrentI = 0; refreshNodes(); }
+          if(network._simCurrentI >= m) { network._simCurrentI = 0; refreshNodes(); }
           _playStep(m);
         };
         timelineEl.querySelector('#pause_btn').onclick = function() {
@@ -1305,7 +1313,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         timelineEl.querySelector('#stop_btn').onclick = function() {
           if(simTimer) { clearTimeout(simTimer); simTimer = null; }
           if(_tweenRAF) { cancelAnimationFrame(_tweenRAF); _tweenRAF = null; }
-          window._activePulses = [];
+          network._activePulses = [];
           updateIteration(0);
         };
         simSettingsContent.querySelector('#reset_sim').onclick = function() {
@@ -1383,13 +1391,20 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         refreshNodes();
       };
 
-      visContent.querySelector('#weight_slider').oninput = function() {
-        var threshold = parseFloat(this.value);
+      var updateEdges = function() {
+        var threshold = parseFloat(visContent.querySelector('#weight_slider').value);
+        var hideDirect = visContent.querySelector('#hide_direct_check').checked;
         visContent.querySelector('#weight_val_txt').innerText = threshold.toFixed(2);
-        var edges = network.body.data.edges;
-        var updates = edges.get().map(edge => ({id: edge.id, hidden: Math.abs(edge.weight) < threshold}));
-        edges.update(updates);
+        var edgesDS = network.body.data.edges;
+        var updates = edgesDS.get().map(edge => ({
+          id: edge.id, 
+          hidden: Math.abs(edge.weight) < threshold || (hideDirect && (edge.weight > 0 || edge.is_dilemmatic))
+        }));
+        edgesDS.update(updates);
       };
+
+      visContent.querySelector('#weight_slider').oninput = updateEdges;
+      visContent.querySelector('#hide_direct_check').onchange = updateEdges;
 
       // Initial refresh to ensure centering on load
       refreshNodes();
@@ -1433,6 +1448,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
     g$x$sim_data      <- sim_data
     g$x$initial_palette <- color
     g$x$initial_layout <- layout
+    g$x$hide_direct    <- hide_direct
     g$x$color_palette_js <- list(
       "red/green" = c("#F52722", "#A5D610", "#999999", "#FFFF00"),
       "grey scale" = c("#808080", "#ffffff", "#f2f2f2", "#e5e5e5"),
