@@ -1700,7 +1700,17 @@ weight_heatmap <- function(wimp, palette = "Redgreen") {
       showgrid = FALSE, zeroline = FALSE
     ),
     shapes = shapes,
-    margin = list(l = 100, r = 50, b = 100, t = 40)
+    annotations = list(
+      list(
+        x = 1.02, y = -0.05,
+        text = paste0("<b>\u03c1(G) = ", round(density_index(wimp), 3), "</b>"),
+        showarrow = FALSE,
+        xref = "paper", yref = "paper",
+        xanchor = "left", yanchor = "top",
+        font = list(size = 12)
+      )
+    ),
+    margin = list(l = 100, r = 80, b = 100, t = 40)
   ) %>%
   config(displayModeBar = FALSE)
   

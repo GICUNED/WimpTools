@@ -36,8 +36,10 @@ density_index <- function(wimp) {
     }
   }
   n <- ncol(wmat)
-
-  result <- sum(degree_index(wimp)[, 1]) / (n * (n - 1))
-
+  
+  # Calculate density as E / (n * (n-1))
+  # Count edges using 'simple' method in degree_index
+  result <- sum(degree_index(wimp, method = "simple")[, 1]) / (n * (n - 1))
+  
   result
 }
