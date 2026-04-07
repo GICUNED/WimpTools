@@ -455,6 +455,15 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
     )
   )
   vertex[[area_attr]] <- as.character(area_vec)
+  
+  # Add other categorical columns from wimp$vertices for tooltips/filtering
+  if (inherits(wimp, "wimp")) {
+    w_verts <- wimp$vertices
+    cat_cols_orig <- names(w_verts)[sapply(w_verts, function(x) is.character(x) || is.factor(x))]
+    for (cc in cat_cols_orig) {
+      if (!cc %in% names(vertex)) vertex[[cc]] <- as.character(w_verts[[cc]])
+    }
+  }
 
   # Internal helper for layout pre-calculation
   .get_all_layouts <- function(wmatrix, vertex, area_attr) {
@@ -519,7 +528,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
   if (nrow(edges_raw) == 0) {
     edges <- data.frame(
       from = integer(0), to = integer(0), width = numeric(0),
-      arrows = character(0), dashes = logical(0), smooth = logical(0),
+      arrows = character(0), dashes = logical(0),
       color = character(0), title = numeric(0), weight = numeric(0),
       hidden = logical(0), is_dilemmatic = logical(0),
       stringsAsFactors = FALSE
@@ -527,11 +536,6 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
   } else {
     edge_props <- .calculate_edge_properties(edges_raw$weight, color)
     
-    # Use subtle curves for bidirectional edges
-    smooth_list <- lapply(edge_curved, function(sc) {
-      if (sc) list(enabled = TRUE, type = "curvedCW", roundness = 0.15) else list(enabled = FALSE)
-    })
-
     is_dilemmatic_edge <- logical_dilemmatic[edges_raw$from] | logical_dilemmatic[edges_raw$to]
 
     edges <- data.frame(
@@ -540,7 +544,6 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       width = 2 * abs(edges_raw$weight),
       arrows = "to",
       dashes = edge_props$dashes,
-      smooth = smooth_list,
       color = edge_props$color,
       title = round(edges_raw$weight, 2),
       weight = edges_raw$weight,
@@ -642,38 +645,32 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
   if (use_areas_layout) {
     # Areas layout with fixed positions
     g <- visNetwork(vertex, edges, height = height, width = width) %>%
-      visOptions(manipulation = list(enabled = TRUE, addNode = FALSE, addEdge = FALSE, 
-                                     editNode = FALSE, editEdge = FALSE, 
-                                     deleteNode = TRUE, deleteEdge = TRUE),
+      visOptions(manipulation = list(enabled = FALSE),
                  highlightNearest = list(enabled = TRUE, degree = 0,
-                                         labelOnly = TRUE),
-                 selectedBy = list(variable = "group", main = "All")) %>%
+                                         labelOnly = TRUE)) %>%
       visInteraction(navigationButtons = FALSE, multiselect = TRUE) %>%
       visPhysics(enabled = FALSE) %>%
+      visEdges(smooth = list(enabled = TRUE, type = "curvedCW", roundness = 0.15)) %>% 
       visNodes(font = list(align = "center", multi = TRUE, vadjust = 0))
   } else if (layout == "rtcircle") {
     # Circular tree layout
     g <- visNetwork(vertex, edges, height = height, width = width) %>%
       visIgraphLayout(layout = "layout_as_tree", circular = TRUE) %>%
-      visOptions(manipulation = list(enabled = TRUE, addNode = FALSE, addEdge = FALSE, 
-                                     editNode = FALSE, editEdge = FALSE, 
-                                     deleteNode = TRUE, deleteEdge = TRUE),
+      visOptions(manipulation = list(enabled = FALSE),
                  highlightNearest = list(enabled = TRUE, degree = 0,
-                                         labelOnly = TRUE),
-                 selectedBy = list(variable = "group", main = "All")) %>%
+                                         labelOnly = TRUE)) %>%
       visInteraction(navigationButtons = FALSE, multiselect = TRUE) %>%
+      visEdges(smooth = list(enabled = TRUE, type = "curvedCW", roundness = 0.15)) %>% 
       visNodes(font = list(align = "center", multi = TRUE, vadjust = 0))
   } else {
     # Standard igraph layouts
     g <- visNetwork(vertex, edges, height = height, width = width) %>%
       visIgraphLayout(layout = layout_name, randomSeed = 33) %>%
-      visOptions(manipulation = list(enabled = TRUE, addNode = FALSE, addEdge = FALSE, 
-                                     editNode = FALSE, editEdge = FALSE, 
-                                     deleteNode = TRUE, deleteEdge = TRUE),
+      visOptions(manipulation = list(enabled = FALSE),
                  highlightNearest = list(enabled = TRUE, degree = 0,
-                                         labelOnly = TRUE),
-                 selectedBy = list(variable = "group", main = "All")) %>%
+                                         labelOnly = TRUE)) %>%
       visInteraction(navigationButtons = FALSE, multiselect = TRUE) %>%
+      visEdges(smooth = list(enabled = TRUE, type = "curvedCW", roundness = 0.15)) %>% 
       visNodes(font = list(align = "center", multi = TRUE, vadjust = 0))
   }
 
@@ -761,10 +758,19 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       el.style.minHeight = '600px';
       var network = this.network;
       var container = el;
+
+      // Inject Chart.js if not present
+      if (!window.Chart) {
+        var script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+        document.head.appendChild(script);
+      }
       
       var currentDistMult = 1.0;
       var currentSizeMult = 1.0;
       var currentTextSize = 20;
+      var viewMode = 'graph';
+      var pcsdChart = null;
 
       // --- Utilities ---
       var getPaletteColor = function(v, i, scheme) {
@@ -1041,6 +1047,23 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       // --- Panels Initialization ---
       var visContent = createPanel('vis_panel', 'Visualization Options', {top: '10px', right: '10px'});
       
+      // Top-Left Category Filter Pill
+      var filterPanel = createPanel('cat_filter_panel', 'Category Filter', {top: '10px', left: '10px', width: '220px', borderLeft: '4px solid #f1c40f'});
+      
+      var propHtml = '<div style=\"margin-bottom:8px;\">' +
+                     '<label style=\"display:block; font-size:10px; color:#666; margin-bottom:2px;\">Property:</label>' +
+                     '<select id=\"prop_filter_sel\" style=\"width:100%; padding:4px; border-radius:4px; font-size:11px;\">' +
+                     (x.cat_cols || ['group']).map(c => '<option value=\"' + c + '\">' + (c.charAt(0).toUpperCase() + c.slice(1)) + '</option>').join('') +
+                     '</select></div>';
+      
+      var valHtml = '<div style=\"margin-bottom:5px;\">' +
+                    '<label style=\"display:block; font-size:10px; color:#666; margin-bottom:2px;\">Value:</label>' +
+                    '<select id=\"cat_filter_sel\" style=\"width:100%; padding:4px; border-radius:4px; font-size:11px;\">' +
+                    '<option value=\"all\">Show All</option>' +
+                    '</select></div>';
+      
+      filterPanel.innerHTML = propHtml + valHtml;
+      
       // Minimalist Export Panel
       var exportPanel = document.createElement('div');
       Object.assign(exportPanel.style, {
@@ -1056,6 +1079,16 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       exportPanel.onmouseout = function() { this.style.backgroundColor = 'rgba(255, 255, 255, 0.95)'; };
       exportPanel.onclick = exportPNG;
       container.appendChild(exportPanel);
+
+      // PCSD Chart Overlay
+      var chartContainer = document.createElement('div');
+      chartContainer.id = 'pcsd_chart_container';
+      Object.assign(chartContainer.style, {
+        position: 'absolute', top: '0', left: '0', width: '100%', height: '100%',
+        backgroundColor: '#fff', zIndex: '5', display: 'none', padding: '60px 40px 110px 40px', boxSizing: 'border-box'
+      });
+      chartContainer.innerHTML = '<canvas id=\"pcsd_canvas\"></canvas>';
+      container.appendChild(chartContainer);
 
       // --- Visualization Content ---
       var visHTML = '<div style=\"margin-bottom:15px;\">' +
@@ -1092,8 +1125,9 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
                  '<input type=\"range\" id=\"text_size_slider\" min=\"10\" max=\"40\" step=\"1\" value=\"20\" style=\"width:100%;\">' +
                  '</div>';
 
-      visHTML += '<div style=\"border-top:1px solid #eee; padding-top:10px; margin-bottom:15px;\">' +
-                 '<button id=\"btn_reset\" style=\"width:100%; padding:6px; background:#f8f9fa; border:1px solid #ccc; border-radius:4px; font-weight:bold; color:#555; cursor:pointer;\">Reset Configuration</button>' +
+      visHTML += '<div style=\"margin-bottom:15px; border-top:1px solid #f0f0f0; padding-top:10px; display:flex; gap:5px;\">' +
+                 '<button id=\"eraser_tool\" title=\"Click nodes/edges to hide them\" style=\"flex:1; padding:6px; background:#fff; border:1px solid #ccc; border-radius:4px; cursor:pointer; font-size:11px; display:flex; align-items:center; justify-content:center; gap:4px;\">🧹 Eraser Mode</button>' +
+                 '<button id=\"btn_reset\" title=\"Reset all settings and restore elements\" style=\"flex:1; padding:6px; background:#f8f9fa; border:1px solid #ccc; border-radius:4px; font-weight:bold; color:#555; cursor:pointer; font-size:11px; display:flex; align-items:center; justify-content:center; gap:4px;\">↺ Reset</button>' +
                  '</div>';
 
       visHTML += '<div style=\"border-top:1px solid #eee; padding-top:10px;\">' +
@@ -1119,6 +1153,10 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
           {bottom: '10px', left: '10px', width: '260px', borderLeft: '4px solid #3498db'});
         
         var settingsHTML =
+          '<div style=\"margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:10px; display:flex; gap:5px;\">' +
+            '<button id=\"btn_view_graph\" style=\"flex:1; padding:6px; background:#e3f2fd; border:1px solid #2196f3; border-radius:4px; font-weight:bold; color:#1565c0; cursor:pointer; font-size:11px;\">Network View</button>' +
+            '<button id=\"btn_view_pcsd\" style=\"flex:1; padding:6px; background:#fff; border:1px solid #ccc; border-radius:4px; font-weight:bold; color:#555; cursor:pointer; font-size:11px;\">PCSD Chart</button>' +
+          '</div>' +
           '<div style=\"margin-bottom:12px;\">' +
             '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444;\">Threshold Function</label>' +
             '<select id=\"sim_thr_sel\" style=\"width:100%; padding:4px; border-radius:4px;\">' +
@@ -1261,6 +1299,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
           sliderEl.max = m;
           if(network._simCurrentI > m) network._simCurrentI = m;
           refreshNodes();
+          if(typeof updatePcsdData === 'function') updatePcsdData();
         };
 
         var updateIteration = function(idx) {
@@ -1329,6 +1368,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
           });
           runSimulation();
           updateIteration(0);
+          if(typeof updatePcsdData === 'function') updatePcsdData();
         };
         actList.oninput = function(e) {
           if(e.target.classList.contains('target-slider')) {
@@ -1343,11 +1383,130 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
           }
         };
 
+        // --- PCSD View & Chart Logic ---
+        var btnGraph = simSettingsContent.querySelector('#btn_view_graph');
+        var btnPcsd = simSettingsContent.querySelector('#btn_view_pcsd');
+        var chartCanvas = container.querySelector('#pcsd_canvas');
+        var pcsdChart = null;
+
+        var updateView = function(mode) {
+          var isGraph = (mode === 'graph');
+          chartContainer.style.display = isGraph ? 'none' : 'block';
+          btnGraph.style.background = isGraph ? '#e3f2fd' : '#fff';
+          btnGraph.style.border = isGraph ? '1px solid #2196f3' : '1px solid #ccc';
+          btnGraph.style.color = isGraph ? '#1565c0' : '#555';
+          
+          btnPcsd.style.background = !isGraph ? '#e3f2fd' : '#fff';
+          btnPcsd.style.border = !isGraph ? '1px solid #2196f3' : '1px solid #ccc';
+          btnPcsd.style.color = !isGraph ? '#1565c0' : '#555';
+          
+          if (!isGraph && !pcsdChart && window.Chart) initPcsdChart();
+        };
+
+        btnGraph.onclick = function() { updateView('graph'); };
+        btnPcsd.onclick = function() { updateView('pcsd'); };
+
+        var initPcsdChart = function() {
+          if (!window.Chart) return;
+          var poles = sim.lpoles.map((lp, i) => lp + ' - ' + sim.rpoles[i]);
+          var styles = ['circle', 'rect', 'triangle', 'diamond', 'rectRot'];
+          var plotlyPalette = [
+            '#636EFA', '#EF553B', '#00CC96', '#AB63FA', '#FFA15A', '#19D3F3', '#FF6692', '#B6E880', 
+            '#FF97FF', '#FECB52', '#0d0887', '#46039f', '#7201a8', '#9c179e', '#bd3786', '#d8576b'
+          ];
+          
+          var datasets = poles.map((p, i) => {
+            var colorIdx = i % plotlyPalette.length;
+            var shapeIdx = Math.floor(i / plotlyPalette.length);
+            var color = plotlyPalette[colorIdx];
+            var shape = styles[shapeIdx % styles.length];
+            
+            return {
+              label: (p.length > 30 ? p.substring(0, 27) + '...' : p),
+              data: [],
+              borderColor: color,
+              backgroundColor: color,
+              tension: 0.4,
+              borderWidth: 2.5,
+              pointStyle: shape,
+              pointRadius: 5,
+              pointHoverRadius: 8,
+              pointBorderColor: '#fff',
+              pointBorderWidth: 1.5,
+              fill: false
+            };
+          });
+
+          if(pcsdChart) pcsdChart.destroy();
+          pcsdChart = new Chart(chartCanvas, {
+            type: 'line',
+            data: { labels: [], datasets: datasets },
+            options: {
+              responsive: true, maintainAspectRatio: false,
+              interaction: { mode: 'point', intersect: true },
+              layout: { padding: { bottom: 60, top: 40 } },
+              plugins: { 
+                legend: { 
+                  position: 'right', 
+                  labels: { usePointStyle: true, boxWidth: 10, font: {size: 11}, padding: 15 },
+                  title: { display: true, text: 'PERSONAL CONSTRUCTS', font: {size: 12, weight: 'bold'} }
+                },
+                title: { display: false }
+              },
+              scales: {
+                x: { 
+                  title: { display: true, text: 'ITERATIONS', font: {size: 13, weight: 'bold', family: 'Arial'} }, 
+                  grid: {display: false},
+                  ticks: {font: {size: 12}} 
+                },
+                y: { 
+                  title: { display: true, text: 'SELF DIFFERENTIAL', font: {size: 13, weight: 'bold', family: 'Arial'} }, 
+                  suggestedMin: -0.6, suggestedMax: 0.6,
+                  grid: {
+                    color: '#f0f0f0',
+                    drawBorder: true,
+                    borderColor: '#f0f0f0'
+                  },
+                  ticks: {font: {size: 12}} 
+                }
+              }
+            },
+            plugins: [{
+              id: 'zeroLine',
+              beforeDraw: (chart) => {
+                const {ctx, chartArea: {top, bottom, left, right}, scales: {y}} = chart;
+                const zeroY = y.getPixelForValue(0);
+                if (zeroY >= top && zeroY <= bottom) {
+                  ctx.save();
+                  ctx.strokeStyle = '#666';
+                  ctx.lineWidth = 2;
+                  ctx.beginPath();
+                  ctx.moveTo(left, zeroY);
+                  ctx.lineTo(right, zeroY);
+                  ctx.stroke();
+                  ctx.restore();
+                }
+              }
+            }]
+          });
+          updatePcsdData();
+        };
+
+        var updatePcsdData = function() {
+          if(!pcsdChart || !network._simHistory) return;
+          var history = network._simHistory;
+          var initial = sim.initial_self;
+          
+          pcsdChart.data.labels = history.map((_, i) => i);
+          pcsdChart.data.datasets.forEach((ds, dsIdx) => {
+            ds.data = history.map(step => step[dsIdx] - initial[dsIdx]);
+          });
+          pcsdChart.update('none');
+        };
+
         runSimulation();
       }
 
-
-      // --- Event Listeners ---
       visContent.querySelector('#btn_reset').onclick = function() {
         visContent.querySelector('#dist_slider').value = 1.0;
         visContent.querySelector('#size_slider').value = 1.0;
@@ -1355,8 +1514,21 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         currentDistMult = 1.0;
         currentSizeMult = 1.0;
         currentTextSize = 20;
+        
+        // Restore Visibility
+        var nodesDS = network.body.data.nodes;
+        var edgesDS = network.body.data.edges;
+        nodesDS.update(nodesDS.get().map(n => ({id: n.id, hidden: false})));
+        edgesDS.update(edgesDS.get().map(e => ({id: e.id, hidden: false})));
+        visContent.querySelectorAll('.node-check').forEach(chk => chk.checked = true);
+        
+        // Reset Filter
+        filterPanel.querySelector('#cat_filter_sel').value = 'all';
+        network.unselectAll();
+
         refreshNodes();
         network.stabilize();
+        if(typeof initPcsdChart === 'function') initPcsdChart();
       };
 
       visContent.querySelector('#palette_sel').onchange = function() { refreshNodes(); };
@@ -1407,6 +1579,68 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       visContent.querySelector('#weight_slider').oninput = updateEdges;
       visContent.querySelector('#hide_direct_check').onchange = updateEdges;
 
+      // ── Custom Network Tools Logic ─────────────────────────────────────────
+      var eraserActive = false;
+      var eraserBtn = visContent.querySelector('#eraser_tool');
+      
+      eraserBtn.onclick = function() {
+        eraserActive = !eraserActive;
+        this.style.background = eraserActive ? '#fff0f0' : '#fff';
+        this.style.borderColor = eraserActive ? '#e74c3c' : '#ccc';
+        this.style.color = eraserActive ? '#e74c3c' : '#333';
+        network.canvas.body.container.style.cursor = eraserActive ? 'crosshair' : 'default';
+      };
+
+
+      var propSel = filterPanel.querySelector('#prop_filter_sel');
+      var catSel = filterPanel.querySelector('#cat_filter_sel');
+
+      var updateCatOptions = function() {
+        var prop = propSel.value;
+        var nodesDS = network.body.data.nodes;
+        var vals = [...new Set(nodesDS.get().map(n => n[prop] || 'Default'))].sort();
+        catSel.innerHTML = '<option value=\"all\">Show All ' + propSel.options[propSel.selectedIndex].text + '</option>' +
+                           vals.map(v => '<option value=\"' + v + '\">' + v + '</option>').join('');
+      };
+
+      propSel.onchange = updateCatOptions;
+      updateCatOptions();
+
+      catSel.onchange = function() {
+        var prop = propSel.value;
+        var val = this.value;
+        var nodesDS = network.body.data.nodes;
+        var edgesDS = network.body.data.edges;
+        
+        if (val === 'all') {
+           nodesDS.update(nodesDS.get().map(n => ({id: n.id, hidden: false})));
+           edgesDS.update(edgesDS.get().map(e => ({id: e.id, hidden: false})));
+           visContent.querySelectorAll('.node-check').forEach(chk => chk.checked = true);
+        } else {
+           nodesDS.update(nodesDS.get().map(n => {
+             var isMatch = (n[prop] === val || (val === 'Default' && !n[prop]));
+             var chk = visContent.querySelector('input[value=\"' + n.id + '\"]');
+             if(chk) chk.checked = isMatch;
+             return {id: n.id, hidden: !isMatch};
+           }));
+           // Hide edges that connect to hidden nodes
+           var nodeMap = nodesDS.get().reduce((acc, n) => { acc[n.id] = n.hidden; return acc; }, {});
+           edgesDS.update(edgesDS.get().map(e => ({id: e.id, hidden: nodeMap[e.from] || nodeMap[e.to]})));
+        }
+      };
+
+      network.on('click', function(params) {
+        if(!eraserActive) return;
+        if(params.nodes.length > 0) {
+          var nodeId = params.nodes[0];
+          network.body.data.nodes.update({id: nodeId, hidden: true});
+          var chk = visContent.querySelector('input[value=\"' + nodeId + '\"]');
+          if(chk) chk.checked = false;
+        } else if(params.edges.length > 0) {
+          network.body.data.edges.update({id: params.edges[0], hidden: true});
+        }
+      });
+
       // Initial refresh to ensure centering on load
       refreshNodes();
 
@@ -1414,9 +1648,12 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       var nodesDS = network.body.data.nodes;
       nodesDS.get().forEach(node => {
         var div = document.createElement('div');
+        div.className = 'node-item';
         div.style.marginBottom = '4px';
+        div.style.display = 'flex';
+        div.style.alignItems = 'center';
         div.innerHTML = '<label style=\"cursor:pointer; display:flex; align-items:center; font-size:11px;\">' +
-                        '<input type=\"checkbox\" class=\"node-check\" data-id=\"' + node.id + '\" ' + (node.hidden ? '' : 'checked') + ' style=\"margin-right:6px;\">' +
+                        '<input type=\"checkbox\" class=\"node-check\" value=\"' + node.id + '\" data-id=\"' + node.id + '\" ' + (node.hidden ? '' : 'checked') + ' style=\"margin-right:6px;\">' +
                         node.label.split('\\n')[0] + '</label>';
         nodeListDiv.appendChild(div);
       });
@@ -1458,6 +1695,11 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       "dark" = c("#8B0000", "#006400", "#696969", "#DAA520"),
       "viridis" = c("#440154", "#35b779", "#31688e", "#fde725")
     )
+    
+    # Identify categorical columns for advanced filtering UI
+    cat_props <- names(vertex)[sapply(vertex, function(col) is.character(col) || is.factor(col))]
+    g$x$cat_cols <- setdiff(cat_props, c("id", "label", "shape", "title", "color.background", "color.border", "font"))
+    
     g <- g %>% htmlwidgets::onRender(js_panel)
   }
 
