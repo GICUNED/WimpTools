@@ -1047,27 +1047,12 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       // --- Panels Initialization ---
       var visContent = createPanel('vis_panel', 'Visualization Options', {top: '10px', right: '10px'});
       
-      // Top-Left Category Filter Pill
-      var filterPanel = createPanel('cat_filter_panel', 'Category Filter', {top: '10px', left: '10px', width: '220px', borderLeft: '4px solid #f1c40f'});
-      
-      var propHtml = '<div style=\"margin-bottom:8px;\">' +
-                     '<label style=\"display:block; font-size:10px; color:#666; margin-bottom:2px;\">Property:</label>' +
-                     '<select id=\"prop_filter_sel\" style=\"width:100%; padding:4px; border-radius:4px; font-size:11px;\">' +
-                     (x.cat_cols || ['group']).map(c => '<option value=\"' + c + '\">' + (c.charAt(0).toUpperCase() + c.slice(1)) + '</option>').join('') +
-                     '</select></div>';
-      
-      var valHtml = '<div style=\"margin-bottom:5px;\">' +
-                    '<label style=\"display:block; font-size:10px; color:#666; margin-bottom:2px;\">Value:</label>' +
-                    '<select id=\"cat_filter_sel\" style=\"width:100%; padding:4px; border-radius:4px; font-size:11px;\">' +
-                    '<option value=\"all\">Show All</option>' +
-                    '</select></div>';
-      
-      filterPanel.innerHTML = propHtml + valHtml;
+
       
       // Minimalist Export Panel
       var exportPanel = document.createElement('div');
       Object.assign(exportPanel.style, {
-        position: 'absolute', top: '10px', right: '265px', zIndex: '1000',
+        position: 'absolute', bottom: '10px', right: '10px', zIndex: '1000',
         backgroundColor: 'rgba(255, 255, 255, 0.95)', width: '32px', height: '32px',
         borderRadius: '6px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
         border: '1px solid #ddd', display: 'flex', alignItems: 'center',
@@ -1522,8 +1507,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         edgesDS.update(edgesDS.get().map(e => ({id: e.id, hidden: false})));
         visContent.querySelectorAll('.node-check').forEach(chk => chk.checked = true);
         
-        // Reset Filter
-        filterPanel.querySelector('#cat_filter_sel').value = 'all';
+
         network.unselectAll();
 
         refreshNodes();
@@ -1592,42 +1576,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       };
 
 
-      var propSel = filterPanel.querySelector('#prop_filter_sel');
-      var catSel = filterPanel.querySelector('#cat_filter_sel');
 
-      var updateCatOptions = function() {
-        var prop = propSel.value;
-        var nodesDS = network.body.data.nodes;
-        var vals = [...new Set(nodesDS.get().map(n => n[prop] || 'Default'))].sort();
-        catSel.innerHTML = '<option value=\"all\">Show All ' + propSel.options[propSel.selectedIndex].text + '</option>' +
-                           vals.map(v => '<option value=\"' + v + '\">' + v + '</option>').join('');
-      };
-
-      propSel.onchange = updateCatOptions;
-      updateCatOptions();
-
-      catSel.onchange = function() {
-        var prop = propSel.value;
-        var val = this.value;
-        var nodesDS = network.body.data.nodes;
-        var edgesDS = network.body.data.edges;
-        
-        if (val === 'all') {
-           nodesDS.update(nodesDS.get().map(n => ({id: n.id, hidden: false})));
-           edgesDS.update(edgesDS.get().map(e => ({id: e.id, hidden: false})));
-           visContent.querySelectorAll('.node-check').forEach(chk => chk.checked = true);
-        } else {
-           nodesDS.update(nodesDS.get().map(n => {
-             var isMatch = (n[prop] === val || (val === 'Default' && !n[prop]));
-             var chk = visContent.querySelector('input[value=\"' + n.id + '\"]');
-             if(chk) chk.checked = isMatch;
-             return {id: n.id, hidden: !isMatch};
-           }));
-           // Hide edges that connect to hidden nodes
-           var nodeMap = nodesDS.get().reduce((acc, n) => { acc[n.id] = n.hidden; return acc; }, {});
-           edgesDS.update(edgesDS.get().map(e => ({id: e.id, hidden: nodeMap[e.from] || nodeMap[e.to]})));
-        }
-      };
 
       network.on('click', function(params) {
         if(!eraserActive) return;
@@ -1696,9 +1645,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       "viridis" = c("#440154", "#35b779", "#31688e", "#fde725")
     )
     
-    # Identify categorical columns for advanced filtering UI
-    cat_props <- names(vertex)[sapply(vertex, function(col) is.character(col) || is.factor(col))]
-    g$x$cat_cols <- setdiff(cat_props, c("id", "label", "shape", "title", "color.background", "color.border", "font"))
+
     
     g <- g %>% htmlwidgets::onRender(js_panel)
   }

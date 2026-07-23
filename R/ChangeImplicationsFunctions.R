@@ -58,9 +58,11 @@ if_index <- function(wimp, std = "adjacent") {
 
   # Standardize impact if requested
   if (std != "none") {
-    negative_impact <- negative_impact / std_coef
-    positive_impact <- positive_impact / std_coef
-    global_impact <- global_impact / std_coef
+    std_coef_safe <- std_coef
+    std_coef_safe[std_coef_safe == 0] <- 1
+    negative_impact <- negative_impact / std_coef_safe
+    positive_impact <- positive_impact / std_coef_safe
+    global_impact <- global_impact / std_coef_safe
   }
 
   # Feedback matrix (interaction of bilateral influence)
@@ -76,9 +78,11 @@ if_index <- function(wimp, std = "adjacent") {
 
   # Standardize feedback if requested
   if (std != "none") {
-    negative_feedback <- negative_feedback / std_coef
-    positive_feedback <- positive_feedback / std_coef
-    global_feedback <- global_feedback / std_coef
+    std_coef_safe <- std_coef
+    std_coef_safe[std_coef_safe == 0] <- 1
+    negative_feedback <- negative_feedback / std_coef_safe
+    positive_feedback <- positive_feedback / std_coef_safe
+    global_feedback <- global_feedback / std_coef_safe
   }
 
   # Assemble result data frame

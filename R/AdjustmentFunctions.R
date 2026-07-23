@@ -280,7 +280,8 @@ self_plot <- function(wimp) {
       polar = list(
         radialaxis = list(
           visible = TRUE,
-          range = c(-1, 1)
+          range = c(-1.2, 1),
+          tickvals = seq(-1, 1, by = 0.2)
         )
       )
     )
