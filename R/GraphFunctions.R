@@ -764,6 +764,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       el.style.minHeight = '600px';
       var network = this.network;
       var container = el;
+      el.style.position = 'relative';
 
       // Inject Chart.js if not present
       if (!window.Chart) {
@@ -1210,7 +1211,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
                        '<option value=\"None\">None</option>' +
                        x.cat_cols.map(function(c) { return '<option value=\"' + c + '\">' + c.charAt(0).toUpperCase() + c.slice(1) + '</option>'; }).join('') +
                        '</select>' +
-                       '<button id=\"btn_area_layout\" style=\"width:100%; padding:6px; background:#e3f2fd; border:1px solid #2196f3; color:#1565c0; border-radius:4px; cursor:pointer; font-size:11px; font-weight:bold; display:none; align-items:center; justify-content:center; gap:4px;\">Cluster Areas</button>' +
+                       '<button id=\"btn_area_layout\" style=\"width:100%; padding:6px; background:#f4f9ef; border:1px solid #8cc63f; color:#5c8822; border-radius:4px; cursor:pointer; font-size:11px; font-weight:bold; display:none; align-items:center; justify-content:center; gap:4px;\">Cluster Areas</button>' +
                        '</div>';
         areaPanelContent.innerHTML = areaHTML;
         
@@ -1457,7 +1458,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         
         var settingsHTML =
           '<div style=\"margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:10px; display:flex; gap:5px;\">' +
-            '<button id=\"btn_view_graph\" style=\"flex:1; padding:6px; background:#e3f2fd; border:1px solid #2196f3; border-radius:4px; font-weight:bold; color:#1565c0; cursor:pointer; font-size:11px;\">Network View</button>' +
+            '<button id=\"btn_view_graph\" style=\"flex:1; padding:6px; background:#f4f9ef; border:1px solid #8cc63f; border-radius:4px; font-weight:bold; color:#5c8822; cursor:pointer; font-size:11px;\">Network View</button>' +
             '<button id=\"btn_view_pcsd\" style=\"flex:1; padding:6px; background:#fff; border:1px solid #ccc; border-radius:4px; font-weight:bold; color:#555; cursor:pointer; font-size:11px;\">PCSD Chart</button>' +
           '</div>' +
           '<div style=\"margin-bottom:12px;\">' +
@@ -1695,13 +1696,13 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         var updateView = function(mode) {
           var isGraph = (mode === 'graph');
           chartContainer.style.display = isGraph ? 'none' : 'block';
-          btnGraph.style.background = isGraph ? '#e3f2fd' : '#fff';
-          btnGraph.style.border = isGraph ? '1px solid #2196f3' : '1px solid #ccc';
-          btnGraph.style.color = isGraph ? '#1565c0' : '#555';
+          btnGraph.style.background = isGraph ? '#f4f9ef' : '#fff';
+          btnGraph.style.border = isGraph ? '1px solid #8cc63f' : '1px solid #ccc';
+          btnGraph.style.color = isGraph ? '#5c8822' : '#555';
           
-          btnPcsd.style.background = !isGraph ? '#e3f2fd' : '#fff';
-          btnPcsd.style.border = !isGraph ? '1px solid #2196f3' : '1px solid #ccc';
-          btnPcsd.style.color = !isGraph ? '#1565c0' : '#555';
+          btnPcsd.style.background = !isGraph ? '#f4f9ef' : '#fff';
+          btnPcsd.style.border = !isGraph ? '1px solid #8cc63f' : '1px solid #ccc';
+          btnPcsd.style.color = !isGraph ? '#5c8822' : '#555';
           
           if (!isGraph && !pcsdChart && window.Chart) initPcsdChart();
         };
