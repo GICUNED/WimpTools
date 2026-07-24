@@ -336,19 +336,23 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
   # Determine edge visual properties based on weight values
   .calculate_edge_properties <- function(weight_vector, color) {
     if (length(weight_vector) == 0) {
-      return(list(color = character(0), dashes = logical(0)))
+      return(list(color = character(0), highlight = character(0), dashes = logical(0)))
     }
 
     if (color != "grey scale") {
       list(
         color = sapply(weight_vector, function(x) {
-          ifelse(x > 0, "grey", "#CD5C5C")
+          ifelse(x > 0, "rgba(128,128,128,0.5)", "rgba(205,92,92,0.5)")
+        }),
+        highlight = sapply(weight_vector, function(x) {
+          ifelse(x > 0, "rgba(128,128,128,1)", "rgba(205,92,92,1)")
         }),
         dashes = rep(FALSE, length(weight_vector))
       )
     } else {
       list(
-        color = rep("grey", length(weight_vector)),
+        color = rep("rgba(128,128,128,0.5)", length(weight_vector)),
+        highlight = rep("rgba(128,128,128,1)", length(weight_vector)),
         dashes = sapply(weight_vector, function(x) {
           ifelse(x > 0, FALSE, TRUE)
         })
@@ -529,7 +533,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
     edges <- data.frame(
       from = integer(0), to = integer(0), width = numeric(0),
       arrows = character(0), dashes = logical(0),
-      color = character(0), title = numeric(0), weight = numeric(0),
+      color.color = character(0), color.highlight = character(0), title = numeric(0), weight = numeric(0),
       hidden = logical(0), is_dilemmatic = logical(0),
       stringsAsFactors = FALSE
     )
@@ -544,11 +548,13 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       width = 2 * abs(edges_raw$weight),
       arrows = "to",
       dashes = edge_props$dashes,
-      color = edge_props$color,
+      color.color = edge_props$color,
+      color.highlight = edge_props$highlight,
       title = round(edges_raw$weight, 2),
       weight = edges_raw$weight,
       orig_dashes = edge_props$dashes,
       orig_color = edge_props$color,
+      orig_highlight = edge_props$highlight,
       is_direct = edges_raw$weight > 0,
       is_dilemmatic = is_dilemmatic_edge,
       hidden = if (interactive_options) (abs(edges_raw$weight) < min_weight | (hide_direct & (edges_raw$weight > 0 | is_dilemmatic_edge))) else FALSE,
@@ -648,7 +654,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       visOptions(manipulation = list(enabled = FALSE),
                  highlightNearest = list(enabled = TRUE, degree = 0,
                                          labelOnly = TRUE)) %>%
-      visInteraction(navigationButtons = FALSE, multiselect = TRUE) %>%
+      visInteraction(navigationButtons = FALSE, multiselect = TRUE, selectConnectedEdges = FALSE) %>%
       visPhysics(enabled = FALSE) %>%
       visEdges(smooth = list(enabled = TRUE, type = "curvedCW", roundness = 0.15)) %>% 
       visNodes(font = list(align = "center", multi = TRUE, vadjust = 0))
@@ -659,7 +665,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       visOptions(manipulation = list(enabled = FALSE),
                  highlightNearest = list(enabled = TRUE, degree = 0,
                                          labelOnly = TRUE)) %>%
-      visInteraction(navigationButtons = FALSE, multiselect = TRUE) %>%
+      visInteraction(navigationButtons = FALSE, multiselect = TRUE, selectConnectedEdges = FALSE) %>%
       visEdges(smooth = list(enabled = TRUE, type = "curvedCW", roundness = 0.15)) %>% 
       visNodes(font = list(align = "center", multi = TRUE, vadjust = 0))
   } else {
@@ -669,7 +675,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       visOptions(manipulation = list(enabled = FALSE),
                  highlightNearest = list(enabled = TRUE, degree = 0,
                                          labelOnly = TRUE)) %>%
-      visInteraction(navigationButtons = FALSE, multiselect = TRUE) %>%
+      visInteraction(navigationButtons = FALSE, multiselect = TRUE, selectConnectedEdges = FALSE) %>%
       visEdges(smooth = list(enabled = TRUE, type = "curvedCW", roundness = 0.15)) %>% 
       visNodes(font = list(align = "center", multi = TRUE, vadjust = 0))
   }
@@ -814,7 +820,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
           var vadjust = - (finalSize * 1.1 + currentTextSize * 0.8);
           return {
             id: node.id,
-            color: { background: c, border: darkenColor(c, 0.4), highlight: { background: c, border: darkenColor(c, 0.6) } },
+            color: { background: c, border: darkenColor(c, 0.4), highlight: { background: c, border: darkenColor(c, 0.4) } },
             size: finalSize, label: label, shape: 'dot',
             font: { vadjust: vadjust, size: currentTextSize, face: 'Segoe UI', color: '#000000', strokeWidth: 3, strokeColor: '#ffffff' }
           };
@@ -824,8 +830,8 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         var edgesDS = network.body.data.edges;
         var scheme2 = visContent.querySelector('#palette_sel').value;
         var edgeUpdates = edgesDS.get().map(function(edge) {
-          if(scheme2 === 'grey scale') return {id: edge.id, color: '#999999', dashes: edge.weight < 0};
-          return {id: edge.id, color: edge.orig_color, dashes: edge.orig_dashes};
+          if(scheme2 === 'grey scale') return {id: edge.id, color: {color: 'rgba(153,153,153,0.5)', highlight: 'rgba(153,153,153,1)'}, dashes: edge.weight < 0};
+          return {id: edge.id, color: {color: edge.orig_color, highlight: edge.orig_highlight}, dashes: edge.orig_dashes};
         });
         edgesDS.update(edgeUpdates);
       };
@@ -916,6 +922,153 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
           drawArrowShape(sz/2); // inner core relative to size
           ctx.restore();
         });
+      });
+
+      // ── Dynamic Area Drawing (Convex Hulls) ────────────────────────────────
+      var drawAreasOnCanvas = function(ctx) {
+        if(currentAreaAttr === 'None') return;
+        
+        var PAD = 50; 
+        var ROUND = 10;
+        var LINE_W = 2;
+        var MAX_OFFSET_DIST = 150;
+        
+        var FILL = ['rgba(110,168,254,0.15)', 'rgba(114,214,160,0.15)', 'rgba(247,178,103,0.15)', 'rgba(217,133,185,0.15)', 'rgba(143,211,254,0.15)', 'rgba(181,228,140,0.15)', 'rgba(255,209,102,0.15)', 'rgba(205,180,219,0.15)', 'rgba(160,196,255,0.15)', 'rgba(255,175,204,0.15)'];
+        var STROK = ['rgba(110,168,254,0.65)', 'rgba(114,214,160,0.65)', 'rgba(247,178,103,0.65)', 'rgba(217,133,185,0.65)', 'rgba(143,211,254,0.65)', 'rgba(181,228,140,0.65)', 'rgba(255,209,102,0.65)', 'rgba(205,180,219,0.65)', 'rgba(160,196,255,0.65)', 'rgba(255,175,204,0.65)'];
+        
+        function isCCW(pts){var s=0;for(var i=0;i<pts.length;i++){var a=pts[i],b=pts[(i+1)%pts.length];s+=a.x*b.y-a.y*b.x;}return s>0;}
+        function distance(p1,p2){return Math.hypot(p2.x-p1.x,p2.y-p1.y);}
+        function lineIntersect(p1,d1,p2,d2){var det=d1.x*d2.y-d1.y*d2.x;if(Math.abs(det)<1e-9) return null;var t=((p2.x-p1.x)*d2.y-(p2.y-p1.y)*d2.x)/det;return {x:p1.x+t*d1.x,y:p1.y+t*d1.y};}
+        function convexHull(points){
+          if(points.length<=1) return points.slice();
+          var pts=points.slice().sort(function(a,b){return a.x!==b.x?a.x-b.x:a.y-b.y;});
+          function cross(o,a,b){return (a.x-o.x)*(b.y-o.y)-(a.y-o.y)*(b.x-o.x);}
+          var lower=[],upper=[];
+          for(var i=0;i<pts.length;i++){while(lower.length>=2 && cross(lower[lower.length-2], lower[lower.length-1], pts[i])<=0) lower.pop(); lower.push(pts[i]);}
+          for(var j=pts.length-1;j>=0;j--){while(upper.length>=2 && cross(upper[upper.length-2], upper[upper.length-1], pts[j])<=0) upper.pop(); upper.push(pts[j]);}
+          upper.pop(); lower.pop(); return lower.concat(upper);
+        }
+        function offsetConvex(pts, d){
+          if(pts.length<3) return null;
+          var H=pts.slice(); if(!isCCW(H)) H.reverse();
+          var N=H.length, out=new Array(N);
+          for(var i=0;i<N;i++){
+            var p0=H[(i-1+N)%N], p1=H[i], p2=H[(i+1)%N];
+            var e0={x:p1.x-p0.x,y:p1.y-p0.y}, e1={x:p2.x-p1.x,y:p2.y-p1.y};
+            var l0=Math.hypot(e0.x,e0.y)||1, l1=Math.hypot(e1.x,e1.y)||1; e0.x/=l0; e0.y/=l0; e1.x/=l1; e1.y/=l1;
+            var n0={x:e0.y,y:-e0.x}, n1={x:e1.y,y:-e1.x};
+            var dot=e0.x*e1.x+e0.y*e1.y; var angle=Math.acos(Math.max(-1,Math.min(1,-dot)));
+            var isSharpCorner=angle<Math.PI/3;
+            var pB={x:p1.x+n0.x*d,y:p1.y+n0.y*d}, pC={x:p1.x+n1.x*d,y:p1.y+n1.y*d};
+            var q=lineIntersect(pB,e0,pC,e1);
+            if(q && distance(p1,q)<=MAX_OFFSET_DIST && !isSharpCorner){
+              out[i]=q;
+            } else {
+              var avgNormal={x:(n0.x+n1.x)*0.5, y:(n0.y+n1.y)*0.5};
+              var len=Math.hypot(avgNormal.x,avgNormal.y)||1;
+              avgNormal.x/=len; avgNormal.y/=len;
+              var safeDist=isSharpCorner ? d*1.5 : d;
+              out[i]={x:p1.x+avgNormal.x*safeDist, y:p1.y+avgNormal.y*safeDist};
+            }
+          }
+          return out;
+        }
+        function draw(ctx, pts, fill, stroke){
+          if(!pts || pts.length<3) return;
+          ctx.save(); 
+          ctx.fillStyle=fill; ctx.strokeStyle=stroke; ctx.lineWidth=LINE_W;
+          if(ROUND<=0){
+            ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+            for(var i=1;i<pts.length;i++) ctx.lineTo(pts[i].x,pts[i].y);
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+          }else{
+            ctx.lineJoin='round'; ctx.lineCap='round'; ctx.miterLimit=4;
+            ctx.beginPath(); var n=pts.length;
+            for(var i=0;i<n;i++){
+              var p0=pts[(i-1+n)%n], p1=pts[i], p2=pts[(i+1)%n];
+              var v1x=p1.x-p0.x,v1y=p1.y-p0.y,v2x=p2.x-p1.x,v2y=p2.y-p1.y;
+              var l1=Math.hypot(v1x,v1y)||1,l2=Math.hypot(v2x,v2y)||1;
+              var dot=(v1x/l1)*(-v2x/l2)+(v1y/l1)*(-v2y/l2);
+              var angle=Math.acos(Math.max(-1,Math.min(1,dot)));
+              var angleRatio=Math.max(0.3,Math.sin(angle*0.5));
+              var adaptiveRound=ROUND*angleRatio;
+              var rr=Math.min(adaptiveRound,0.4*l1,0.4*l2);
+              v1x/=l1; v1y/=l1; v2x/=l2; v2y/=l2;
+              var p1_in={x:p1.x-v1x*rr,y:p1.y-v1y*rr}, p1_out={x:p1.x+v2x*rr,y:p1.y+v2y*rr};
+              if(i===0) ctx.moveTo(p1_in.x,p1_in.y); else ctx.lineTo(p1_in.x,p1_in.y);
+              if(angle<Math.PI/4){
+                var ctrl={x:(p1_in.x+p1.x+p1_out.x)/3, y:(p1_in.y+p1.y+p1_out.y)/3};
+                ctx.quadraticCurveTo(ctrl.x,ctrl.y,p1_out.x,p1_out.y);
+              } else {
+                ctx.arcTo(p1.x,p1.y,p1_out.x,p1_out.y,rr);
+              }
+            }
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+          }
+          ctx.restore();
+        }
+        function drawLabelAbove(ctx, pts, text, stroke){
+          var xs = pts.map(function(p){ return p.x; }), ys = pts.map(function(p){ return p.y; });
+          var minX = Math.min.apply(null,xs), maxX = Math.max.apply(null,xs);
+          var minY = Math.min.apply(null,ys);
+          var cx = (minX + maxX) / 2, y = minY - 12;
+          ctx.save(); ctx.font='bold 14px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='bottom';
+          ctx.strokeStyle = stroke; ctx.lineWidth = 4; ctx.strokeText(text, cx, y);
+          ctx.fillStyle = 'rgba(0,0,0,0.80)'; ctx.fillText(text, cx, y); ctx.restore();
+        }
+
+        var nodes=network.body.data.nodes.get(); 
+        var bycat={};
+        nodes.forEach(function(n){
+          if(n.hidden) return;
+          if(n[currentAreaAttr]==null) return;
+          var c=String(n[currentAreaAttr]);
+          if(c===''||c==='NA') return;
+          (bycat[c]||(bycat[c]=[])).push(n.id);
+        });
+
+        var CAT = Object.keys(bycat);
+        for(var i=0;i<CAT.length;i++){
+          var cat = CAT[i], ids = bycat[cat];
+          if(!ids || ids.length===0) continue;
+          var pos = network.getPositions(ids);
+          var pts = ids.map(function(id){ return {x:pos[id].x, y:pos[id].y}; });
+
+          var outline;
+          if(pts.length<=2){
+            var xs=pts.map(function(p){ return p.x; }), ys=pts.map(function(p){ return p.y; });
+            var minX=Math.min.apply(null,xs), maxX=Math.max.apply(null,xs);
+            var minY=Math.min.apply(null,ys), maxY=Math.max.apply(null,ys);
+            var width=maxX-minX, height=maxY-minY;
+            var adaptivePad=Math.max(PAD, Math.max(width,height)*0.3+20);
+            outline=[
+              {x:minX-adaptivePad,y:minY-adaptivePad},
+              {x:maxX+adaptivePad,y:minY-adaptivePad},
+              {x:maxX+adaptivePad,y:maxY+adaptivePad},
+              {x:minX-adaptivePad,y:maxY+adaptivePad}
+            ];
+          } else {
+            var xs=pts.map(function(p){ return p.x; }), ys=pts.map(function(p){ return p.y; });
+            var avgX=xs.reduce(function(a,b){return a+b;})/xs.length, avgY=ys.reduce(function(a,b){return a+b;})/ys.length;
+            var avgDist=pts.reduce(function(sum,p){return sum+distance({x:avgX,y:avgY},p);},0)/pts.length;
+            var adaptivePad=Math.max(PAD, avgDist*0.15+15);
+            var hull=convexHull(pts); 
+            outline=offsetConvex(hull, adaptivePad);
+            if(!outline){
+              var minX=Math.min.apply(null,xs)-adaptivePad, maxX=Math.max.apply(null,xs)+adaptivePad;
+              var minY=Math.min.apply(null,ys)-adaptivePad, maxY=Math.max.apply(null,ys)+adaptivePad;
+              outline=[{x:minX,y:minY},{x:maxX,y:minY},{x:maxX,y:maxY},{x:minX,y:maxY}];
+            }
+          }
+
+          var colorIdx = i % FILL.length;
+          draw(ctx, outline, FILL[colorIdx], STROK[colorIdx]);
+          drawLabelAbove(ctx, outline, String(cat), STROK[colorIdx]);
+        }
+      };
+
+      network.on('beforeDrawing', function(ctx) {
+        drawAreasOnCanvas(ctx);
       });
 
       var _tweenRAF = null;
@@ -1047,8 +1200,173 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       // --- Panels Initialization ---
       var visContent = createPanel('vis_panel', 'Visualization Options', {top: '10px', right: '10px'});
       
+      // --- Area Selector Panel ---
+      var currentAreaAttr = 'None';
+      if (x.cat_cols && x.cat_cols.length > 0) {
+        var areaPanelContent = createPanel('area_panel', 'Areas', {top: '10px', left: '10px'});
+        var areaHTML = '<div style=\"margin-bottom:10px;\">' +
+                       '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444;\">Group by</label>' +
+                       '<select id=\"area_sel\" style=\"width:100%; padding:4px; border-radius:4px; margin-bottom:8px;\">' +
+                       '<option value=\"None\">None</option>' +
+                       x.cat_cols.map(function(c) { return '<option value=\"' + c + '\">' + c.charAt(0).toUpperCase() + c.slice(1) + '</option>'; }).join('') +
+                       '</select>' +
+                       '<button id=\"btn_area_layout\" style=\"width:100%; padding:6px; background:#e3f2fd; border:1px solid #2196f3; color:#1565c0; border-radius:4px; cursor:pointer; font-size:11px; font-weight:bold; display:none; align-items:center; justify-content:center; gap:4px;\">Cluster Areas</button>' +
+                       '</div>';
+        areaPanelContent.innerHTML = areaHTML;
+        
+        areaPanelContent.querySelector('#area_sel').onchange = function() {
+          currentAreaAttr = this.value;
+          areaPanelContent.querySelector('#btn_area_layout').style.display = (currentAreaAttr === 'None') ? 'none' : 'flex';
+          network.redraw();
+        };
+        
+        areaPanelContent.querySelector('#btn_area_layout').onclick = function() {
+          if (currentAreaAttr === 'None') return;
+          var nodes = network.body.data.nodes.get();
+          var edges = network.body.data.edges.get();
+          
+          var edgeMap = {};
+          edges.forEach(function(e) {
+             if (!e.from || !e.to) return;
+             var f = String(e.from), t = String(e.to);
+             edgeMap[f + '_' + t] = true;
+             edgeMap[t + '_' + f] = true;
+          });
 
-      
+          var bycat = {};
+          nodes.forEach(function(n) {
+            if (n.hidden) return;
+            var c = String(n[currentAreaAttr] || 'Uncategorized');
+            if (c === '' || c === 'NA' || c === 'null' || c === 'undefined') c = 'Uncategorized';
+            (bycat[c] || (bycat[c] = [])).push(n.id);
+          });
+          
+          var cats = Object.keys(bycat).filter(function(c) { return c !== 'Uncategorized'; });
+          var k = cats.length;
+          
+          var ncol = Math.max(1, Math.ceil(Math.sqrt(k)));
+          var nrow = Math.max(1, Math.ceil(k / ncol));
+          var cell = 450; 
+          
+          var centers = {};
+          for (var i = 0; i < k; i++) {
+            var r = Math.floor(i / ncol);
+            var c = i % ncol;
+            centers[cats[i]] = {
+              cx: (c - (ncol - 1) / 2) * cell,
+              cy: ((nrow - 1) / 2 - r) * cell
+            };
+          }
+          
+          var pos = network.getPositions();
+          var simNodes = [];
+          nodes.forEach(function(n) {
+             if (n.hidden) return;
+             var cat = String(n[currentAreaAttr] || 'Uncategorized');
+             if (cat === '' || cat === 'NA' || cat === 'null' || cat === 'undefined') cat = 'Uncategorized';
+             var cx = 0, cy = 0;
+             if (centers[cat]) {
+                 cx = centers[cat].cx;
+                 cy = centers[cat].cy;
+             }
+             var currentP = pos[n.id] || {x: cx + (Math.random()-0.5)*100, y: cy + (Math.random()-0.5)*100};
+             simNodes.push({
+                id: String(n.id),
+                cat: cat,
+                x: currentP.x,
+                y: currentP.y,
+                vx: 0,
+                vy: 0,
+                radius: (n.size || 20) + 15 // padding for collision
+             });
+          });
+
+          // Custom Force Simulation for Organic Clustering
+          var iterations = 200;
+          var alpha = 1.0;
+          for (var iter = 0; iter < iterations; iter++) {
+             alpha *= 0.98; // cooling
+             
+             // 1. Weak attraction to category centers (Uncategorized float freely but weakly pull to center)
+             for (var i = 0; i < simNodes.length; i++) {
+                var sn = simNodes[i];
+                if (sn.cat !== 'Uncategorized' && centers[sn.cat]) {
+                   var center = centers[sn.cat];
+                   sn.vx += (center.cx - sn.x) * 0.02 * alpha;
+                   sn.vy += (center.cy - sn.y) * 0.02 * alpha;
+                } else {
+                   sn.vx += (0 - sn.x) * 0.003 * alpha;
+                   sn.vy += (0 - sn.y) * 0.003 * alpha;
+                }
+             }
+             
+             for (var i = 0; i < simNodes.length; i++) {
+                for (var j = i + 1; j < simNodes.length; j++) {
+                   var n1 = simNodes[i];
+                   var n2 = simNodes[j];
+                   var dx = n1.x - n2.x;
+                   var dy = n1.y - n2.y;
+                   var distSq = dx*dx + dy*dy;
+                   if (distSq === 0) { dx = Math.random()-0.5; dy = Math.random()-0.5; distSq = dx*dx+dy*dy; }
+                   var dist = Math.sqrt(distSq);
+                   var minDist = n1.radius + n2.radius;
+                   
+                   // 2. Edge Attraction
+                   if (edgeMap[n1.id + '_' + n2.id]) {
+                      var pullEdge = (dist - minDist * 1.5) * 0.008 * alpha;
+                      n1.vx -= (dx / dist) * pullEdge;
+                      n1.vy -= (dy / dist) * pullEdge;
+                      n2.vx += (dx / dist) * pullEdge;
+                      n2.vy += (dy / dist) * pullEdge;
+                   }
+                   
+                   // 3. Attraction between nodes of same category (skip Uncategorized)
+                   if (n1.cat === n2.cat && n1.cat !== 'Uncategorized') {
+                      var pullCat = (dist - minDist * 1.5) * 0.005 * alpha;
+                      n1.vx -= (dx / dist) * pullCat;
+                      n1.vy -= (dy / dist) * pullCat;
+                      n2.vx += (dx / dist) * pullCat;
+                      n2.vy += (dy / dist) * pullCat;
+                   }
+                   
+                   // 4. Collision / Repulsion
+                   if (dist < minDist) {
+                      var force = (minDist - dist) / dist * 0.8 * alpha; // strong collision
+                      n1.vx += dx * force;
+                      n1.vy += dy * force;
+                      n2.vx -= dx * force;
+                      n2.vy -= dy * force;
+                   } else if (dist < minDist * 4) {
+                      var force = (400 / distSq) * alpha; // soft repulsion
+                      n1.vx += dx * force;
+                      n1.vy += dy * force;
+                      n2.vx -= dx * force;
+                      n2.vy -= dy * force;
+                   }
+                }
+             }
+             
+             // 5. Apply velocity and add friction
+             for (var i = 0; i < simNodes.length; i++) {
+                var sn = simNodes[i];
+                sn.x += sn.vx;
+                sn.y += sn.vy;
+                sn.vx *= 0.6; // strong friction
+                sn.vy *= 0.6;
+             }
+          }
+
+          var updates = simNodes.map(function(sn) {
+             return {id: sn.id, x: sn.x, y: sn.y};
+          });
+          
+          network.setOptions({physics: {enabled: false}});
+          network.body.data.nodes.update(updates);
+          if (typeof refreshNodes === 'function') refreshNodes();
+          network.fit({animation: true});
+        };
+      }
+
       // Minimalist Export Panel
       var exportPanel = document.createElement('div');
       Object.assign(exportPanel.style, {
@@ -1578,15 +1896,119 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
 
 
 
+      var nodeClickState = {};
+      
+      function hex2rgba(hex, alpha) {
+          if(hex && hex.startsWith('#')) {
+              var r = parseInt(hex.slice(1, 3), 16),
+                  g = parseInt(hex.slice(3, 5), 16),
+                  b = parseInt(hex.slice(5, 7), 16);
+              return 'rgba(' + (isNaN(r)?150:r) + ',' + (isNaN(g)?150:g) + ',' + (isNaN(b)?150:b) + ',' + alpha + ')';
+          }
+          return hex; 
+      }
+
       network.on('click', function(params) {
-        if(!eraserActive) return;
-        if(params.nodes.length > 0) {
+        if(eraserActive) {
+          if(params.nodes.length > 0) {
+            var nodeId = params.nodes[0];
+            network.body.data.nodes.update({id: nodeId, hidden: true});
+            var chk = visContent.querySelector('input[value=\"' + nodeId + '\"]');
+            if(chk) chk.checked = false;
+          } else if(params.edges.length > 0) {
+            network.body.data.edges.update({id: params.edges[0], hidden: true});
+          }
+          return;
+        }
+        
+        var edgesDS = network.body.data.edges;
+        var nodesDS = network.body.data.nodes;
+        var scheme = visContent.querySelector('#palette_sel').value;
+
+        if (params.nodes.length === 1) {
           var nodeId = params.nodes[0];
-          network.body.data.nodes.update({id: nodeId, hidden: true});
-          var chk = visContent.querySelector('input[value=\"' + nodeId + '\"]');
-          if(chk) chk.checked = false;
-        } else if(params.edges.length > 0) {
-          network.body.data.edges.update({id: params.edges[0], hidden: true});
+          var state = nodeClickState[nodeId] || 0;
+          state = (state + 1) % 4; // 1: OUT, 2: IN, 3: BOTH, 0: NONE -> skip 0
+          if (state === 0) state = 1;
+          
+          nodeClickState = {};
+          nodeClickState[nodeId] = state;
+
+          var connectedNodes = {};
+          connectedNodes[nodeId] = true;
+
+          var edgeUpdates = edgesDS.get().map(function(e) {
+            var isOut = String(e.from) === String(nodeId);
+            var isIn = String(e.to) === String(nodeId);
+            
+            var highlight = false;
+            if (state === 1 && isOut) highlight = true;
+            if (state === 2 && isIn) highlight = true;
+            if (state === 3 && (isIn || isOut)) highlight = true;
+
+            if (highlight) {
+               connectedNodes[e.from] = true;
+               connectedNodes[e.to] = true;
+            }
+
+            var baseColor = e.orig_color;
+            var highColor = e.orig_highlight;
+            if (scheme === 'grey scale') {
+               baseColor = 'rgba(153,153,153,0.5)';
+               highColor = 'rgba(153,153,153,1)';
+            }
+
+            if (highlight) {
+              return {id: e.id, color: {color: highColor, highlight: highColor}, hidden: false};
+            } else {
+              return {id: e.id, color: {color: 'rgba(200,200,200,0.05)', highlight: 'rgba(200,200,200,0.05)'}};
+            }
+          });
+          
+          refreshNodes();
+          edgesDS.update(edgeUpdates);
+
+          var nodeUpdates = nodesDS.get().map(function(n) {
+             if (connectedNodes[n.id]) {
+                if (String(n.id) === String(nodeId)) {
+                   // Ensure the selected node remains exactly its native color without any highlight darkening
+                   return {
+                      id: n.id,
+                      color: {
+                         background: n.color.background,
+                         border: n.color.border,
+                         highlight: { background: n.color.background, border: n.color.border }
+                      },
+                      font: { color: '#000000', strokeColor: '#ffffff' }
+                   };
+                } else {
+                   return {
+                      id: n.id,
+                      color: {
+                         background: hex2rgba(n.color.background, 0.4),
+                         border: hex2rgba(n.color.border, 0.4),
+                         highlight: { background: hex2rgba(n.color.background, 0.4), border: hex2rgba(n.color.border, 0.4) }
+                      },
+                      font: { color: '#000000', strokeColor: '#ffffff' }
+                   };
+                }
+             } else {
+                return {
+                   id: n.id,
+                   color: {
+                      background: 'rgba(200,200,200,0.1)',
+                      border: 'rgba(200,200,200,0.1)',
+                      highlight: { background: 'rgba(200,200,200,0.1)', border: 'rgba(200,200,200,0.1)' }
+                   },
+                   font: { color: 'rgba(0,0,0,0)', strokeColor: 'rgba(0,0,0,0)' }
+                };
+             }
+          });
+          nodesDS.update(nodeUpdates);
+          
+        } else if (params.nodes.length === 0) {
+          nodeClickState = {};
+          refreshNodes();
         }
       });
 
@@ -1644,6 +2066,14 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       "dark" = c("#8B0000", "#006400", "#696969", "#DAA520"),
       "viridis" = c("#440154", "#35b779", "#31688e", "#fde725")
     )
+    
+    if (inherits(wimp, "wimp") && !is.null(wimp$vertices)) {
+      w_verts <- wimp$vertices
+      raw_cat_cols <- names(w_verts)[sapply(w_verts, function(x) is.character(x) || is.factor(x))]
+      g$x$cat_cols <- setdiff(raw_cat_cols, c("left_pole", "right_pole", "label", "id", "self_pole", "ideal_pole"))
+    } else {
+      g$x$cat_cols <- c()
+    }
     
 
     

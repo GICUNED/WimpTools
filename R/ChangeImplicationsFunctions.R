@@ -24,7 +24,6 @@
 #' @export
 #' @examples
 #' if_index(example_wimp)
-
 if_index <- function(wimp, std = "adjacent") {
   # Align so all ideal values are positive (required for comparisons)
   wimp <- .align_wimp(wimp, exclude_dilemmatics = FALSE)
@@ -124,7 +123,6 @@ if_index <- function(wimp, std = "adjacent") {
 #' @import plotly
 #' @examples
 #' if_plot(example_wimp)
-
 if_plot <- function(wimp, show = "all", center = "data", text_size = 1, ...) {
   # Align grid and extract core vectors
   wimp <- .align_wimp(wimp, exclude_dilemmatics = FALSE)
@@ -144,10 +142,15 @@ if_plot <- function(wimp, show = "all", center = "data", text_size = 1, ...) {
   # Congruency coloring
   congruency <- self_vector / ideal_vector
   construct_color <- sapply(congruency, function(x) {
-    if (is.na(x) || is.infinite(x)) "#FFD97D"
-    else if (x < 0) "#d13b43"
-    else if (x > 0) "#5ce75c"
-    else "grey"
+    if (is.na(x) || is.infinite(x)) {
+      "#FFD97D"
+    } else if (x < 0) {
+      "#d13b43"
+    } else if (x > 0) {
+      "#5ce75c"
+    } else {
+      "grey"
+    }
   })
 
   # Build plotting data frame from index results
@@ -174,18 +177,26 @@ if_plot <- function(wimp, show = "all", center = "data", text_size = 1, ...) {
 
   # Quadrant background shapes
   shapes <- list(
-    list(type = "rect", fillcolor = "palegreen",
-         line = list(color = "palegreen"), opacity = 0.3, layer = "below",
-         x0 = 0, x1 = 10000, y0 = 0, y1 = 10000),
-    list(type = "rect", fillcolor = "#eb636b",
-         line = list(color = "#eb636b"), opacity = 0.3, layer = "below",
-         x0 = 0, x1 = -10000, y0 = 0, y1 = -10000),
-    list(type = "rect", fillcolor = "#ffe65d",
-         line = list(color = "#ffe65d"), opacity = 0.3, layer = "below",
-         x0 = 0, x1 = -10000, y0 = 0, y1 = 10000),
-    list(type = "rect", fillcolor = "#ffe65d",
-         line = list(color = "#ffe65d"), opacity = 0.3, layer = "below",
-         x0 = 0, x1 = 10000, y0 = 0, y1 = -10000)
+    list(
+      type = "rect", fillcolor = "palegreen",
+      line = list(color = "palegreen"), opacity = 0.3, layer = "below",
+      x0 = 0, x1 = 10000, y0 = 0, y1 = 10000
+    ),
+    list(
+      type = "rect", fillcolor = "#eb636b",
+      line = list(color = "#eb636b"), opacity = 0.3, layer = "below",
+      x0 = 0, x1 = -10000, y0 = 0, y1 = -10000
+    ),
+    list(
+      type = "rect", fillcolor = "#ffe65d",
+      line = list(color = "#ffe65d"), opacity = 0.3, layer = "below",
+      x0 = 0, x1 = -10000, y0 = 0, y1 = 10000
+    ),
+    list(
+      type = "rect", fillcolor = "#ffe65d",
+      line = list(color = "#ffe65d"), opacity = 0.3, layer = "below",
+      x0 = 0, x1 = 10000, y0 = 0, y1 = -10000
+    )
   )
 
   # Normalized coordinates for label optimization
@@ -212,19 +223,27 @@ if_plot <- function(wimp, show = "all", center = "data", text_size = 1, ...) {
   fig <- plot_ly(data = df, x = ~I, y = ~FB) %>%
     add_markers(
       data = df, x = ~I, y = ~FB,
-      marker = list(color = ~color, size = 7,
-                    line = list(color = "black", width = 1)),
-      text = ~paste("<B>", construct, "</B>", "\nSelf:", self,
-                    "\nI:", round(I, 2), "\nF:", round(FB, 2)),
+      marker = list(
+        color = ~color, size = 7,
+        line = list(color = "black", width = 1)
+      ),
+      text = ~ paste(
+        "<B>", construct, "</B>", "\nSelf:", self,
+        "\nI:", round(I, 2), "\nF:", round(FB, 2)
+      ),
       hoverinfo = "text"
     ) %>%
     layout(
-      xaxis = list(title = "IMPACT", range = c(impact_min, impact_max),
-                   gridcolor = "white", gridwidth = 0.5, zeroline = TRUE,
-                   zerolinecolor = "black", zerolinewidth = 2),
-      yaxis = list(title = "FEEDBACK", range = c(feedback_min, feedback_max),
-                   gridcolor = "white", gridwidth = 0.5, zeroline = TRUE,
-                   zerolinecolor = "black", zerolinewidth = 2),
+      xaxis = list(
+        title = "IMPACT", range = c(impact_min, impact_max),
+        gridcolor = "white", gridwidth = 0.5, zeroline = TRUE,
+        zerolinecolor = "black", zerolinewidth = 2
+      ),
+      yaxis = list(
+        title = "FEEDBACK", range = c(feedback_min, feedback_max),
+        gridcolor = "white", gridwidth = 0.5, zeroline = TRUE,
+        zerolinecolor = "black", zerolinewidth = 2
+      ),
       showlegend = FALSE, shapes = shapes
     )
 
@@ -268,7 +287,6 @@ if_plot <- function(wimp, show = "all", center = "data", text_size = 1, ...) {
 #' @import plotly
 #' @examples
 #' if_barchart(example_wimp)
-
 if_barchart <- function(wimp, show = "all", ...) {
   # Align and extract base vectors
   wimp <- .align_wimp(wimp, exclude_dilemmatics = FALSE)
@@ -298,13 +316,17 @@ if_barchart <- function(wimp, show = "all", ...) {
 
   # Prepare index data (NI/PI/NF/PF + global)
   df <- if_index(wimp, ...)[c(1, 2, 4, 5)]
-  df <- data.frame(df, df[, 1] + df[, 2], right_poles, self_poles,
-                   constructs, col_n, col_p, width_line)
+  df <- data.frame(
+    df, df[, 1] + df[, 2], right_poles, self_poles,
+    constructs, col_n, col_p, width_line
+  )
   df[, 1] <- -df[, 1]
   df[, 3] <- -df[, 3]
-  names(df) <- c("NI", "PI", "NF", "PF", "global", "right.poles",
-                 "self.poles", "construct", "colorn", "colorp",
-                 "widthline")
+  names(df) <- c(
+    "NI", "PI", "NF", "PF", "global", "right.poles",
+    "self.poles", "construct", "colorn", "colorp",
+    "widthline"
+  )
   rownames(df) <- right_poles
   if (show == "nodil") df <- df[-dil, ]
   if (show == "dil") df <- df[dil, ]
@@ -313,76 +335,134 @@ if_barchart <- function(wimp, show = "all", ...) {
   range <- max(abs(df[c(1, 2, 3, 4)])) * 1.15
 
   # Positive / Negative Impact panel
-  fig1 <- plot_ly(data = df, x = ~PI, y = ~reorder(right_poles, global),
-                  type = "bar", orientation = "h",
-                  marker = list(color = "#AAF683",
-                                line = list(color = ~colorp,
-                                            width = ~widthline),
-                                pattern = list(shape = ~ifelse(pattern == 1,
-                                                               "/", ""),
-                                               fillmode = "overlay",
-                                               fgcolor = "#FFEE7D",
-                                               size = 20)),
-                  hovertext = ~paste("<B>", construct, "</B>", "\nSelf:",
-                                     self_poles, "\nPositive Impact:",
-                                     round(PI, 2)), hoverinfo = "text") %>%
-    add_trace(x = ~NI, name = "Impact",
-              marker = list(color = "#EE6055",
-                            line = list(color = ~colorn,
-                                        width = ~widthline),
-                            pattern = list(shape = ~ifelse(pattern == 1,
-                                                           "/", ""),
-                                           fillmode = "overlay",
-                                           fgcolor = "#FFEE7D",
-                                           size = 20)),
-              hovertext = ~paste("<B>", construct, "</B>", "\nSelf:",
-                                 self_poles, "\nNegative Impact:",
-                                 round(NI, 2)), hoverinfo = "text") %>%
-    layout(barmode = "overlay", bargap = 0.08,
-           xaxis = list(title = "IMPACT", range = c(-range, range),
-                        showline = TRUE),
-           yaxis = list(title = "", showgrid = TRUE, showline = TRUE),
-           showlegend = FALSE)
+  fig1 <- plot_ly(
+    data = df, x = ~PI, y = ~ reorder(right_poles, global),
+    type = "bar", orientation = "h",
+    marker = list(
+      color = "#AAF683",
+      line = list(
+        color = ~colorp,
+        width = ~widthline
+      ),
+      pattern = list(
+        shape = ~ ifelse(pattern == 1,
+          "/", ""
+        ),
+        fillmode = "overlay",
+        fgcolor = "#FFEE7D",
+        size = 20
+      )
+    ),
+    hovertext = ~ paste(
+      "<B>", construct, "</B>", "\nSelf:",
+      self_poles, "\nPositive Impact:",
+      round(PI, 2)
+    ), hoverinfo = "text"
+  ) %>%
+    add_trace(
+      x = ~NI, name = "Impact",
+      marker = list(
+        color = "#EE6055",
+        line = list(
+          color = ~colorn,
+          width = ~widthline
+        ),
+        pattern = list(
+          shape = ~ ifelse(pattern == 1,
+            "/", ""
+          ),
+          fillmode = "overlay",
+          fgcolor = "#FFEE7D",
+          size = 20
+        )
+      ),
+      hovertext = ~ paste(
+        "<B>", construct, "</B>", "\nSelf:",
+        self_poles, "\nNegative Impact:",
+        round(NI, 2)
+      ), hoverinfo = "text"
+    ) %>%
+    layout(
+      barmode = "overlay", bargap = 0.08,
+      xaxis = list(
+        title = "IMPACT", range = c(-range, range),
+        showline = TRUE
+      ),
+      yaxis = list(title = "", showgrid = TRUE, showline = TRUE),
+      showlegend = FALSE
+    )
 
   # Positive / Negative Feedback panel
-  fig2 <- plot_ly(data = df, x = ~PF, y = ~reorder(right_poles, global),
-                  type = "bar", orientation = "h", name = "Feedback",
-                  marker = list(color = "#AAF683",
-                                line = list(color = ~colorp,
-                                            width = ~widthline),
-                                pattern = list(shape = ~ifelse(pattern == 1,
-                                                               "/", ""),
-                                               fillmode = "overlay",
-                                               fgcolor = "#FFEE7D",
-                                               size = 20)),
-                  hovertext = ~paste("<B>", construct, "</B>", "\nSelf:",
-                                     self_poles, "\nPositive Feedback:",
-                                     round(PF, 2)), hoverinfo = "text") %>%
-    add_trace(x = ~NF, name = "Feedback",
-              marker = list(color = "#EE6055",
-                            line = list(color = ~colorn,
-                                        width = ~widthline),
-                            pattern = list(shape = ~ifelse(pattern == 1,
-                                                           "/", ""),
-                                           fillmode = "overlay",
-                                           fgcolor = "#FFEE7D",
-                                           size = 20)),
-              hovertext = ~paste("<B>", construct, "</B>", "\nSelf:",
-                                 self_poles, "\nNegative Feedback:",
-                                 round(NF, 2)), hoverinfo = "text") %>%
-    layout(barmode = "overlay", bargap = 0.08,
-           xaxis = list(title = "FEEDBACK", range = c(-range, range),
-                        showline = TRUE),
-           yaxis = list(title = "", showgrid = TRUE, showline = TRUE,
-                        showticklabels = TRUE, side = "right"),
-           showlegend = FALSE)
+  fig2 <- plot_ly(
+    data = df, x = ~PF, y = ~ reorder(right_poles, global),
+    type = "bar", orientation = "h", name = "Feedback",
+    marker = list(
+      color = "#AAF683",
+      line = list(
+        color = ~colorp,
+        width = ~widthline
+      ),
+      pattern = list(
+        shape = ~ ifelse(pattern == 1,
+          "/", ""
+        ),
+        fillmode = "overlay",
+        fgcolor = "#FFEE7D",
+        size = 20
+      )
+    ),
+    hovertext = ~ paste(
+      "<B>", construct, "</B>", "\nSelf:",
+      self_poles, "\nPositive Feedback:",
+      round(PF, 2)
+    ), hoverinfo = "text"
+  ) %>%
+    add_trace(
+      x = ~NF, name = "Feedback",
+      marker = list(
+        color = "#EE6055",
+        line = list(
+          color = ~colorn,
+          width = ~widthline
+        ),
+        pattern = list(
+          shape = ~ ifelse(pattern == 1,
+            "/", ""
+          ),
+          fillmode = "overlay",
+          fgcolor = "#FFEE7D",
+          size = 20
+        )
+      ),
+      hovertext = ~ paste(
+        "<B>", construct, "</B>", "\nSelf:",
+        self_poles, "\nNegative Feedback:",
+        round(NF, 2)
+      ), hoverinfo = "text"
+    ) %>%
+    layout(
+      barmode = "overlay", bargap = 0.08,
+      xaxis = list(
+        title = "FEEDBACK", range = c(-range, range),
+        showline = TRUE
+      ),
+      yaxis = list(
+        title = "", showgrid = TRUE, showline = TRUE,
+        showticklabels = TRUE, side = "right"
+      ),
+      showlegend = FALSE
+    )
 
   # Combine panels
   fig <- subplot(fig1, fig2, margin = 0.005) %>%
-    layout(xaxis = list(title = "IMPACT"), yaxis = list(title = ""),
-           xaxis2 = list(title = "FEEDBACK"),
-           yaxis2 = list(title = "", showticklabels = TRUE,
-                         side = "right", overlaying = "y")) %>%
+    layout(
+      xaxis = list(title = "IMPACT"), yaxis = list(title = ""),
+      xaxis2 = list(title = "FEEDBACK"),
+      yaxis2 = list(
+        title = "", showticklabels = TRUE,
+        side = "right", overlaying = "y"
+      )
+    ) %>%
     .plot_optimization()
   return(fig)
 }
