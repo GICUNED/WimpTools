@@ -104,7 +104,11 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
                     show = TRUE, hide_direct = FALSE,
                     areas = FALSE, area_attr = "category", area_color = NA,
                     pad_side = 50, rounding = 10, min_weight = 0,
-                    interactive_options = TRUE, sim_data = NULL, ...) {
+                    interactive_options = TRUE, sim_data = NULL, export_name = NULL, ...) {
+
+  if (is.null(export_name)) {
+    export_name <- deparse(substitute(wimp))
+  }
 
   # ==========================================
   # INPUT VALIDATION
@@ -1146,7 +1150,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         var canvas = container.getElementsByTagName('canvas')[0];
         if(!canvas) return;
         var link = document.createElement('a');
-        link.download = 'WimpTools_Digraph_' + new Date().getTime() + '.png';
+        link.download = 'WIMP_EXPORT_NAME_Digraph.png';
         link.href = canvas.toDataURL('image/png', 1.0);
         link.click();
       };
@@ -1371,7 +1375,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       // Minimalist Export Panel
       var exportPanel = document.createElement('div');
       Object.assign(exportPanel.style, {
-        position: 'absolute', bottom: '10px', right: '10px', zIndex: '1000',
+        position: 'absolute', bottom: '10px', right: '50px', zIndex: '1000',
         backgroundColor: 'rgba(255, 255, 255, 0.95)', width: '32px', height: '32px',
         borderRadius: '6px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
         border: '1px solid #ddd', display: 'flex', alignItems: 'center',
@@ -1383,6 +1387,63 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       exportPanel.onmouseout = function() { this.style.backgroundColor = 'rgba(255, 255, 255, 0.95)'; };
       exportPanel.onclick = exportPNG;
       container.appendChild(exportPanel);
+
+      // Info Modal
+      var infoModal = document.createElement('div');
+      infoModal.id = 'digraph_info_modal';
+      Object.assign(infoModal.style, {
+        position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+        width: '80%', maxWidth: '400px', backgroundColor: '#fff', zIndex: '2000',
+        padding: '20px', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+        border: '1px solid #eaeaea', display: 'none', fontFamily: 'Inter, Roboto, sans-serif'
+      });
+      infoModal.innerHTML = '<div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eaeaea; padding-bottom:10px; margin-bottom:15px;\">' +
+                            '<h3 style=\"margin:0; color:#444; font-size:16px;\">Self Digraph</h3>' +
+                            '<span id=\"close_info_modal\" style=\"cursor:pointer; font-size:20px; font-weight:bold; color:#888; line-height:1;\">&times;</span>' +
+                            '</div>' +
+                            '<p style=\"margin:0; color:#666; font-size:13px; line-height:1.6;\">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>';
+      container.appendChild(infoModal);
+
+      // Info Button
+      var infoPanel = document.createElement('div');
+      Object.assign(infoPanel.style, {
+        position: 'absolute', bottom: '10px', right: '90px', zIndex: '1000',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)', width: '32px', height: '32px',
+        borderRadius: '6px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+        border: '1px solid #ddd', display: 'flex', alignItems: 'center',
+        justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s'
+      });
+      infoPanel.innerHTML = \"<svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'></circle><line x1='12' y1='16' x2='12' y2='12'></line><line x1='12' y1='8' x2='12.01' y2='8'></line></svg>\";
+      infoPanel.title = 'Info';
+      infoPanel.onmouseover = function() { this.style.backgroundColor = '#f5f5f5'; };
+      infoPanel.onmouseout = function() { this.style.backgroundColor = 'rgba(255, 255, 255, 0.95)'; };
+      infoPanel.onclick = function() { infoModal.style.display = 'block'; };
+      container.appendChild(infoPanel);
+      
+      infoModal.querySelector('#close_info_modal').onclick = function() { infoModal.style.display = 'none'; };
+
+      // Fullscreen Button
+      var fsPanel = document.createElement('div');
+      Object.assign(fsPanel.style, {
+        position: 'absolute', bottom: '10px', right: '10px', zIndex: '1000',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)', width: '32px', height: '32px',
+        borderRadius: '6px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+        border: '1px solid #ddd', display: 'flex', alignItems: 'center',
+        justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s'
+      });
+      fsPanel.innerHTML = \"<svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3'></path></svg>\";
+      fsPanel.title = 'Fullscreen';
+      fsPanel.onmouseover = function() { this.style.backgroundColor = '#f5f5f5'; };
+      fsPanel.onmouseout = function() { this.style.backgroundColor = 'rgba(255, 255, 255, 0.95)'; };
+      fsPanel.onclick = function() {
+        var fullEl = container.closest('.wt-tab-container') || container;
+        if (!document.fullscreenElement) {
+          fullEl.requestFullscreen().catch(err => console.log('Error full screen:', err));
+        } else {
+          document.exitFullscreen();
+        }
+      };
+      container.appendChild(fsPanel);
 
       // PCSD Chart Overlay
       var chartContainer = document.createElement('div');
@@ -1416,17 +1477,17 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
 
       visHTML += '<div style=\"margin-bottom:15px; border-top:1px solid #f0f0f0; padding-top:10px;\">' +
                  '<div style=\"display:flex; justify-content:space-between; margin-bottom:5px;\"><b style=\"color:#444;\">Node Spacing</b></div>' +
-                 '<input type=\"range\" id=\"dist_slider\" min=\"0.5\" max=\"3\" step=\"0.1\" value=\"1\" style=\"width:100%;\">' +
+                 '<input type=\"range\" id=\"dist_slider\" min=\"0.5\" max=\"3\" step=\"0.1\" value=\"1\" style=\"width:100%; accent-color:#8cc63f;\">' +
                  '</div>';
 
       visHTML += '<div style=\"margin-bottom:15px;\">' +
                  '<div style=\"display:flex; justify-content:space-between; margin-bottom:5px;\"><b style=\"color:#444;\">Node Size</b></div>' +
-                 '<input type=\"range\" id=\"size_slider\" min=\"0.5\" max=\"3\" step=\"0.1\" value=\"1\" style=\"width:100%;\">' +
+                 '<input type=\"range\" id=\"size_slider\" min=\"0.5\" max=\"3\" step=\"0.1\" value=\"1\" style=\"width:100%; accent-color:#8cc63f;\">' +
                  '</div>';
 
       visHTML += '<div style=\"margin-bottom:15px;\">' +
                  '<div style=\"display:flex; justify-content:space-between; margin-bottom:5px;\"><b style=\"color:#444;\">Text Size</b></div>' +
-                 '<input type=\"range\" id=\"text_size_slider\" min=\"10\" max=\"40\" step=\"1\" value=\"20\" style=\"width:100%;\">' +
+                 '<input type=\"range\" id=\"text_size_slider\" min=\"10\" max=\"40\" step=\"1\" value=\"20\" style=\"width:100%; accent-color:#8cc63f;\">' +
                  '</div>';
 
       visHTML += '<div style=\"margin-bottom:15px; border-top:1px solid #f0f0f0; padding-top:10px; display:flex; gap:5px;\">' +
@@ -1476,7 +1537,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
           '</div>' +
           '<div style=\"margin-bottom:12px; border-top:1px solid #eee; padding-top:10px;\">' +
             '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444;\">Playback Speed</label>' +
-            '<input type=\"range\" id=\"speed_slider\" min=\"0.25\" max=\"2\" step=\"0.25\" value=\"1\" style=\"width:100%; accent-color:#3498db;\">' +
+            '<input type=\"range\" id=\"speed_slider\" min=\"0.25\" max=\"2\" step=\"0.25\" value=\"1\" style=\"width:100%; accent-color:#8cc63f;\">' +
             '<div id=\"speed_txt\" style=\"text-align:right; font-size:10px; color:#888; margin-top:2px;\">1.00x</div>' +
           '</div>' +
           '<div style=\"border-top:1px solid #eee; padding-top:10px;\">' +
@@ -1503,12 +1564,12 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         });
         timelineEl.innerHTML =
           '<div style=\"display:flex; align-items:center; gap:7px; width:100%;\">' +
-            '<button id=\"play_btn\" title=\"Play\" style=\"width:26px;height:26px;flex-shrink:0;border:none;border-radius:50%;background:#3498db;color:#fff;font-size:12px;cursor:pointer;padding:0;line-height:1;\">&#9654;</button>' +
+            '<button id=\"play_btn\" title=\"Play\" style=\"width:26px;height:26px;flex-shrink:0;border:none;border-radius:50%;background:#8cc63f;color:#fff;font-size:12px;cursor:pointer;padding:0;line-height:1;\">&#9654;</button>' +
             '<button id=\"pause_btn\" title=\"Pause\" style=\"width:26px;height:26px;flex-shrink:0;border:1px solid #ccc;border-radius:50%;background:#f5f5f5;color:#555;font-size:10px;cursor:pointer;padding:0;line-height:1;\">&#9646;&#9646;</button>' +
             '<button id=\"stop_btn\" title=\"Stop (Reset)\" style=\"width:26px;height:26px;flex-shrink:0;border:1px solid #ccc;border-radius:50%;background:#f5f5f5;color:#e74c3c;font-size:12px;cursor:pointer;padding:0;line-height:1;\">&#9632;</button>' +
             '<input type=\"range\" id=\"sim_slider\" min=\"0\" max=\"' + simMaxIter + '\" value=\"0\"' +
-              ' style=\"flex:1;accent-color:#3498db;cursor:pointer;margin:0;\">' +
-            '<span id=\"iter_label\" style=\"flex-shrink:0;font-size:11px;font-weight:bold;color:#3498db;white-space:nowrap;min-width:38px;text-align:right;\">0/' + simMaxIter + '</span>' +
+              ' style=\"flex:1;accent-color:#8cc63f;cursor:pointer;margin:0;\">' +
+            '<span id=\"iter_label\" style=\"flex-shrink:0;font-size:11px;font-weight:bold;color:#8cc63f;white-space:nowrap;min-width:38px;text-align:right;\">0/' + simMaxIter + '</span>' +
           '</div>';
         container.appendChild(timelineEl);
 
@@ -1525,7 +1586,12 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
             '.wt-slider::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:#555;cursor:pointer;margin-top:-4px;border:2px solid #fff;box-shadow:0 0 2px rgba(0,0,0,0.3);}' +
             '.wt-slider::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:#555;border:2px solid #fff;cursor:pointer;}' +
             '.wt-slider::-webkit-slider-runnable-track{height:6px;background:var(--wt-track-bg,#e0e0e0);border-radius:3px;}' +
-            '.wt-slider::-moz-range-track{height:6px;background:var(--wt-track-bg,#e0e0e0);border-radius:3px;}';
+            '.wt-slider::-moz-range-track{height:6px;background:var(--wt-track-bg,#e0e0e0);border-radius:3px;}' +
+            'input[type=\"range\"], input[type=\"checkbox\"], input[type=\"radio\"] { accent-color: #8cc63f !important; }' +
+            'select:focus { border-color: #8cc63f !important; outline: none; }' +
+            'option:checked { background-color: #8cc63f !important; color: white !important; }' +
+            'option:hover, option:focus, option:active { background-color: #8cc63f !important; color: white !important; box-shadow: 0 0 10px 100px #8cc63f inset !important; }' +
+            '::selection { background-color: #8cc63f !important; color: white !important; }';
           document.head.appendChild(s);
         })();
 
@@ -2078,6 +2144,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
     
 
     
+    js_panel <- gsub("WIMP_EXPORT_NAME", export_name, js_panel)
     g <- g %>% htmlwidgets::onRender(js_panel)
   }
 
