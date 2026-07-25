@@ -253,10 +253,16 @@ if_plot <- function(wimp, show = "all", center = "data", text_size = 1, ...) {
       fig <- fig %>% add_annotations(
         x = df$I[i], y = df$FB[i], text = optimized_positions$label[i],
         hoverinfo = "skip", font = list(size = 15 * text_size),
-        showarrow = FALSE, xanchor = optimized_positions$xanchor[i],
-        yanchor = optimized_positions$yanchor[i],
-        xshift = optimized_positions$xshift_data[i],
-        yshift = optimized_positions$yshift_data[i]
+        showarrow = TRUE,
+        arrowcolor = "rgba(0,0,0,0.15)",
+        arrowwidth = 1,
+        arrowsize = 0.5,
+        axref = "x",
+        ayref = "y",
+        ax = optimized_positions$x_data[i],
+        ay = optimized_positions$y_data[i],
+        xanchor = optimized_positions$xanchor[i],
+        yanchor = optimized_positions$yanchor[i]
       )
     }
   }

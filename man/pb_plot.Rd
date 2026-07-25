@@ -4,7 +4,7 @@
 \alias{pb_plot}
 \title{PB Space Scatter Plot -- pb_plot()}
 \usage{
-pb_plot(wimp, text_size = 1, ...)
+pb_plot(wimp, text_size = 1, lang = "en", ...)
 }
 \arguments{
 \item{wimp}{Subject's WimpGrid. It must be a "wimp" S3 object

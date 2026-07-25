@@ -4,7 +4,7 @@
 \alias{weight_heatmap}
 \title{Weight Matrix Heatmap -- weight_heatmap()}
 \usage{
-weight_heatmap(wimp, palette = "Redgreen")
+weight_heatmap(wimp, palette = "Redgreen", lang = "en")
 }
 \arguments{
 \item{wimp}{Subject's WimpGrid object. It must be a "wimp" S3 object

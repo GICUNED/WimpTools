@@ -22,6 +22,8 @@ digraph(
   min_weight = 0,
   interactive_options = TRUE,
   sim_data = NULL,
+  export_name = NULL,
+  lang = "en",
   ...
 )
 }

@@ -104,7 +104,10 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
                     show = TRUE, hide_direct = FALSE,
                     areas = FALSE, area_attr = "category", area_color = NA,
                     pad_side = 50, rounding = 10, min_weight = 0,
-                    interactive_options = TRUE, sim_data = NULL, export_name = NULL, ...) {
+                    interactive_options = TRUE, sim_data = NULL, export_name = NULL, lang = "en", ...) {
+
+  # --- Localization (see R/i18n.R) ---
+  t <- wt_i18n(lang)
 
   if (is.null(export_name)) {
     export_name <- deparse(substitute(wimp))
@@ -1155,16 +1158,30 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         link.click();
       };
 
+      var isSidebarMode = !!document.getElementById('wsim_sidebar');
       // --- Helper to create panels ---
       var createPanel = function(id, title, positionStyles) {
         var p = document.createElement('div');
         p.id = id;
-        Object.assign(p.style, {
-          position: 'absolute', zIndex: '1000', backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          padding: '10px', borderRadius: '8px', boxShadow: '0 2px 15px rgba(0,0,0,0.15)',
-          border: '1px solid #ddd', fontFamily: 'Segoe UI, Tahoma, sans-serif', fontSize: '12px',
-          width: '220px', maxHeight: '40px', overflowY: 'hidden', transition: 'all 0.3s ease'
-        }, positionStyles);
+        var useSidebar = (isSidebarMode && id === 'sim_settings_panel');
+        var sidebar = document.getElementById('wsim_sidebar');
+        if (useSidebar) {
+          Object.assign(p.style, {
+            backgroundColor: '#ffffff',
+            padding: '15px', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+            border: '1px solid #ddd', fontFamily: 'Segoe UI, Tahoma, sans-serif', fontSize: '12px',
+            marginBottom: '0', transition: 'all 0.3s ease', width: '100%',
+            display: 'flex', flexDirection: 'column', flex: '1', boxSizing: 'border-box', minHeight: '0'
+          });
+          p.style.maxHeight = 'none';
+        } else {
+          Object.assign(p.style, {
+            position: 'absolute', zIndex: '1000', backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            padding: '10px', borderRadius: '8px', boxShadow: '0 2px 15px rgba(0,0,0,0.15)',
+            border: '1px solid #ddd', fontFamily: 'Segoe UI, Tahoma, sans-serif', fontSize: '12px',
+            width: '220px', maxHeight: '40px', overflowY: 'hidden', transition: 'all 0.3s ease'
+          }, positionStyles);
+        }
 
         var header = document.createElement('div');
         header.style.display = 'flex';
@@ -1178,9 +1195,13 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         header.appendChild(titleTxt);
 
         var toggleIcon = document.createElement('span');
-        toggleIcon.className = 'toggle-icon';
-        toggleIcon.innerText = '+';
-        header.appendChild(toggleIcon);
+        if (!useSidebar) {
+            toggleIcon.className = 'toggle-icon';
+            toggleIcon.innerText = '+';
+            header.appendChild(toggleIcon);
+        } else {
+            header.style.cursor = 'default';
+        }
         p.appendChild(header);
 
         var content = document.createElement('div');
@@ -1190,7 +1211,16 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         content.style.paddingTop = '10px';
         p.appendChild(content);
 
+        if (useSidebar) {
+          content.style.display = 'flex';
+          content.style.flexDirection = 'column';
+          content.style.flex = '1';
+          content.style.overflow = 'hidden';
+          content.style.minHeight = '0';
+        }
+
         header.onclick = function() {
+          if (useSidebar) return; // Do not collapse in sidebar
           var isHidden = content.style.display === 'none';
           content.style.display = isHidden ? 'block' : 'none';
           toggleIcon.innerText = isHidden ? '−' : '+';
@@ -1198,24 +1228,28 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
           p.style.overflowY = isHidden ? 'auto' : 'hidden';
         };
 
-        container.appendChild(p);
+        if (useSidebar) {
+          sidebar.appendChild(p);
+        } else {
+          container.appendChild(p);
+        }
         return content;
       };
 
       // --- Panels Initialization ---
-      var visContent = createPanel('vis_panel', 'Visualization Options', {top: '10px', right: '10px'});
+      var visContent = createPanel('vis_panel', x.dict.vis_options, {top: '10px', right: '10px'});
       
       // --- Area Selector Panel ---
       var currentAreaAttr = 'None';
       if (x.cat_cols && x.cat_cols.length > 0) {
-        var areaPanelContent = createPanel('area_panel', 'Areas', {top: '10px', left: '10px'});
+        var areaPanelContent = createPanel('area_panel', x.dict.areas, {top: '10px', left: '10px'});
         var areaHTML = '<div style=\"margin-bottom:10px;\">' +
-                       '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444;\">Group by</label>' +
+                       '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444;\">' + x.dict.group_by + '</label>' +
                        '<select id=\"area_sel\" style=\"width:100%; padding:4px; border-radius:4px; margin-bottom:8px;\">' +
-                       '<option value=\"None\">None</option>' +
+                       '<option value=\"None\">' + x.dict.none + '</option>' +
                        x.cat_cols.map(function(c) { return '<option value=\"' + c + '\">' + c.charAt(0).toUpperCase() + c.slice(1) + '</option>'; }).join('') +
                        '</select>' +
-                       '<button id=\"btn_area_layout\" style=\"width:100%; padding:6px; background:#f4f9ef; border:1px solid #8cc63f; color:#5c8822; border-radius:4px; cursor:pointer; font-size:11px; font-weight:bold; display:none; align-items:center; justify-content:center; gap:4px;\">Cluster Areas</button>' +
+                       '<button id=\"btn_area_layout\" style=\"width:100%; padding:6px; background:#f4f9ef; border:1px solid #8cc63f; color:#5c8822; border-radius:4px; cursor:pointer; font-size:11px; font-weight:bold; display:none; align-items:center; justify-content:center; gap:4px;\">' + x.dict.cluster_areas + '</button>' +
                        '</div>';
         areaPanelContent.innerHTML = areaHTML;
         
@@ -1382,7 +1416,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s'
       });
       exportPanel.innerHTML = \"<svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'></path><polyline points='7 10 12 15 17 10'></polyline><line x1='12' y1='15' x2='12' y2='3'></line></svg>\";
-      exportPanel.title = 'Export PNG';
+      exportPanel.title = x.dict.export_png;
       exportPanel.onmouseover = function() { this.style.backgroundColor = '#f5f5f5'; };
       exportPanel.onmouseout = function() { this.style.backgroundColor = 'rgba(255, 255, 255, 0.95)'; };
       exportPanel.onclick = exportPNG;
@@ -1398,10 +1432,10 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         border: '1px solid #eaeaea', display: 'none', fontFamily: 'Inter, Roboto, sans-serif'
       });
       infoModal.innerHTML = '<div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eaeaea; padding-bottom:10px; margin-bottom:15px;\">' +
-                            '<h3 style=\"margin:0; color:#444; font-size:16px;\">Self Digraph</h3>' +
+                            '<h3 style=\"margin:0; color:#444; font-size:16px;\">' + x.dict.self_digraph + '</h3>' +
                             '<span id=\"close_info_modal\" style=\"cursor:pointer; font-size:20px; font-weight:bold; color:#888; line-height:1;\">&times;</span>' +
                             '</div>' +
-                            '<p style=\"margin:0; color:#666; font-size:13px; line-height:1.6;\">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>';
+                            '<p style=\"margin:0; color:#666; font-size:13px; line-height:1.6;\">' + x.dict.info_text_digraph + '</p>';
       container.appendChild(infoModal);
 
       // Info Button
@@ -1414,7 +1448,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s'
       });
       infoPanel.innerHTML = \"<svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'></circle><line x1='12' y1='16' x2='12' y2='12'></line><line x1='12' y1='8' x2='12.01' y2='8'></line></svg>\";
-      infoPanel.title = 'Info';
+      infoPanel.title = x.dict.info;
       infoPanel.onmouseover = function() { this.style.backgroundColor = '#f5f5f5'; };
       infoPanel.onmouseout = function() { this.style.backgroundColor = 'rgba(255, 255, 255, 0.95)'; };
       infoPanel.onclick = function() { infoModal.style.display = 'block'; };
@@ -1432,7 +1466,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s'
       });
       fsPanel.innerHTML = \"<svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3'></path></svg>\";
-      fsPanel.title = 'Fullscreen';
+      fsPanel.title = x.dict.fullscreen;
       fsPanel.onmouseover = function() { this.style.backgroundColor = '#f5f5f5'; };
       fsPanel.onmouseout = function() { this.style.backgroundColor = 'rgba(255, 255, 255, 0.95)'; };
       fsPanel.onclick = function() {
@@ -1457,49 +1491,49 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
 
       // --- Visualization Content ---
       var visHTML = '<div style=\"margin-bottom:15px;\">' +
-                    '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444;\">Color Palette</label>' +
+                    '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444;\">' + x.dict.color_palette + '</label>' +
                     '<select id=\"palette_sel\" style=\"width:100%; padding:4px; border-radius:4px;\">' +
-                    Object.keys(x.color_palette_js).map(k => '<option value=\"' + k + '\"' + (k === x.initial_palette ? ' selected' : '') + '>' + k.charAt(0).toUpperCase() + k.slice(1) + '</option>').join('') +
+                    Object.keys(x.color_palette_js).map(k => '<option value=\"' + k + '\"' + (k === x.initial_palette ? ' selected' : '') + '>' + ((x.dict.palette_labels && x.dict.palette_labels[k]) || k.charAt(0).toUpperCase() + k.slice(1)) + '</option>').join('') +
                     '</select></div>';
       
       visHTML += '<div style=\"margin-bottom:15px;\">' +
-                 '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444;\">Layout Algorithm</label>' +
+                 '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444;\">' + x.dict.layout_algo + '</label>' +
                  '<select id=\"layout_sel\" style=\"width:100%; padding:4px; border-radius:4px;\">' +
-                 Object.keys(x.layouts).map(k => '<option value=\"' + k + '\"' + (k === x.initial_layout ? ' selected' : '') + '>' + k.charAt(0).toUpperCase() + k.slice(1) + '</option>').join('') +
+                 Object.keys(x.layouts).map(k => '<option value=\"' + k + '\"' + (k === x.initial_layout ? ' selected' : '') + '>' + ((x.dict.layout_labels && x.dict.layout_labels[k]) || k.charAt(0).toUpperCase() + k.slice(1)) + '</option>').join('') +
                  '</select></div>';
       
       visHTML += '<div style=\"margin-bottom:15px; border-top:1px solid #eee; padding-top:10px;\">' +
-                 '<div style=\"display:flex; justify-content:space-between; margin-bottom:5px;\"><b style=\"color:#444;\">Edge Filter</b><span id=\"weight_val_txt\" style=\"font-family:monospace;\">0.00</span></div>' +
+                 '<div style=\"display:flex; justify-content:space-between; margin-bottom:5px;\"><b style=\"color:#444;\">' + x.dict.edge_filter + '</b><span id=\"weight_val_txt\" style=\"font-family:monospace;\">0.00</span></div>' +
                  '<input type=\"range\" id=\"weight_slider\" min=\"0\" max=\"' + x.max_weight + '\" step=\"0.01\" value=\"0\" style=\"width:100%;\">' +
                  '<label style=\"display:flex; align-items:center; margin-top:8px; font-size:11px; cursor:pointer; color:#555;\">' +
-                 '<input type=\"checkbox\" id=\"hide_direct_check\" ' + (x.hide_direct ? 'checked' : '') + ' style=\"margin-right:6px;\"> Hide Direct (Positive)</label>' +
+                 '<input type=\"checkbox\" id=\"hide_direct_check\" ' + (x.hide_direct ? 'checked' : '') + ' style=\"margin-right:6px;\"> ' + x.dict.hide_direct + '</label>' +
                  '</div>';
 
       visHTML += '<div style=\"margin-bottom:15px; border-top:1px solid #f0f0f0; padding-top:10px;\">' +
-                 '<div style=\"display:flex; justify-content:space-between; margin-bottom:5px;\"><b style=\"color:#444;\">Node Spacing</b></div>' +
+                 '<div style=\"display:flex; justify-content:space-between; margin-bottom:5px;\"><b style=\"color:#444;\">' + x.dict.node_spacing + '</b></div>' +
                  '<input type=\"range\" id=\"dist_slider\" min=\"0.5\" max=\"3\" step=\"0.1\" value=\"1\" style=\"width:100%; accent-color:#8cc63f;\">' +
                  '</div>';
 
       visHTML += '<div style=\"margin-bottom:15px;\">' +
-                 '<div style=\"display:flex; justify-content:space-between; margin-bottom:5px;\"><b style=\"color:#444;\">Node Size</b></div>' +
+                 '<div style=\"display:flex; justify-content:space-between; margin-bottom:5px;\"><b style=\"color:#444;\">' + x.dict.node_size + '</b></div>' +
                  '<input type=\"range\" id=\"size_slider\" min=\"0.5\" max=\"3\" step=\"0.1\" value=\"1\" style=\"width:100%; accent-color:#8cc63f;\">' +
                  '</div>';
 
       visHTML += '<div style=\"margin-bottom:15px;\">' +
-                 '<div style=\"display:flex; justify-content:space-between; margin-bottom:5px;\"><b style=\"color:#444;\">Text Size</b></div>' +
+                 '<div style=\"display:flex; justify-content:space-between; margin-bottom:5px;\"><b style=\"color:#444;\">' + x.dict.text_size + '</b></div>' +
                  '<input type=\"range\" id=\"text_size_slider\" min=\"10\" max=\"40\" step=\"1\" value=\"20\" style=\"width:100%; accent-color:#8cc63f;\">' +
                  '</div>';
 
       visHTML += '<div style=\"margin-bottom:15px; border-top:1px solid #f0f0f0; padding-top:10px; display:flex; gap:5px;\">' +
-                 '<button id=\"eraser_tool\" title=\"Click nodes/edges to hide them\" style=\"flex:1; padding:6px; background:#fff; border:1px solid #ccc; border-radius:4px; cursor:pointer; font-size:11px; display:flex; align-items:center; justify-content:center; gap:4px;\">🧹 Eraser Mode</button>' +
-                 '<button id=\"btn_reset\" title=\"Reset all settings and restore elements\" style=\"flex:1; padding:6px; background:#f8f9fa; border:1px solid #ccc; border-radius:4px; font-weight:bold; color:#555; cursor:pointer; font-size:11px; display:flex; align-items:center; justify-content:center; gap:4px;\">↺ Reset</button>' +
+                 '<button id=\"eraser_tool\" title=\"Click nodes/edges to hide them\" style=\"flex:1; padding:6px; background:#fff; border:1px solid #ccc; border-radius:4px; cursor:pointer; font-size:11px; display:flex; align-items:center; justify-content:center; gap:4px;\">🧹 ' + x.dict.eraser_mode + '</button>' +
+                 '<button id=\"btn_reset\" title=\"Reset all settings and restore elements\" style=\"flex:1; padding:6px; background:#f8f9fa; border:1px solid #ccc; border-radius:4px; font-weight:bold; color:#555; cursor:pointer; font-size:11px; display:flex; align-items:center; justify-content:center; gap:4px;\">↺ ' + x.dict.reset + '</button>' +
                  '</div>';
 
       visHTML += '<div style=\"border-top:1px solid #eee; padding-top:10px;\">' +
-                 '<b style=\"color:#444; display:block; margin-bottom:8px;\">Visible Constructs</b>' +
+                 '<b style=\"color:#444; display:block; margin-bottom:8px;\">' + x.dict.visible_constructs + '</b>' +
                  '<div style=\"display:flex; gap:5px; margin-bottom:8px;\">' +
-                 '<button id=\"sel_all\" style=\"flex:1; font-size:10px; cursor:pointer;\">All</button>' +
-                 '<button id=\"sel_none\" style=\"flex:1; font-size:10px; cursor:pointer;\">None</button></div>' +
+                 '<button id=\"sel_all\" style=\"flex:1; font-size:10px; cursor:pointer;\">' + x.dict.all + '</button>' +
+                 '<button id=\"sel_none\" style=\"flex:1; font-size:10px; cursor:pointer;\">' + x.dict.none_btn + '</button></div>' +
                  '<div id=\"node_list\" style=\"max-height:150px; overflow-y:auto; border:1px solid #f0f0f0; padding:5px;\"></div></div>';
       
       visContent.innerHTML = visHTML;
@@ -1514,38 +1548,39 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         var simThreshold = sim.threshold || 'saturation';
 
         // ── 1. Settings Panel – collapsible, Bottom-Left ──────────────────
-        var simSettingsContent = createPanel('sim_settings_panel', 'Simulation Settings',
+        var simSettingsContent = createPanel('sim_settings_panel', x.dict.sim_settings,
           {bottom: '10px', left: '10px', width: '260px', borderLeft: '4px solid #3498db'});
         
         var settingsHTML =
+          (isSidebarMode ? '' :
           '<div style=\"margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:10px; display:flex; gap:5px;\">' +
-            '<button id=\"btn_view_graph\" style=\"flex:1; padding:6px; background:#f4f9ef; border:1px solid #8cc63f; border-radius:4px; font-weight:bold; color:#5c8822; cursor:pointer; font-size:11px;\">Network View</button>' +
-            '<button id=\"btn_view_pcsd\" style=\"flex:1; padding:6px; background:#fff; border:1px solid #ccc; border-radius:4px; font-weight:bold; color:#555; cursor:pointer; font-size:11px;\">PCSD Chart</button>' +
-          '</div>' +
+            '<button id=\"btn_view_graph\" style=\"flex:1; padding:6px; background:#f4f9ef; border:1px solid #8cc63f; border-radius:4px; font-weight:bold; color:#5c8822; cursor:pointer; font-size:11px;\">' + x.dict.network_view + '</button>' +
+            '<button id=\"btn_view_pcsd\" style=\"flex:1; padding:6px; background:#fff; border:1px solid #ccc; border-radius:4px; font-weight:bold; color:#555; cursor:pointer; font-size:11px;\">' + x.dict.pcsd_chart + '</button>' +
+          '</div>') +
           '<div style=\"margin-bottom:12px;\">' +
-            '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444;\">Threshold Function</label>' +
+            '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444;\">' + x.dict.thr_function + '</label>' +
             '<select id=\"sim_thr_sel\" style=\"width:100%; padding:4px; border-radius:4px;\">' +
-              '<option value=\"saturation\"' + (simThreshold === 'saturation' ? ' selected' : '') + '>Saturation</option>' +
-              '<option value=\"tanh\"' + (simThreshold === 'tanh' ? ' selected' : '') + '>Hyperbolic (Tanh)</option>' +
-              '<option value=\"linear\"' + (simThreshold === 'linear' ? ' selected' : '') + '>Linear (No limit)</option>' +
+              '<option value=\"saturation\"' + (simThreshold === 'saturation' ? ' selected' : '') + '>' + x.dict.saturation + '</option>' +
+              '<option value=\"tanh\"' + (simThreshold === 'tanh' ? ' selected' : '') + '>' + x.dict.tanh + '</option>' +
+              '<option value=\"linear\"' + (simThreshold === 'linear' ? ' selected' : '') + '>' + x.dict.linear + '</option>' +
             '</select>' +
           '</div>' +
           '<div style=\"margin-bottom:12px;\">' +
-            '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444;\">Simulation Depth (Iter)</label>' +
+            '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444;\">' + x.dict.sim_depth + '</label>' +
             '<input type=\"number\" id=\"sim_depth_input\" min=\"1\" max=\"50\" value=\"' + simMaxIter + '\"' +
               ' style=\"width:100%; padding:4px; border-radius:4px; border:1px solid #ccc;\">' +
           '</div>' +
           '<div style=\"margin-bottom:12px; border-top:1px solid #eee; padding-top:10px;\">' +
-            '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444;\">Playback Speed</label>' +
+            '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444;\">' + x.dict.playback_speed + '</label>' +
             '<input type=\"range\" id=\"speed_slider\" min=\"0.25\" max=\"2\" step=\"0.25\" value=\"1\" style=\"width:100%; accent-color:#8cc63f;\">' +
             '<div id=\"speed_txt\" style=\"text-align:right; font-size:10px; color:#888; margin-top:2px;\">1.00x</div>' +
           '</div>' +
-          '<div style=\"border-top:1px solid #eee; padding-top:10px;\">' +
-            '<b style=\"color:#444; display:block; margin-bottom:8px;\">Scenario</b>' +
-            '<div id=\"act_list\" style=\"max-height:220px; overflow-y:auto; border:1px solid #f8f9fa; padding:5px; background:#fafafa;\"></div>' +
+          '<div style=\"border-top:1px solid #eee; padding-top:10px; display:flex; flex-direction:column; flex:1; min-height:0;\">' +
+            '<b style=\"color:#444; display:block; margin-bottom:8px; flex-shrink:0;\">' + x.dict.scenario + '</b>' +
+            '<div id=\"act_list\" style=\"flex:1; overflow-y:auto; overflow-x:hidden; border:1px solid #f8f9fa; padding:5px; background:#fafafa;\"></div>' +
           '</div>' +
-          '<div style=\"border-top:1px solid #eee; padding-top:10px; margin-top:8px;\">' +
-            '<button id=\"reset_sim\" style=\"width:100%; padding:5px 0; background:#fef9f1; border:1px solid #e0c97a; border-radius:4px; font-size:11px; font-weight:bold; color:#888; cursor:pointer;\">&#8635; Reset Scenario</button>' +
+          '<div style=\"border-top:1px solid #eee; padding-top:10px; margin-top:8px; flex-shrink:0;\">' +
+            '<button id=\"reset_sim\" style=\"width:100%; padding:5px 0; background:#fef9f1; border:1px solid #e0c97a; border-radius:4px; font-size:11px; font-weight:bold; color:#888; cursor:pointer;\">&#8635; ' + x.dict.reset_scenario + '</button>' +
           '</div>';
 
         simSettingsContent.innerHTML = settingsHTML;
@@ -1560,13 +1595,13 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
           boxShadow: '0 2px 10px rgba(0,0,0,0.12)',
           border: '1px solid #d0e8f8',
           fontFamily: 'Segoe UI, Tahoma, sans-serif', fontSize: '12px',
-          bottom: '14px', left: '50%', transform: 'translateX(-50%)', width: '300px', boxSizing: 'border-box'
+          bottom: '20px', left: '50%', transform: 'translateX(-50%)', width: '330px', boxSizing: 'border-box'
         });
         timelineEl.innerHTML =
           '<div style=\"display:flex; align-items:center; gap:7px; width:100%;\">' +
-            '<button id=\"play_btn\" title=\"Play\" style=\"width:26px;height:26px;flex-shrink:0;border:none;border-radius:50%;background:#8cc63f;color:#fff;font-size:12px;cursor:pointer;padding:0;line-height:1;\">&#9654;</button>' +
-            '<button id=\"pause_btn\" title=\"Pause\" style=\"width:26px;height:26px;flex-shrink:0;border:1px solid #ccc;border-radius:50%;background:#f5f5f5;color:#555;font-size:10px;cursor:pointer;padding:0;line-height:1;\">&#9646;&#9646;</button>' +
-            '<button id=\"stop_btn\" title=\"Stop (Reset)\" style=\"width:26px;height:26px;flex-shrink:0;border:1px solid #ccc;border-radius:50%;background:#f5f5f5;color:#e74c3c;font-size:12px;cursor:pointer;padding:0;line-height:1;\">&#9632;</button>' +
+            '<button id=\"play_btn\" title=\"Play\" style=\"min-width:26px;min-height:26px;width:26px;height:26px;flex-shrink:0;border:none;border-radius:50%;background:#8cc63f;color:#fff;font-size:12px;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;box-sizing:border-box;\">&#9654;</button>' +
+            '<button id=\"pause_btn\" title=\"Pause\" style=\"min-width:26px;min-height:26px;width:26px;height:26px;flex-shrink:0;border:1px solid #ccc;border-radius:50%;background:#f5f5f5;color:#555;font-size:10px;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;box-sizing:border-box;\">&#9646;&#9646;</button>' +
+            '<button id=\"stop_btn\" title=\"Stop (Reset)\" style=\"min-width:26px;min-height:26px;width:26px;height:26px;flex-shrink:0;border:1px solid #ccc;border-radius:50%;background:#f5f5f5;color:#e74c3c;font-size:12px;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;box-sizing:border-box;\">&#9632;</button>' +
             '<input type=\"range\" id=\"sim_slider\" min=\"0\" max=\"' + simMaxIter + '\" value=\"0\"' +
               ' style=\"flex:1;accent-color:#8cc63f;cursor:pointer;margin:0;\">' +
             '<span id=\"iter_label\" style=\"flex-shrink:0;font-size:11px;font-weight:bold;color:#8cc63f;white-space:nowrap;min-width:38px;text-align:right;\">0/' + simMaxIter + '</span>' +
@@ -1756,122 +1791,90 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         // --- PCSD View & Chart Logic ---
         var btnGraph = simSettingsContent.querySelector('#btn_view_graph');
         var btnPcsd = simSettingsContent.querySelector('#btn_view_pcsd');
-        var chartCanvas = container.querySelector('#pcsd_canvas');
-        var pcsdChart = null;
+        var plotlyCanvasId = isSidebarMode ? 'wsim_pcsd_plot' : 'pcsd_canvas_plotly';
+        var _pcsdInit = false;
 
-        var updateView = function(mode) {
-          var isGraph = (mode === 'graph');
-          chartContainer.style.display = isGraph ? 'none' : 'block';
-          btnGraph.style.background = isGraph ? '#f4f9ef' : '#fff';
-          btnGraph.style.border = isGraph ? '1px solid #8cc63f' : '1px solid #ccc';
-          btnGraph.style.color = isGraph ? '#5c8822' : '#555';
-          
-          btnPcsd.style.background = !isGraph ? '#f4f9ef' : '#fff';
-          btnPcsd.style.border = !isGraph ? '1px solid #8cc63f' : '1px solid #ccc';
-          btnPcsd.style.color = !isGraph ? '#5c8822' : '#555';
-          
-          if (!isGraph && !pcsdChart && window.Chart) initPcsdChart();
+        if (btnGraph && btnPcsd) {
+          var updateView = function(mode) {
+            var isGraph = (mode === 'graph');
+            chartContainer.style.display = isGraph ? 'none' : 'block';
+            btnGraph.style.background = isGraph ? '#f4f9ef' : '#fff';
+            btnGraph.style.border = isGraph ? '1px solid #8cc63f' : '1px solid #ccc';
+            btnGraph.style.color = isGraph ? '#5c8822' : '#555';
+            
+            btnPcsd.style.background = !isGraph ? '#f4f9ef' : '#fff';
+            btnPcsd.style.border = !isGraph ? '1px solid #8cc63f' : '1px solid #ccc';
+            btnPcsd.style.color = !isGraph ? '#5c8822' : '#555';
+            if (!isGraph) {
+              if (window.Plotly && !_pcsdInit) {
+                initPcsdChart();
+              }
+            }
+          };
+          btnGraph.onclick = function() { updateView('graph'); };
+          btnPcsd.onclick = function() { updateView('pcsd'); };
+        } else {
+           // If we are in sidebar mode, just initialize it silently so Plotly reacts
+           setTimeout(function() { if(window.Plotly && !_pcsdInit) initPcsdChart(); }, 500);
+        }
+
+        var _plotlyLayout = {
+          margin: { l: 60, r: 20, t: 30, b: 50 },
+          showlegend: true,
+          legend: { title: { text: '<b>PERSONAL CONSTRUCTS</b>' }, font: {size: 11} },
+          xaxis: { title: 'ITERATIONS', zeroline: false },
+          yaxis: { title: 'SELF DIFFERENTIAL', zeroline: true, zerolinecolor: '#666', zerolinewidth: 2, range: [-2, 2] }
         };
 
-        btnGraph.onclick = function() { updateView('graph'); };
-        btnPcsd.onclick = function() { updateView('pcsd'); };
-
         var initPcsdChart = function() {
-          if (!window.Chart) return;
+          if (!window.Plotly) return;
           var poles = sim.lpoles.map((lp, i) => lp + ' - ' + sim.rpoles[i]);
-          var styles = ['circle', 'rect', 'triangle', 'diamond', 'rectRot'];
           var plotlyPalette = [
             '#636EFA', '#EF553B', '#00CC96', '#AB63FA', '#FFA15A', '#19D3F3', '#FF6692', '#B6E880', 
             '#FF97FF', '#FECB52', '#0d0887', '#46039f', '#7201a8', '#9c179e', '#bd3786', '#d8576b'
           ];
+          var symbols = ['circle', 'square', 'diamond', 'cross', 'x', 'triangle-up'];
           
-          var datasets = poles.map((p, i) => {
-            var colorIdx = i % plotlyPalette.length;
-            var shapeIdx = Math.floor(i / plotlyPalette.length);
-            var color = plotlyPalette[colorIdx];
-            var shape = styles[shapeIdx % styles.length];
-            
+          var traces = poles.map((p, i) => {
             return {
-              label: (p.length > 30 ? p.substring(0, 27) + '...' : p),
-              data: [],
-              borderColor: color,
-              backgroundColor: color,
-              tension: 0.4,
-              borderWidth: 2.5,
-              pointStyle: shape,
-              pointRadius: 5,
-              pointHoverRadius: 8,
-              pointBorderColor: '#fff',
-              pointBorderWidth: 1.5,
-              fill: false
+              name: (p.length > 30 ? p.substring(0, 27) + '...' : p),
+              x: [],
+              y: [],
+              mode: 'lines+markers',
+              line: { color: plotlyPalette[i % plotlyPalette.length], width: 2.5, shape: 'spline' },
+              marker: { symbol: symbols[Math.floor(i / plotlyPalette.length) % symbols.length], size: 8 }
             };
           });
 
-          if(pcsdChart) pcsdChart.destroy();
-          pcsdChart = new Chart(chartCanvas, {
-            type: 'line',
-            data: { labels: [], datasets: datasets },
-            options: {
-              responsive: true, maintainAspectRatio: false,
-              interaction: { mode: 'point', intersect: true },
-              layout: { padding: { bottom: 60, top: 40 } },
-              plugins: { 
-                legend: { 
-                  position: 'right', 
-                  labels: { usePointStyle: true, boxWidth: 10, font: {size: 11}, padding: 15 },
-                  title: { display: true, text: 'PERSONAL CONSTRUCTS', font: {size: 12, weight: 'bold'} }
-                },
-                title: { display: false }
-              },
-              scales: {
-                x: { 
-                  title: { display: true, text: 'ITERATIONS', font: {size: 13, weight: 'bold', family: 'Arial'} }, 
-                  grid: {display: false},
-                  ticks: {font: {size: 12}} 
-                },
-                y: { 
-                  title: { display: true, text: 'SELF DIFFERENTIAL', font: {size: 13, weight: 'bold', family: 'Arial'} }, 
-                  suggestedMin: -0.6, suggestedMax: 0.6,
-                  grid: {
-                    color: '#f0f0f0',
-                    drawBorder: true,
-                    borderColor: '#f0f0f0'
-                  },
-                  ticks: {font: {size: 12}} 
-                }
-              }
-            },
-            plugins: [{
-              id: 'zeroLine',
-              beforeDraw: (chart) => {
-                const {ctx, chartArea: {top, bottom, left, right}, scales: {y}} = chart;
-                const zeroY = y.getPixelForValue(0);
-                if (zeroY >= top && zeroY <= bottom) {
-                  ctx.save();
-                  ctx.strokeStyle = '#666';
-                  ctx.lineWidth = 2;
-                  ctx.beginPath();
-                  ctx.moveTo(left, zeroY);
-                  ctx.lineTo(right, zeroY);
-                  ctx.stroke();
-                  ctx.restore();
-                }
-              }
-            }]
-          });
+          var canvasEl = document.getElementById(plotlyCanvasId);
+          if (!canvasEl) {
+              console.warn('Plotly canvas element not found: ' + plotlyCanvasId);
+              return;
+          }
+          _pcsdInit = true;
+          // Clear any R htmlwidget content first to avoid conflicts
+          canvasEl.innerHTML = '';
+          try {
+              Plotly.newPlot(plotlyCanvasId, traces, _plotlyLayout, {responsive: true, displayModeBar: false});
+          } catch (err) {
+              console.error('Plotly.newPlot error:', err);
+          }
           updatePcsdData();
         };
 
         var updatePcsdData = function() {
-          if(!pcsdChart || !network._simHistory) return;
+          if (!window.Plotly || !_pcsdInit || !network._simHistory) return;
           var history = network._simHistory;
           var initial = sim.initial_self;
           
-          pcsdChart.data.labels = history.map((_, i) => i);
-          pcsdChart.data.datasets.forEach((ds, dsIdx) => {
-            ds.data = history.map(step => step[dsIdx] - initial[dsIdx]);
-          });
-          pcsdChart.update('none');
+          var x_data = history.map((_, i) => i);
+          
+          var tracesUpdate = {
+            x: Array(initial.length).fill(x_data),
+            y: initial.map((_, dsIdx) => history.map(step => step[dsIdx] - initial[dsIdx]))
+          };
+          
+          Plotly.update(plotlyCanvasId, tracesUpdate, {});
         };
 
         runSimulation();
@@ -2142,6 +2145,9 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       g$x$cat_cols <- c()
     }
     
+    # Pass dictionary to JS
+    g$x$dict <- t
+    
 
     
     js_panel <- gsub("WIMP_EXPORT_NAME", export_name, js_panel)
@@ -2263,7 +2269,7 @@ simdigraph <- function(scn, niter = 0, ...) {
 #' @examples
 #' weight_heatmap(example_wimp)
 #'
-weight_heatmap <- function(wimp, palette = "Redgreen") {
+weight_heatmap <- function(wimp, palette = "Redgreen", lang = "en") {
   
   # 1. Extract data
   if (!inherits(wimp, "wimp")) {
@@ -2310,11 +2316,19 @@ weight_heatmap <- function(wimp, palette = "Redgreen") {
     zmax = 2,
     xgap = 0,
     ygap = 0,
-    hovertemplate = paste(
-      "<b>From:</b> %{y}<br>",
-      "<b>To:</b> %{x}<br>",
-      "<b>Weight:</b> %{z:.3f}<extra></extra>"
-    ),
+    hovertemplate = if (lang == "es") {
+      paste(
+        "<b>Origen:</b> %{y}<br>",
+        "<b>Destino:</b> %{x}<br>",
+        "<b>Peso:</b> %{z:.3f}<extra></extra>"
+      )
+    } else {
+      paste(
+        "<b>From:</b> %{y}<br>",
+        "<b>To:</b> %{x}<br>",
+        "<b>Weight:</b> %{z:.3f}<extra></extra>"
+      )
+    },
     colorbar = list(title = "")
   )
   
@@ -2373,14 +2387,14 @@ weight_heatmap <- function(wimp, palette = "Redgreen") {
   layout(
     title = "",
     xaxis = list(
-      title = list(text = "<b>Effect on (To)</b>", font = list(size = 14), standoff = 25),
+      title = list(text = if (lang == "es") "<b>Efecto sobre (Destino)</b>" else "<b>Effect on (To)</b>", font = list(size = 14), standoff = 25),
       tickangle = -45,
       tickfont = list(size = 10),
       showline = TRUE, mirror = TRUE, linecolor = "black", linewidth = 1,
       showgrid = FALSE, zeroline = FALSE
     ),
     yaxis = list(
-      title = list(text = "<b>Influence of (From)</b>", font = list(size = 14), standoff = 25),
+      title = list(text = if (lang == "es") "<b>Influencia de (Origen)</b>" else "<b>Influence of (From)</b>", font = list(size = 14), standoff = 25),
       autorange = "reversed",
       tickfont = list(size = 10),
       showline = TRUE, mirror = TRUE, linecolor = "black", linewidth = 1,

@@ -366,7 +366,9 @@ eigen_index <- function(wimp, matrix = "weights", num_vectors = 2) {
 #' pb_plot(example_wimp)
 #'
 
-pb_plot <- function(wimp, text_size = 1, ...) {
+pb_plot <- function(wimp, text_size = 1, lang = "en", ...) {
+
+  t <- wt_i18n(lang)
 
   pb_mat <- pb_index(wimp, ...)
   pb_mat_df <- as.data.frame(pb_mat)
@@ -432,20 +434,20 @@ pb_plot <- function(wimp, text_size = 1, ...) {
 
   # Convert optimized positions back to original data scale
   if (nrow(optimized_positions) > 0) {
-    # Convert normalized shifts back to data coordinates
-    optimized_positions$xshift_data <- optimized_positions$xshift *
-      (x_span + 2 * x_padding)
-    optimized_positions$yshift_data <- optimized_positions$yshift *
-      (y_span + 2 * y_padding)
+    # Convert normalized coordinates back to data coordinates
+    optimized_positions$x_data <- optimized_positions$x *
+      (x_span + 2 * x_padding) + (x_range[1] - x_padding)
+    optimized_positions$y_data <- optimized_positions$y *
+      (y_span + 2 * y_padding) + (y_range[1] - y_padding)
   }
 
   # Create plotly graph
   p <- plot_ly() %>%
     layout(
       title = "",
-      xaxis = list(title = list(text = "PRESENCE", font = list(size = 20),
+      xaxis = list(title = list(text = t$pb_axis_x, font = list(size = 20),
                                 standoff = 25)),
-      yaxis = list(title = list(text = "BALANCE",
+      yaxis = list(title = list(text = t$pb_axis_y,
                                 font = list(size = 20), standoff = 25)),
       plot_bgcolor = "white",
       font = list(family = "Arial"),
@@ -469,11 +471,16 @@ pb_plot <- function(wimp, text_size = 1, ...) {
         text = optimized_positions$label[i],
         hoverinfo = "skip",
         font = list(size = 12 * text_size, color = "black"),
-        showarrow = FALSE,
+        showarrow = TRUE,
+        arrowcolor = "rgba(0,0,0,0.15)",
+        arrowwidth = 1,
+        arrowsize = 0.5,
+        axref = "x",
+        ayref = "y",
+        ax = optimized_positions$x_data[i],
+        ay = optimized_positions$y_data[i],
         xanchor = optimized_positions$xanchor[i],
-        yanchor = optimized_positions$yanchor[i],
-        xshift = optimized_positions$xshift_data[i],
-        yshift = optimized_positions$yshift_data[i]
+        yanchor = optimized_positions$yanchor[i]
       )
     }
   }

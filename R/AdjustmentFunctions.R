@@ -589,8 +589,8 @@ hypo_plot <- function(wimp, text_size = 1, show_labels = TRUE, ...) {
 
     df$xanchor <- label_positions$xanchor
     df$yanchor <- label_positions$yanchor
-    df$xshift <- label_positions$xshift
-    df$yshift <- label_positions$yshift
+    df$opt_x <- label_positions$x
+    df$opt_y <- label_positions$y
 
     fig <- fig %>%
       add_annotations(
@@ -600,11 +600,16 @@ hypo_plot <- function(wimp, text_size = 1, show_labels = TRUE, ...) {
         text = ~construct,
         hoverinfo = "skip",
         font = list(size = 11 * text_size, color = "black"),
-        showarrow = FALSE,
+        showarrow = TRUE,
+        arrowcolor = "rgba(0,0,0,0.15)",
+        arrowwidth = 1,
+        arrowsize = 0.5,
+        axref = "x",
+        ayref = "y",
+        ax = ~opt_x,
+        ay = ~opt_y,
         xanchor = ~xanchor,
-        xshift = ~xshift,
-        yanchor = ~yanchor,
-        yshift = ~yshift
+        yanchor = ~yanchor
       )
   }
 

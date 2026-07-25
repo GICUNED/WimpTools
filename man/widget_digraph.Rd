@@ -4,7 +4,7 @@
 \alias{widget_digraph}
 \title{Generate Tabbed HTML Widget for Psychlab}
 \usage{
-widget_digraph(x, ...)
+widget_digraph(x, lang = "en", ...)
 }
 \arguments{
 \item{x}{A \code{wimp} object created by \code{\link{wimp}}.}
