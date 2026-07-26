@@ -462,6 +462,7 @@ if_barchart <- function(wimp, show = "all", ...) {
   # Combine panels
   fig <- subplot(fig1, fig2, margin = 0.005) %>%
     layout(
+      margin = list(r = 100),
       xaxis = list(title = "IMPACT"), yaxis = list(title = ""),
       xaxis2 = list(title = "FEEDBACK"),
       yaxis2 = list(

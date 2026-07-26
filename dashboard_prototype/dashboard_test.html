@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WimpTools Modular Dashboard</title>
+
+    <!-- GridStack.js CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/gridstack@8.1.1/dist/gridstack.min.css" rel="stylesheet"/>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body, html {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .app-layout {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Sidebar Styles */
+        .app-sidebar {
+            width: 250px;
+            background-color: #f8f9fa;
+            border-right: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            transition: margin-left 0.3s ease;
+            flex-shrink: 0;
+        }
+        .app-sidebar.collapsed {
+            margin-left: -250px;
+        }
+        .sidebar-logo {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            background: white;
+        }
+        .sidebar-nav {
+            flex-grow: 1;
+            padding: 15px 0;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: #555;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            transition: background-color 0.2s, color 0.2s;
+            gap: 12px;
+        }
+        .nav-item:hover {
+            background-color: #eee;
+        }
+        .nav-item.active {
+            color: #8cc63f;
+            background-color: #f0f7e6;
+            border-left: 4px solid #8cc63f;
+            padding-left: 16px;
+        }
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid #eee;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        .lang-toggle {
+            display: flex;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+            width: 100%;
+        }
+        .lang-opt {
+            flex: 1;
+            text-align: center;
+            padding: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #888;
+            cursor: pointer;
+        }
+        .lang-opt.active {
+            background: #8cc63f;
+            color: white;
+        }
+        .user-profile {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            align-items: center;
+        }
+        
+        /* Main Content wrapper */
+        .app-main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 10px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            flex-shrink: 0;
+            z-index: 100;
+            gap: 10px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 18px;
+            color: #333;
+            flex: 1 1 auto;
+            min-width: 250px;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .controls button {
+            background-color: #8cc63f;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+            transition: background-color 0.2s;
+        }
+
+        .controls button:hover {
+            background-color: #7ab332;
+        }
+
+        /* Edit mode toggle button */
+        #editModeBtn {
+            background-color: #666;
+        }
+        #editModeBtn.active {
+            background-color: #e63946;
+        }
+
+        /* Dropdown styles */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: white;
+            min-width: 200px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
+            z-index: 200;
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid #eee;
+        }
+        .dropdown-content button {
+            color: #333;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            background: none;
+            width: 100%;
+            text-align: left;
+            border-radius: 0;
+            margin: 0;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .dropdown-content button:hover {
+            background-color: #f8f9fa;
+            color: #8cc63f;
+        }
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dashboard-container {
+            flex: 1;
+            padding: 10px;
+            position: relative;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background-color: #f8f9fa;
+            background-image: radial-gradient(#d0d0d0 1.5px, transparent 1.5px);
+            background-size: 25px 25px;
+        }
+
+        .grid-stack {
+            height: 100%;
+            background: transparent;
+        }
+
+        /* GridStack Element Styles */
+        .grid-stack-item-content {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #e0e0e0;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            flex: 1;
+            border: none;
+            display: block;
+        }
+
+        /* Overlay used for dragging and deleting during Edit Mode */
+        .edit-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.4);
+            z-index: 10;
+            display: none;
+            cursor: move;
+            border: 2px dashed #e63946;
+            border-radius: 8px;
+        }
+
+        /* Delete button (only visible in edit mode inside overlay) */
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff4d4f;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            pointer-events: auto; /* Allow clicking the button */
+        }
+
+        .delete-btn:hover {
+            background: #ff7875;
+        }
+        
+        .drag-hint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            pointer-events: none;
+        }
+
+        /* When Grid is in edit mode */
+        body.edit-mode .edit-overlay {
+            display: block;
+        }
+
+        /* Hide GridStack native resize handles when not in edit mode */
+        .grid-stack-item .ui-resizable-handle {
+            display: none !important;
+            background-image: none !important; /* Hide native arrows/dots */
+        }
+        body.edit-mode .grid-stack-item .ui-resizable-handle {
+            display: block !important;
+        }
+
+        /* Dashboard Tabs */
+        .dashboard-tabs {
+            display: flex;
+            background-color: #fff;
+            padding: 0 20px;
+            gap: 15px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            border-bottom: 1px solid #eaeaea;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+            z-index: 10;
+            flex-shrink: 0;
+        }
+        .dashboard-tab {
+            background-color: transparent;
+            border: none;
+            padding: 12px 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #777;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -1px;
+        }
+        .dashboard-tab:hover {
+            color: #333;
+        }
+        .dashboard-tab.active {
+            color: #8cc63f;
+            border-bottom: 3px solid #8cc63f;
+            font-weight: 600;
+        }
+        .dashboard-tab .close-tab {
+            font-size: 16px;
+            line-height: 1;
+            color: #bbb;
+            border: none;
+            background: none;
+            padding: 0;
+            cursor: pointer;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .dashboard-tab:hover .close-tab {
+            color: #999;
+        }
+        .dashboard-tab .close-tab:hover {
+            color: #ff4d4f;
+        }
+        .add-tab-btn {
+            background: none;
+            border: none;
+            padding: 12px 10px;
+            cursor: pointer;
+            color: #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .add-tab-btn:hover {
+            color: #8cc63f;
+        }
+        .grid-wrapper {
+            display: none;
+            height: 100%;
+        }
+        .grid-wrapper.active {
+            display: block;
+        }
+
+        /* Patient Banner */
+        .patient-banner {
+            display: flex;
+            align-items: center;
+            padding: 15px 25px;
+            background-color: #fafafa;
+            border-bottom: 1px solid #eaeaea;
+            gap: 20px;
+            flex-shrink: 0;
+        }
+        .patient-photo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #e4e6e9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            color: #8cc63f;
+        }
+        .patient-info {
+            flex-grow: 1;
+        }
+        .patient-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .patient-desc {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.4;
+        }
+        .patient-meta {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .meta-tag {
+            background-color: #f0f7e6;
+            color: #66992b;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid #d3ebb8;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Placeholder -->
+        <div class="app-sidebar" id="appSidebar">
+            <div class="sidebar-logo">
+                <div style="font-size: 20px; font-weight: 800; color: #333; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8cc63f" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 12 2.1 7.1"></path><path d="M12 12l9.9 4.9"></path></svg>
+                    PsychLab<span style="color: #8cc63f; font-size: 12px; vertical-align: top;">UNED</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg> Inicio
+                </a>
+                <a href="#" class="nav-item active">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> Pacientes
+                </a>
+                <a href="#" class="nav-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> Sugerencias / Análisis
+                </a>
+                <a href="#" class="nav-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> Configuración
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="lang-toggle">
+                    <span class="lang-opt">EN</span>
+                    <span class="lang-opt active">ES</span>
+                </div>
+                <div class="user-profile">
+                    <span>Alejandro Sanfeliciano</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="iso-logo">
+                    <div style="width: 60px; height: 60px; border: 2px solid #5b9bd5; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #5b9bd5; font-size: 16px; margin: 0 auto;">ISO</div>
+                    <div style="font-size: 9px; color: #888; text-align: center; margin-top: 4px;">27001</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="app-main-content">
+            <div class="header">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <button onclick="document.getElementById('appSidebar').classList.toggle('collapsed')" style="background:none; border:none; cursor:pointer; padding:5px; color:#555;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                    </button>
+                    <h1 style="display: flex; align-items: center; gap: 8px; font-size: 18px; margin: 0;">
+                        <span style="color: #666; font-weight: 500;">Pacientes</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        <span style="color: #666; font-weight: 500;">Caso SU</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        <span style="color: #333; font-weight: 600;">Dashboard</span>
+                    </h1>
+                </div>
+            </div>
+    
+    <!-- Patient Banner -->
+    <div class="patient-banner">
+        <div class="patient-photo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        </div>
+        <div class="patient-info">
+            <div class="patient-name">Paciente: Caso SU</div>
+            <div class="patient-desc">Conflicto sobre estilo comunicativo y miedo a la pérdida.</div>
+        </div>
+        <div class="patient-meta">
+            <span class="meta-tag">Femenino</span>
+            <span class="meta-tag">34 años</span>
+            <span class="meta-tag">Caso abierto</span>
+        </div>
+    </div>
+
+    <!-- Tabs and Controls Bar -->
+    <div class="tabs-and-controls-bar" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eaeaea; background-color: #fff; padding-right: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); z-index: 10;">
+        <div class="dashboard-tabs" id="tabsBar" style="border-bottom: none; box-shadow: none; flex-grow: 1; padding-right: 0; z-index: 1;">
+            <!-- Tabs will be injected here -->
+            <button class="add-tab-btn" onclick="promptNewDashboard()" title="Nuevo Dashboard">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+        </div>
+        <div class="controls" style="display: flex; gap: 8px;">
+            <button id="tabSettingsBtn" onclick="openTabSettings()" title="Configuración de Pestaña" style="display:flex; align-items:center; justify-content:center; padding:6px; width:28px; height:28px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
+            <button id="editModeBtn" onclick="toggleEditMode()" title="Modo Edición" style="display:flex; align-items:center; justify-content:center; padding:6px; width:28px; height:28px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+            </button>
+            <div class="dropdown">
+                <button class="dropbtn" title="Añadir Widget" style="display:flex; align-items:center; justify-content:center; padding:6px; width:28px; height:28px;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+                <div class="dropdown-content">
+                    <button onclick="addWidget('widget_digraph.html', 6, 10)">Mapa de Implicaciones</button>
+                    <button onclick="addWidget('widget_centrality.html', 6, 10)">Análisis de Centralidad</button>
+                    <button onclick="addWidget('widget_implications.html', 6, 10)">Análisis de Implicaciones</button>
+                    <button onclick="addWidget('widget_simulation.html', 6, 10)">Laboratorio de Dinámicas</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- The Grid Container -->
+    <div class="dashboard-container" id="dashboardsContainer">
+        <!-- Grids will be injected here dynamically -->
+    </div>
+        </div> <!-- End app-main-content -->
+    </div> <!-- End app-layout -->
+
+    <!-- Tab Settings Modal -->
+    <div id="tabSettingsModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:20px; border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,0.2); z-index:9999; min-width:320px; font-family:Inter, sans-serif;">
+        <h3 style="margin-top:0; color:#333; font-size:16px;">Configuración de Dashboard</h3>
+        
+        <label style="display:block; margin-bottom:5px; font-size:13px; color:#555;">Nombre del Dashboard:</label>
+        <input type="text" id="tabNameInput" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; margin-bottom:15px; font-family:inherit;">
+        
+        <label style="display:flex; align-items:center; gap:8px; margin-bottom:20px; font-size:14px; cursor:pointer; color:#444;">
+            <input type="checkbox" id="tabSharedInput" style="cursor:pointer;">
+            Compartir vista con el paciente
+        </label>
+
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <button onclick="deleteCurrentTab()" style="background:#fff; color:#e63946; border:1px solid #e63946; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:13px; transition:0.2s;" onmouseover="this.style.background='#e63946'; this.style.color='#fff';" onmouseout="this.style.background='#fff'; this.style.color='#e63946';">Eliminar</button>
+            <div style="display:flex; gap:8px;">
+                <button onclick="document.getElementById('tabSettingsModal').style.display='none'" style="background:#f1f1f1; color:#333; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:13px;">Cancelar</button>
+                <button onclick="saveTabSettings()" style="background:#8cc63f; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:13px;">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GridStack.js Script -->
+    <script src="https://cdn.jsdelivr.net/npm/gridstack@8.1.1/dist/gridstack-all.js"></script>
+    <script>
+        let widgetCount = 0;
+        let isEditMode = false;
+        let tabCount = 0;
+        let activeTabId = null;
+        const grids = {};
+
+        // Calculate row height dynamically to fit exactly 10 rows in available screen space
+        // Subtracting 180px safely covers header, tabs padding, container padding, and grid margins
+        const rowHeight = Math.floor((window.innerHeight - 180) / 10);
+
+        // Function to prompt and create a new dashboard
+        function promptNewDashboard() {
+            const name = prompt("Nombre del nuevo dashboard:", "Dashboard " + (tabCount + 1));
+            if (name && name.trim() !== "") {
+                addDashboardTab(name.trim());
+            }
+        }
+
+        // Function to create a new dashboard tab and GridStack instance
+        function addDashboardTab(name) {
+            tabCount++;
+            const tabId = 'tab_' + tabCount;
+            const gridId = 'grid_' + tabCount;
+
+            // 1. Create Tab Button
+            const tabBtn = document.createElement('div');
+            tabBtn.className = 'dashboard-tab';
+            tabBtn.id = 'btn_' + tabId;
+            tabBtn.innerHTML = `
+                <span class="tab-name-text" onclick="switchTab('${tabId}')" style="flex-grow:1; display:flex; align-items:center;">${name}</span>
+            `;
+            // Insert before the Add (+) button
+            const tabsBar = document.getElementById('tabsBar');
+            tabsBar.insertBefore(tabBtn, tabsBar.lastElementChild);
+
+            // 2. Create Grid Wrapper
+            const gridWrapper = document.createElement('div');
+            gridWrapper.className = 'grid-wrapper';
+            gridWrapper.id = 'wrapper_' + tabId;
+            
+            const gridDiv = document.createElement('div');
+            gridDiv.className = 'grid-stack';
+            gridDiv.id = gridId;
+            
+            gridWrapper.appendChild(gridDiv);
+            document.getElementById('dashboardsContainer').appendChild(gridWrapper);
+
+            // 3. Initialize GridStack for this div
+            const newGrid = GridStack.init({
+                cellHeight: rowHeight + 'px',
+                margin: 8,
+                handle: '.edit-overlay',
+                float: true,
+                disableOneColumnMode: true,
+                resizable: { handles: 'e, se, s, sw, w, n, nw, ne' },
+                staticGrid: !isEditMode // Follow current edit mode state
+            }, gridDiv);
+            
+            grids[tabId] = newGrid;
+            
+            // Switch to the new tab immediately
+            switchTab(tabId);
+        }
+
+        // --- TAB SETTINGS LOGIC ---
+        function openTabSettings() {
+            if (!activeTabId) return;
+            const tabBtn = document.getElementById('btn_' + activeTabId);
+            if (!tabBtn) return;
+            const nameSpan = tabBtn.querySelector('.tab-name-text');
+            
+            document.getElementById('tabNameInput').value = nameSpan.textContent;
+            document.getElementById('tabSharedInput').checked = !!tabBtn.dataset.shared;
+            
+            document.getElementById('tabSettingsModal').style.display = 'block';
+        }
+
+        function saveTabSettings() {
+            if (!activeTabId) return;
+            const tabBtn = document.getElementById('btn_' + activeTabId);
+            if (!tabBtn) return;
+            
+            const newName = document.getElementById('tabNameInput').value;
+            const isShared = document.getElementById('tabSharedInput').checked;
+            
+            // Update name (removing any extra HTML just in case)
+            const nameSpan = tabBtn.querySelector('.tab-name-text');
+            nameSpan.textContent = newName;
+            
+            // Update shared status
+            if (isShared) {
+                tabBtn.dataset.shared = "true";
+                if (!tabBtn.querySelector('.shared-icon')) {
+                    const icon = document.createElement('span');
+                    icon.className = 'shared-icon';
+                    icon.style.marginLeft = '6px';
+                    icon.style.color = '#5b9bd5';
+                    icon.title = 'Compartido con el paciente';
+                    icon.style.display = 'inline-flex';
+                    icon.style.alignItems = 'center';
+                    icon.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`;
+                    // Append icon inside the flex span
+                    nameSpan.appendChild(icon);
+                }
+            } else {
+                delete tabBtn.dataset.shared;
+                const icon = tabBtn.querySelector('.shared-icon');
+                if (icon) icon.remove();
+            }
+            
+            document.getElementById('tabSettingsModal').style.display = 'none';
+        }
+
+        function deleteCurrentTab() {
+            if (confirm("¿Estás seguro de que deseas eliminar este dashboard? Se perderán todos sus widgets.")) {
+                removeDashboardTab(activeTabId);
+                document.getElementById('tabSettingsModal').style.display = 'none';
+            }
+        }
+        // --------------------------
+        // Function to switch active tabs
+        function switchTab(tabId) {
+            if (!grids[tabId]) return;
+
+            // Deactivate all
+            document.querySelectorAll('.dashboard-tab').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.grid-wrapper').forEach(wrapper => wrapper.classList.remove('active'));
+
+            // Activate target
+            document.getElementById('btn_' + tabId).classList.add('active');
+            document.getElementById('wrapper_' + tabId).classList.add('active');
+            
+            activeTabId = tabId;
+        }
+
+        // Function to remove a dashboard
+        function removeDashboardTab(tabId) {
+            if (Object.keys(grids).length <= 1) {
+                alert("No puedes borrar el único dashboard.");
+                return;
+            }
+            if (confirm("¿Seguro que quieres borrar este dashboard y todos sus widgets?")) {
+                // Remove from DOM
+                document.getElementById('btn_' + tabId).remove();
+                document.getElementById('wrapper_' + tabId).remove();
+                delete grids[tabId];
+                
+                // If we deleted the active tab, switch to the first available one
+                if (activeTabId === tabId) {
+                    switchTab(Object.keys(grids)[0]);
+                }
+            }
+        }
+
+        // Function to toggle edit mode
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            const btn = document.getElementById('editModeBtn');
+            
+            if (isEditMode) {
+                document.body.classList.add('edit-mode');
+                btn.classList.add('active');
+            } else {
+                document.body.classList.remove('edit-mode');
+                btn.classList.remove('active');
+            }
+
+            // Update ALL grid instances
+            Object.values(grids).forEach(gridInstance => {
+                gridInstance.setStatic(!isEditMode);
+            });
+        }
+
+        // Function to add a new widget (to the ACTIVE grid)
+        function addWidget(url, w, h) {
+            if (!activeTabId) return;
+            
+            widgetCount++;
+            let id = 'widget_' + widgetCount;
+
+            let widgetHTML = `
+                <div class="grid-stack-item" id="${id}" gs-w="${w}" gs-h="${h}">
+                    <div class="grid-stack-item-content">
+                        <div class="edit-overlay">
+                            <div class="drag-hint">✥ Arrastrar</div>
+                            <button class="delete-btn" onclick="removeWidget('${id}')" title="Borrar">✖</button>
+                        </div>
+                        <iframe src="${url}" scrolling="no" allow="fullscreen" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>
+                    </div>
+                </div>
+            `;
+
+            grids[activeTabId].addWidget(widgetHTML);
+        }
+
+        // Function to remove a widget (from the ACTIVE grid)
+        function removeWidget(id) {
+            if (!activeTabId) return;
+            let el = document.getElementById(id);
+            if(el) {
+                grids[activeTabId].removeWidget(el);
+            }
+        }
+
+        // Handle window resize to dynamically adjust widget heights to fit screen
+        window.addEventListener('resize', function() {
+            const newRowHeight = Math.floor((window.innerHeight - 180) / 10);
+            Object.values(grids).forEach(gridInstance => {
+                if (gridInstance && typeof gridInstance.cellHeight === 'function') {
+                    gridInstance.cellHeight(newRowHeight + 'px');
+                }
+            });
+        });
+
+        // Initialize the first default dashboard on load
+        window.onload = function() {
+            addDashboardTab("Principal");
+        };
+    </script>
+</body>
+</html>

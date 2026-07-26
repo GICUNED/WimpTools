@@ -767,8 +767,8 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
   if (interactive_options) {
     js_panel <- "
     function(el, x) {
-      el.style.height = '90vh';
-      el.style.minHeight = '600px';
+      el.style.height = '100%';
+      el.style.minHeight = '0px';
       var network = this.network;
       var container = el;
       el.style.position = 'relative';
@@ -837,9 +837,15 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         
         var edgesDS = network.body.data.edges;
         var scheme2 = visContent.querySelector('#palette_sel').value;
+        var opSlider = visContent.querySelector('#opacity_slider');
+        var op = opSlider ? parseFloat(opSlider.value) : 0.5;
+        
         var edgeUpdates = edgesDS.get().map(function(edge) {
-          if(scheme2 === 'grey scale') return {id: edge.id, color: {color: 'rgba(153,153,153,0.5)', highlight: 'rgba(153,153,153,1)'}, dashes: edge.weight < 0};
-          return {id: edge.id, color: {color: edge.orig_color, highlight: edge.orig_highlight}, dashes: edge.orig_dashes};
+          var c1 = edge.orig_color ? edge.orig_color.replace(/[\\d.]+\\)$/, op + ')') : '';
+          var c2 = (scheme2 === 'grey scale') ? 'rgba(153,153,153,'+op+')' : c1;
+          var hl = (scheme2 === 'grey scale') ? 'rgba(153,153,153,1)' : edge.orig_highlight;
+          var dsh = (scheme2 === 'grey scale') ? (edge.weight < 0) : edge.orig_dashes;
+          return {id: edge.id, color: {color: c2, highlight: hl}, dashes: dsh};
         });
         edgesDS.update(edgeUpdates);
       };
@@ -1179,7 +1185,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
             position: 'absolute', zIndex: '1000', backgroundColor: 'rgba(255, 255, 255, 0.95)',
             padding: '10px', borderRadius: '8px', boxShadow: '0 2px 15px rgba(0,0,0,0.15)',
             border: '1px solid #ddd', fontFamily: 'Segoe UI, Tahoma, sans-serif', fontSize: '12px',
-            width: '220px', maxHeight: '40px', overflowY: 'hidden', transition: 'all 0.3s ease'
+            width: '90%', maxWidth: '220px', boxSizing: 'border-box', maxHeight: '40px', overflowY: 'hidden', transition: 'all 0.3s ease'
           }, positionStyles);
         }
 
@@ -1236,13 +1242,36 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         return content;
       };
 
-      // --- Panels Initialization ---
-      var visContent = createPanel('vis_panel', x.dict.vis_options, {top: '10px', right: '10px'});
+      // --- Settings Modal Initialization ---
+      var settingsModal = document.createElement('div');
+      settingsModal.id = 'settings_modal';
+      Object.assign(settingsModal.style, {
+        position: 'absolute', top: '10px', right: '10px',
+        width: '90%', maxWidth: '300px', maxHeight: '80vh', overflowY: 'auto', boxSizing: 'border-box',
+        backgroundColor: '#fff', zIndex: '2000', padding: '20px', borderRadius: '8px', 
+        boxShadow: '0 4px 20px rgba(0,0,0,0.2)', border: '1px solid #eaeaea', display: 'none', 
+        fontFamily: 'Inter, Roboto, sans-serif'
+      });
+      
+      var settingsModalHeader = '<div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eaeaea; padding-bottom:10px; margin-bottom:15px;\">' +
+                                '<h3 style=\"margin:0; color:#444; font-size:14px;\">' + x.dict.vis_options + '</h3>' +
+                                '<span id=\"close_settings_modal\" style=\"cursor:pointer; font-size:20px; font-weight:bold; color:#888; line-height:1;\">&times;</span>' +
+                                '</div>';
+                                
+      var settingsModalBody = document.createElement('div');
+      settingsModal.innerHTML = settingsModalHeader;
+      settingsModal.appendChild(settingsModalBody);
+      container.appendChild(settingsModal);
+      
+      settingsModal.querySelector('#close_settings_modal').onclick = function() { settingsModal.style.display = 'none'; };
+
+      var visContent = document.createElement('div');
       
       // --- Area Selector Panel ---
       var currentAreaAttr = 'None';
       if (x.cat_cols && x.cat_cols.length > 0) {
         var areaPanelContent = createPanel('area_panel', x.dict.areas, {top: '10px', left: '10px'});
+        
         var areaHTML = '<div style=\"margin-bottom:10px;\">' +
                        '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444;\">' + x.dict.group_by + '</label>' +
                        '<select id=\"area_sel\" style=\"width:100%; padding:4px; border-radius:4px; margin-bottom:8px;\">' +
@@ -1406,66 +1435,73 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         };
       }
 
-      // Minimalist Export Panel
-      var exportPanel = document.createElement('div');
-      Object.assign(exportPanel.style, {
-        position: 'absolute', bottom: '10px', right: '50px', zIndex: '1000',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)', width: '32px', height: '32px',
-        borderRadius: '6px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-        border: '1px solid #ddd', display: 'flex', alignItems: 'center',
-        justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s'
+      // Button Container (Flexbox)
+      var btnContainer = document.createElement('div');
+      Object.assign(btnContainer.style, {
+        position: 'absolute', bottom: '15px', right: '15px', zIndex: '1000',
+        display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center'
       });
-      exportPanel.innerHTML = \"<svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'></path><polyline points='7 10 12 15 17 10'></polyline><line x1='12' y1='15' x2='12' y2='3'></line></svg>\";
-      exportPanel.title = x.dict.export_png;
-      exportPanel.onmouseover = function() { this.style.backgroundColor = '#f5f5f5'; };
-      exportPanel.onmouseout = function() { this.style.backgroundColor = 'rgba(255, 255, 255, 0.95)'; };
-      exportPanel.onclick = exportPNG;
-      container.appendChild(exportPanel);
+      container.appendChild(btnContainer);
 
+      var btnStyle = {
+        backgroundColor: 'rgba(255, 255, 255, 0.95)', width: 'clamp(26px, 4vmin, 34px)', height: 'clamp(26px, 4vmin, 34px)',
+        borderRadius: '6px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', border: '1px solid #ddd',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s'
+      };
+
+      // Settings Button
+      var settingsBtn = document.createElement('div');
+      Object.assign(settingsBtn.style, btnStyle);
+      settingsBtn.innerHTML = \"<svg width='60%' height='60%' viewBox='0 0 24 24' fill='none' stroke='#333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='3'></circle><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z'></path></svg>\";
+      settingsBtn.title = \"Ajustes\";
+      settingsBtn.onmouseover = function() { this.style.backgroundColor = '#f5f5f5'; };
+      settingsBtn.onmouseout = function() { this.style.backgroundColor = 'rgba(255, 255, 255, 0.95)'; };
+      settingsBtn.onclick = function() { settingsModal.style.display = (settingsModal.style.display === 'block' ? 'none' : 'block'); };
+      // Info Modal and Button are defined below, we'll append Settings after Info.
       // Info Modal
       var infoModal = document.createElement('div');
       infoModal.id = 'digraph_info_modal';
       Object.assign(infoModal.style, {
         position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-        width: '80%', maxWidth: '400px', backgroundColor: '#fff', zIndex: '2000',
-        padding: '20px', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-        border: '1px solid #eaeaea', display: 'none', fontFamily: 'Inter, Roboto, sans-serif'
+        width: '90%', maxWidth: '450px', maxHeight: '80vh', overflowY: 'auto', boxSizing: 'border-box',
+        backgroundColor: '#fff', zIndex: '2000', padding: '20px', borderRadius: '8px', 
+        boxShadow: '0 4px 20px rgba(0,0,0,0.2)', border: '1px solid #eaeaea', display: 'none', 
+        fontFamily: 'Inter, Roboto, sans-serif'
       });
       infoModal.innerHTML = '<div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eaeaea; padding-bottom:10px; margin-bottom:15px;\">' +
-                            '<h3 style=\"margin:0; color:#444; font-size:16px;\">' + x.dict.self_digraph + '</h3>' +
+                            '<h3 style=\"margin:0; color:#444; font-size:16px;\">' + (x.sim_data ? (x.dict.network_view || 'Vista de Red') : x.dict.self_digraph) + '</h3>' +
                             '<span id=\"close_info_modal\" style=\"cursor:pointer; font-size:20px; font-weight:bold; color:#888; line-height:1;\">&times;</span>' +
                             '</div>' +
-                            '<p style=\"margin:0; color:#666; font-size:13px; line-height:1.6;\">' + x.dict.info_text_digraph + '</p>';
+                            '<p style=\"margin:0; color:#666; font-size:13px; line-height:1.6;\">' + (x.sim_data ? (x.dict.info_text_sim_network || 'Simulación.') : x.dict.info_text_digraph) + '</p>';
       container.appendChild(infoModal);
 
       // Info Button
       var infoPanel = document.createElement('div');
-      Object.assign(infoPanel.style, {
-        position: 'absolute', bottom: '10px', right: '90px', zIndex: '1000',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)', width: '32px', height: '32px',
-        borderRadius: '6px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-        border: '1px solid #ddd', display: 'flex', alignItems: 'center',
-        justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s'
-      });
-      infoPanel.innerHTML = \"<svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'></circle><line x1='12' y1='16' x2='12' y2='12'></line><line x1='12' y1='8' x2='12.01' y2='8'></line></svg>\";
+      Object.assign(infoPanel.style, btnStyle);
+      infoPanel.innerHTML = \"<svg width='60%' height='60%' viewBox='0 0 24 24' fill='none' stroke='#333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'></circle><line x1='12' y1='16' x2='12' y2='12'></line><line x1='12' y1='8' x2='12.01' y2='8'></line></svg>\";
       infoPanel.title = x.dict.info;
       infoPanel.onmouseover = function() { this.style.backgroundColor = '#f5f5f5'; };
       infoPanel.onmouseout = function() { this.style.backgroundColor = 'rgba(255, 255, 255, 0.95)'; };
-      infoPanel.onclick = function() { infoModal.style.display = 'block'; };
-      container.appendChild(infoPanel);
+      infoPanel.onclick = function() { infoModal.style.display = (infoModal.style.display === 'block' ? 'none' : 'block'); };
+      btnContainer.appendChild(infoPanel);
+      btnContainer.appendChild(settingsBtn);
       
       infoModal.querySelector('#close_info_modal').onclick = function() { infoModal.style.display = 'none'; };
 
+      // Minimalist Export Panel
+      var exportPanel = document.createElement('div');
+      Object.assign(exportPanel.style, btnStyle);
+      exportPanel.innerHTML = \"<svg width='60%' height='60%' viewBox='0 0 24 24' fill='none' stroke='#333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'></path><polyline points='7 10 12 15 17 10'></polyline><line x1='12' y1='15' x2='12' y2='3'></line></svg>\";
+      exportPanel.title = x.dict.export_png;
+      exportPanel.onmouseover = function() { this.style.backgroundColor = '#f5f5f5'; };
+      exportPanel.onmouseout = function() { this.style.backgroundColor = 'rgba(255, 255, 255, 0.95)'; };
+      exportPanel.onclick = exportPNG;
+      btnContainer.appendChild(exportPanel);
+
       // Fullscreen Button
       var fsPanel = document.createElement('div');
-      Object.assign(fsPanel.style, {
-        position: 'absolute', bottom: '10px', right: '10px', zIndex: '1000',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)', width: '32px', height: '32px',
-        borderRadius: '6px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-        border: '1px solid #ddd', display: 'flex', alignItems: 'center',
-        justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s'
-      });
-      fsPanel.innerHTML = \"<svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3'></path></svg>\";
+      Object.assign(fsPanel.style, btnStyle);
+      fsPanel.innerHTML = \"<svg width='60%' height='60%' viewBox='0 0 24 24' fill='none' stroke='#333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3'></path></svg>\";
       fsPanel.title = x.dict.fullscreen;
       fsPanel.onmouseover = function() { this.style.backgroundColor = '#f5f5f5'; };
       fsPanel.onmouseout = function() { this.style.backgroundColor = 'rgba(255, 255, 255, 0.95)'; };
@@ -1477,7 +1513,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
           document.exitFullscreen();
         }
       };
-      container.appendChild(fsPanel);
+      btnContainer.appendChild(fsPanel);
 
       // PCSD Chart Overlay
       var chartContainer = document.createElement('div');
@@ -1503,24 +1539,22 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
                  '</select></div>';
       
       visHTML += '<div style=\"margin-bottom:15px; border-top:1px solid #eee; padding-top:10px;\">' +
-                 '<div style=\"display:flex; justify-content:space-between; margin-bottom:5px;\"><b style=\"color:#444;\">' + x.dict.edge_filter + '</b><span id=\"weight_val_txt\" style=\"font-family:monospace;\">0.00</span></div>' +
+                 '<div style=\"display:flex; justify-content:space-between; margin-bottom:5px;\"><b style=\"color:#444; font-size:13px;\">' + x.dict.edge_opacity + '</b></div>' +
+                 '<input type=\"range\" id=\"opacity_slider\" min=\"0.1\" max=\"1\" step=\"0.1\" value=\"0.5\" style=\"width:100%; accent-color:#8cc63f;\">' +
+                 
+                 '<div style=\"display:flex; justify-content:space-between; margin-bottom:5px; margin-top:12px;\"><b style=\"color:#444; font-size:13px;\">' + x.dict.edge_filter + '</b><span id=\"weight_val_txt\" style=\"font-family:monospace; font-size:12px;\">0.00</span></div>' +
                  '<input type=\"range\" id=\"weight_slider\" min=\"0\" max=\"' + x.max_weight + '\" step=\"0.01\" value=\"0\" style=\"width:100%;\">' +
                  '<label style=\"display:flex; align-items:center; margin-top:8px; font-size:11px; cursor:pointer; color:#555;\">' +
                  '<input type=\"checkbox\" id=\"hide_direct_check\" ' + (x.hide_direct ? 'checked' : '') + ' style=\"margin-right:6px;\"> ' + x.dict.hide_direct + '</label>' +
                  '</div>';
 
-      visHTML += '<div style=\"margin-bottom:15px; border-top:1px solid #f0f0f0; padding-top:10px;\">' +
-                 '<div style=\"display:flex; justify-content:space-between; margin-bottom:5px;\"><b style=\"color:#444;\">' + x.dict.node_spacing + '</b></div>' +
-                 '<input type=\"range\" id=\"dist_slider\" min=\"0.5\" max=\"3\" step=\"0.1\" value=\"1\" style=\"width:100%; accent-color:#8cc63f;\">' +
-                 '</div>';
-
       visHTML += '<div style=\"margin-bottom:15px;\">' +
-                 '<div style=\"display:flex; justify-content:space-between; margin-bottom:5px;\"><b style=\"color:#444;\">' + x.dict.node_size + '</b></div>' +
+                 '<div style=\"display:flex; justify-content:space-between; margin-bottom:5px;\"><b style=\"color:#444; font-size:13px;\">' + x.dict.node_size + '</b></div>' +
                  '<input type=\"range\" id=\"size_slider\" min=\"0.5\" max=\"3\" step=\"0.1\" value=\"1\" style=\"width:100%; accent-color:#8cc63f;\">' +
                  '</div>';
 
       visHTML += '<div style=\"margin-bottom:15px;\">' +
-                 '<div style=\"display:flex; justify-content:space-between; margin-bottom:5px;\"><b style=\"color:#444;\">' + x.dict.text_size + '</b></div>' +
+                 '<div style=\"display:flex; justify-content:space-between; margin-bottom:5px;\"><b style=\"color:#444; font-size:13px;\">' + x.dict.text_size + '</b></div>' +
                  '<input type=\"range\" id=\"text_size_slider\" min=\"10\" max=\"40\" step=\"1\" value=\"20\" style=\"width:100%; accent-color:#8cc63f;\">' +
                  '</div>';
 
@@ -1530,13 +1564,14 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
                  '</div>';
 
       visHTML += '<div style=\"border-top:1px solid #eee; padding-top:10px;\">' +
-                 '<b style=\"color:#444; display:block; margin-bottom:8px;\">' + x.dict.visible_constructs + '</b>' +
+                 '<b style=\"color:#444; display:block; margin-bottom:8px; font-size:13px;\">' + x.dict.visible_constructs + '</b>' +
                  '<div style=\"display:flex; gap:5px; margin-bottom:8px;\">' +
                  '<button id=\"sel_all\" style=\"flex:1; font-size:10px; cursor:pointer;\">' + x.dict.all + '</button>' +
                  '<button id=\"sel_none\" style=\"flex:1; font-size:10px; cursor:pointer;\">' + x.dict.none_btn + '</button></div>' +
                  '<div id=\"node_list\" style=\"max-height:150px; overflow-y:auto; border:1px solid #f0f0f0; padding:5px;\"></div></div>';
       
       visContent.innerHTML = visHTML;
+      settingsModalBody.appendChild(visContent);
 
       // --- Simulation Panel ---
       if (x.sim_data) {
@@ -1881,7 +1916,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
       }
 
       visContent.querySelector('#btn_reset').onclick = function() {
-        visContent.querySelector('#dist_slider').value = 1.0;
+        visContent.querySelector('#opacity_slider').value = 0.5;
         visContent.querySelector('#size_slider').value = 1.0;
         visContent.querySelector('#text_size_slider').value = 20;
         currentDistMult = 1.0;
@@ -1914,16 +1949,8 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         network.fit({animation: true});
       };
 
-      visContent.querySelector('#dist_slider').oninput = function() {
-        var newMult = parseFloat(this.value);
-        var ratio = newMult / currentDistMult;
-        currentDistMult = newMult;
-        var nodesDS = network.body.data.nodes;
-        var nodes = nodesDS.get();
-        var updates = nodes.map(n => ({id: n.id, x: n.x * ratio, y: n.y * ratio}));
-        nodesDS.update(updates);
+      visContent.querySelector('#opacity_slider').oninput = function() {
         refreshNodes();
-        network.fit({animation: false});
       };
 
       visContent.querySelector('#size_slider').oninput = function() {
@@ -2114,7 +2141,14 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         nodeListDiv.querySelectorAll('.node-check').forEach(c => { var n = nodesDS.get(c.getAttribute('data-id')); n.hidden = true; nodesDS.update(n); c.checked = false; });
       };
 
-      var forceFit = function() { network.setSize('100%', el.style.height); network.redraw(); network.fit(); };
+      var forceFit = function() { 
+        var h = el.clientHeight;
+        if(h > 0) {
+          network.setSize('100%', h + 'px'); 
+          network.redraw(); 
+          network.fit(); 
+        }
+      };
       window.addEventListener('resize', forceFit);
       setTimeout(forceFit, 100); setTimeout(forceFit, 1500);
     }
@@ -2329,7 +2363,7 @@ weight_heatmap <- function(wimp, palette = "Redgreen", lang = "en") {
         "<b>Weight:</b> %{z:.3f}<extra></extra>"
       )
     },
-    colorbar = list(title = "")
+    colorbar = list(title = "", len = 0.75, y = 0.45, yanchor = "middle")
   )
   
   # 6. Add dotted grid lines and dilemmatic highlighting
@@ -2403,7 +2437,7 @@ weight_heatmap <- function(wimp, palette = "Redgreen", lang = "en") {
     shapes = shapes,
     annotations = list(
       list(
-        x = 1.02, y = -0.05,
+        x = 1.05, y = 1.0,
         text = paste0("<b>\u03c1(G) = ", round(density_index(wimp), 3), "</b>"),
         showarrow = FALSE,
         xref = "paper", yref = "paper",
@@ -2411,9 +2445,253 @@ weight_heatmap <- function(wimp, palette = "Redgreen", lang = "en") {
         font = list(size = 12)
       )
     ),
-    margin = list(l = 100, r = 80, b = 100, t = 40)
+    margin = list(l = 120, r = 120, b = 120, t = 60)
   ) %>%
   config(displayModeBar = FALSE)
+  
+  hm_data <- list(
+    dict = wt_i18n(lang),
+    orig_labels = labels,
+    orig_matrix = wmatrix_ideal,
+    initial_palette = palette,
+    is_dilemmatic = is_dilemmatic
+  )
+  
+  js_hm_panel <- "
+    function(el, p_x, data) {
+      var x = data;
+      // Create Settings Modal
+      var settingsModal = document.createElement('div');
+      settingsModal.id = 'hm_settings_modal';
+      Object.assign(settingsModal.style, {
+        position: 'absolute', top: '10px', right: '10px',
+        width: '90%', maxWidth: '300px', maxHeight: '80vh', overflowY: 'auto', boxSizing: 'border-box',
+        backgroundColor: '#fff', zIndex: '2000', padding: '20px', borderRadius: '8px', 
+        boxShadow: '0 4px 20px rgba(0,0,0,0.2)', border: '1px solid #eaeaea', display: 'none', 
+        fontFamily: 'Inter, Roboto, sans-serif'
+      });
+      
+      var hmHTML = '<div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eaeaea; padding-bottom:10px; margin-bottom:15px;\">' +
+                   '<h3 style=\"margin:0; color:#444; font-size:14px;\">' + x.dict.hm_settings + '</h3>' +
+                   '<span id=\"close_hm_settings\" style=\"cursor:pointer; font-size:20px; font-weight:bold; color:#888; line-height:1;\">&times;</span>' +
+                   '</div>';
+                   
+      hmHTML += '<div style=\"margin-bottom:15px;\">' +
+                '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444; font-size:13px;\">' + x.dict.color_palette + '</label>' +
+                '<select id=\"hm_palette_sel\" style=\"width:100%; padding:4px; border-radius:4px;\">' +
+                '<option value=\"Redgreen\"' + (x.initial_palette === \"Redgreen\" ? ' selected' : '') + '>' + x.dict.pal_redgreen + '</option>' +
+                '<option value=\"Redblue\">' + x.dict.pal_redblue + '</option>' +
+                '<option value=\"Orangepurple\">' + x.dict.pal_orangepurple + '</option>' +
+                '<option value=\"Greyscale\">' + x.dict.pal_greyscale + '</option>' +
+                '</select></div>';
+                
+      hmHTML += '<div style=\"margin-bottom:15px;\">' +
+                '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444; font-size:13px;\">' + x.dict.sort_by + '</label>' +
+                '<select id=\"hm_sort_sel\" style=\"width:100%; padding:4px; border-radius:4px;\">' +
+                '<option value=\"original\" selected>' + x.dict.sort_original + '</option>' +
+                '<option value=\"weight\">' + x.dict.sort_weight + '</option>' +
+                '<option value=\"connectivity\">' + x.dict.sort_connect + '</option>' +
+                '</select></div>';
+                
+      hmHTML += '<div style=\"margin-bottom:15px;\">' +
+                '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444; font-size:13px;\">' + x.dict.filter_constructs + '</label>' +
+                '<div id=\"hm_filter_list\" style=\"max-height:120px; overflow-y:auto; border:1px solid #ddd; padding:5px; border-radius:4px; font-size:12px; background:#f9f9f9;\"></div>' +
+                '</div>';
+                
+      hmHTML += '<div style=\"margin-bottom:15px; border-top:1px solid #f0f0f0; padding-top:10px;\">' +
+                '<label style=\"display:flex; align-items:center; font-size:12px; cursor:pointer; color:#555; margin-bottom:8px;\">' +
+                '<input type=\"checkbox\" id=\"hm_density_check\" checked style=\"margin-right:6px;\"> ' + x.dict.show_density + '</label>' +
+                '<label style=\"display:flex; align-items:center; font-size:12px; cursor:pointer; color:#555;\">' +
+                '<input type=\"checkbox\" id=\"hm_values_check\" style=\"margin-right:6px;\"> ' + x.dict.show_values + '</label>' +
+                '</div>';
+                
+      settingsModal.innerHTML = hmHTML;
+      var container = el.closest('.wt-tab-content') || el; container.appendChild(settingsModal);
+      
+      var filterContainer = settingsModal.querySelector('#hm_filter_list');
+      x.orig_labels.forEach(function(lbl, idx) {
+         var div = document.createElement('div');
+         div.style.marginBottom = '4px';
+         div.innerHTML = '<label style=\"cursor:pointer; display:flex; align-items:center; color:#555;\"><input type=\"checkbox\" checked value=\"' + idx + '\" class=\"hm-construct-cb\" style=\"margin-right:6px;\"> ' + lbl + '</label>';
+         filterContainer.appendChild(div);
+      });
+      
+      settingsModal.querySelector('#close_hm_settings').onclick = function() { settingsModal.style.display = 'none'; };
+      
+      // Settings Button
+      var settingsBtn = document.createElement('div');
+      
+      var hmBtnContainer = el.closest('.wt-tab-content') ? el.closest('.wt-tab-content').querySelector('#hm_btn_container') : null;
+      
+      if (hmBtnContainer) {
+        Object.assign(settingsBtn.style, {
+          backgroundColor: 'rgba(255, 255, 255, 0.95)', width: '32px', height: '32px',
+          borderRadius: '6px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', border: '1px solid #ddd',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s'
+        });
+      } else {
+        Object.assign(settingsBtn.style, {
+          position: 'absolute', bottom: '15px', right: '15px', zIndex: '1000',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)', width: '32px', height: '32px',
+          borderRadius: '6px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', border: '1px solid #ddd',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s'
+        });
+      }
+      
+      settingsBtn.innerHTML = \"<svg width='60%' height='60%' viewBox='0 0 24 24' fill='none' stroke='#333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='3'></circle><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z'></path></svg>\";
+      settingsBtn.title = \"Ajustes\";
+      settingsBtn.onmouseover = function() { this.style.backgroundColor = '#f5f5f5'; };
+      settingsBtn.onmouseout = function() { this.style.backgroundColor = 'rgba(255, 255, 255, 0.95)'; };
+      settingsBtn.onclick = function() { settingsModal.style.display = (settingsModal.style.display === 'block' ? 'none' : 'block'); };
+      
+      if (hmBtnContainer) {
+        var placeholder = hmBtnContainer.querySelector('#hm_settings_placeholder');
+        if (placeholder) {
+          hmBtnContainer.replaceChild(settingsBtn, placeholder);
+        } else {
+          hmBtnContainer.appendChild(settingsBtn);
+        }
+      } else {
+        var container = el.closest('.wt-tab-content') || el;
+        container.appendChild(settingsBtn);
+      }
+
+      // Save original annotations to toggle density
+      var origAnnotations = el.layout.annotations ? JSON.parse(JSON.stringify(el.layout.annotations)) : [];
+
+      // Logic functions
+      var updateHeatmap = function() {
+        var pal = settingsModal.querySelector('#hm_palette_sel').value;
+        var srt = settingsModal.querySelector('#hm_sort_sel').value;
+        var showDens = settingsModal.querySelector('#hm_density_check').checked;
+        var showVals = settingsModal.querySelector('#hm_values_check').checked;
+        
+        var cs = [[0, '#F52722'], [0.5, 'white'], [1, '#A5D610']]; // Default Redgreen
+        if(pal === 'Redblue') cs = [[0, '#F52722'], [0.5, 'white'], [1, '#2272F5']];
+        if(pal === 'Orangepurple') cs = [[0, '#F58222'], [0.5, 'white'], [1, '#9B22F5']];
+        if(pal === 'Greyscale') cs = [[0, '#000000'], [0.5, 'white'], [1, '#000000']]; // V-shaped gradient for absolute values
+        
+        var activeIndices = [];
+        settingsModal.querySelectorAll('.hm-construct-cb').forEach(function(cb) {
+           if(cb.checked) activeIndices.push(parseInt(cb.value));
+        });
+        
+        // Sorting logic
+        var labels = x.orig_labels.slice();
+        var full_n = labels.length;
+        var indices = activeIndices.slice();
+        var n = indices.length;
+        
+        if (srt === 'weight') {
+           var scores = indices.map(i => {
+              var sum = 0;
+              for(var j=0; j<full_n; j++) sum += Math.abs(x.orig_matrix[i][j]) + Math.abs(x.orig_matrix[j][i]);
+              return sum;
+           });
+           indices.sort((a,b) => scores[b] - scores[a]);
+        } else if (srt === 'connectivity') {
+           var scores = indices.map(i => {
+              var count = 0;
+              for(var j=0; j<full_n; j++) {
+                 if(Math.abs(x.orig_matrix[i][j]) > 0.001) count++;
+                 if(Math.abs(x.orig_matrix[j][i]) > 0.001) count++;
+              }
+              return count;
+           });
+           indices.sort((a,b) => scores[b] - scores[a]);
+        }
+        
+        var new_labels = indices.map(i => labels[i]);
+        var new_z = [];
+        var new_text = [];
+        for(var i=0; i<n; i++) {
+           var row_z = [];
+           var row_txt = [];
+           for(var j=0; j<n; j++) {
+               var val = x.orig_matrix[indices[i]][indices[j]];
+               row_z.push(val);
+               if (pal === 'Greyscale' && val < -0.01) {
+                   row_txt.push('-'); // Minus indicator
+               } else {
+                   row_txt.push('');
+               }
+           }
+           new_z.push(row_z);
+           new_text.push(row_txt);
+        }
+        
+        var restyleData = {
+           colorscale: [cs],
+           x: [new_labels],
+           y: [new_labels],
+           z: [new_z],
+           text: [new_text]
+        };
+        
+        if (showVals) {
+           restyleData.texttemplate = ['%{z:.2f}'];
+           restyleData.textfont = [{color: 'black', size: 10}];
+        } else if (pal === 'Greyscale') {
+           restyleData.texttemplate = ['%{text}'];
+           restyleData.textfont = [{color: '#F52722', size: 18, family: 'Arial'}];
+        } else {
+           restyleData.texttemplate = [null];
+        }
+        
+        Plotly.restyle(el, restyleData, [0]);
+        var new_shapes = [];
+        var d_line_color = '#FFC107';
+        var d_fill_color = 'rgba(255, 193, 7, 0.10)';
+        
+        for (var i = 0; i < n; i++) {
+            if (x.is_dilemmatic[indices[i]]) {
+                new_shapes.push({
+                   type: 'rect', x0: i - 0.5, x1: i + 0.5, y0: -0.5, y1: n - 0.5,
+                   fillcolor: d_fill_color, line: {width: 0}, layer: 'above'
+                });
+                new_shapes.push({
+                   type: 'rect', x0: -0.5, x1: n - 0.5, y0: i - 0.5, y1: i + 0.5,
+                   fillcolor: d_fill_color, line: {width: 0}, layer: 'above'
+                });
+            }
+        }
+        
+        if (n > 1) {
+            for (var i = 0; i < n - 1; i++) {
+                var use_strong = x.is_dilemmatic[indices[i]] || x.is_dilemmatic[indices[i+1]];
+                var l_color = use_strong ? d_line_color : 'rgba(0,0,0,0.15)';
+                var l_width = use_strong ? 2 : 1;
+                
+                new_shapes.push({
+                   type: 'line', x0: i + 0.5, x1: i + 0.5, y0: -0.5, y1: n - 0.5,
+                   line: {color: l_color, width: l_width, dash: 'dot'}, layer: 'above'
+                });
+                new_shapes.push({
+                   type: 'line', x0: -0.5, x1: n - 0.5, y0: i + 0.5, y1: i + 0.5,
+                   line: {color: l_color, width: l_width, dash: 'dot'}, layer: 'above'
+                });
+            }
+        }
+
+        Plotly.relayout(el, {
+           annotations: showDens ? origAnnotations : [],
+           shapes: new_shapes,
+           'xaxis.showticklabels': true,
+           'yaxis.showticklabels': true
+        });
+      };
+      
+      settingsModal.querySelector('#hm_palette_sel').onchange = updateHeatmap;
+      settingsModal.querySelector('#hm_sort_sel').onchange = updateHeatmap;
+      settingsModal.querySelector('#hm_density_check').onchange = updateHeatmap;
+      settingsModal.querySelector('#hm_values_check').onchange = updateHeatmap;
+      settingsModal.querySelectorAll('.hm-construct-cb').forEach(function(cb) {
+         cb.onchange = updateHeatmap;
+      });
+    }
+"
+  
+  p <- p %>% htmlwidgets::onRender(js_hm_panel, data = hm_data)
   
   return(p)
 }

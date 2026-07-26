@@ -577,44 +577,42 @@ hypo_plot <- function(wimp, text_size = 1, show_labels = TRUE, ...) {
     )
 
   # Add labels only if requested
+  # Add labels only if requested
   if (show_labels) {
-    # Use smart label positioning to avoid overlaps
-    label_positions <- .smart_label_positions(
-      x_coords = df$self,
-      y_coords = df$ideal,
-      labels = df$construct,
-      distance = 8,
-      text_size = 11 * text_size
+    # Calculate optimal collision-free placements that strictly anchor to dots (no lines)
+    layouts <- .calculate_pb_layouts(
+      x = df$self, 
+      y = df$ideal, 
+      labels = df$construct, 
+      text_size = text_size
     )
+    
+    layouts_xshift <- layouts$xshift[[1]]
+    layouts_yshift <- layouts$yshift[[1]]
+    layouts_xanchor <- layouts$xanchor[[1]]
+    layouts_yanchor <- layouts$yanchor[[1]]
 
-    df$xanchor <- label_positions$xanchor
-    df$yanchor <- label_positions$yanchor
-    df$opt_x <- label_positions$x
-    df$opt_y <- label_positions$y
-
-    fig <- fig %>%
-      add_annotations(
-        data = df,
-        x = ~self,
-        y = ~ideal,
-        text = ~construct,
-        hoverinfo = "skip",
-        font = list(size = 11 * text_size, color = "black"),
-        showarrow = TRUE,
-        arrowcolor = "rgba(0,0,0,0.15)",
-        arrowwidth = 1,
-        arrowsize = 0.5,
-        axref = "x",
-        ayref = "y",
-        ax = ~opt_x,
-        ay = ~opt_y,
-        xanchor = ~xanchor,
-        yanchor = ~yanchor
-      )
+    if (nrow(df) > 0) {
+      for (i in seq_len(nrow(df))) {
+        fig <- fig %>% add_annotations(
+          x = df$self[i],
+          y = df$ideal[i],
+          xshift = layouts_xshift[i],
+          yshift = layouts_yshift[i],
+          text = df$construct[i],
+          showarrow = FALSE,
+          xanchor = layouts_xanchor[i],
+          yanchor = layouts_yanchor[i],
+          font = list(size = 11 * text_size, color = "black"),
+          hoverinfo = "skip"
+        )
+      }
+    }
   }
 
   fig <- fig %>%
     layout(
+      margin = list(r = 85),
       xaxis = list(
         title = "SELF SIMILARITY (SHS)",
         range = c(0, 1),

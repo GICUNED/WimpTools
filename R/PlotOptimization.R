@@ -949,6 +949,10 @@
     result$xshift[index] <- if(dx > 0) shift_amount else -shift_amount
     result$yshift[index] <- if(dy > 0) shift_amount else -shift_amount
   }
+  
+  # UPDATE THE ACTUAL COORDINATES SO PLOTLY GETS THE RIGHT POSITION
+  result$x[index] <- label_x
+  result$y[index] <- label_y
 
   return(result)
 }

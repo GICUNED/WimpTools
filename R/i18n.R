@@ -27,10 +27,11 @@ wt_i18n <- function(lang = "en") {
       cluster_areas  = "Cluster Areas",
 
       # Visualization panel — labels
-      vis_options        = "Visualization Options",
+      vis_options        = "Settings",
       color_palette      = "Color Palette",
       layout_algo        = "Layout Algorithm",
       edge_filter        = "Edge Filter",
+      edge_opacity       = "Edge Opacity",
       hide_direct        = "Hide Direct (Positive)",
       node_spacing       = "Node Spacing",
       node_size          = "Node Size",
@@ -44,7 +45,7 @@ wt_i18n <- function(lang = "en") {
       category           = "Category",
 
       # Simulation panel — labels
-      sim_settings   = "Simulation Settings",
+      sim_settings   = "Settings",
       thr_function   = "Threshold Function",
       saturation     = "Saturation",
       tanh           = "Hyperbolic (Tanh)",
@@ -55,6 +56,20 @@ wt_i18n <- function(lang = "en") {
       reset_scenario = "Reset Scenario",
       network_view   = "Network View",
       pcsd_chart     = "PCSD Chart",
+
+      # Heatmap settings
+      hm_settings    = "Settings",
+      sort_by        = "Sort By",
+      sort_original  = "Original",
+      sort_weight    = "Absolute Weight",
+      sort_connect   = "Connectivity",
+      show_density   = "Show Density \u03c1(G)",
+      show_values    = "Show Cell Values",
+      filter_constructs = "Filter Constructs",
+      pal_redgreen   = "Red - Green",
+      pal_redblue    = "Red - Blue",
+      pal_orangepurple = "Orange - Purple",
+      pal_greyscale  = "Greyscale",
 
       # Info modal body text
       info_text_digraph  = paste0(
@@ -154,10 +169,11 @@ wt_i18n <- function(lang = "en") {
       cluster_areas  = "Agrupar \u00c1reas",
 
       # Panel de visualización — etiquetas
-      vis_options        = "Opciones de Visualizaci\u00f3n",
+      vis_options        = "Ajustes",
       color_palette      = "Paleta de Color",
       layout_algo        = "Algoritmo de Dise\u00f1o",
       edge_filter        = "Filtro de Aristas",
+      edge_opacity       = "Opacidad Aristas",
       hide_direct        = "Ocultar Directas (Positivas)",
       node_spacing       = "Espaciado de Nodos",
       node_size          = "Tama\u00f1o de Nodo",
@@ -171,7 +187,7 @@ wt_i18n <- function(lang = "en") {
       category           = "Categor\u00eda",
 
       # Panel de simulación — etiquetas
-      sim_settings   = "Ajustes de Simulaci\u00f3n",
+      sim_settings   = "Ajustes",
       thr_function   = "Funci\u00f3n de Activaci\u00f3n",
       saturation     = "Saturaci\u00f3n",
       tanh           = "Hiperb\u00f3lica (Tanh)",
@@ -182,6 +198,20 @@ wt_i18n <- function(lang = "en") {
       reset_scenario = "Reiniciar Escenario",
       network_view   = "Vista de Red",
       pcsd_chart     = "Gr\u00e1fico PCSD",
+
+      # Heatmap settings
+      hm_settings    = "Ajustes",
+      sort_by        = "Ordenar por",
+      sort_original  = "Original",
+      sort_weight    = "Peso Absoluto",
+      sort_connect   = "Conectividad",
+      show_density   = "Mostrar Densidad \u03c1(G)",
+      show_values    = "Mostrar Valores",
+      filter_constructs = "Filtrar Constructos",
+      pal_redgreen   = "Rojo - Verde",
+      pal_redblue    = "Rojo - Azul",
+      pal_orangepurple = "Naranja - Morado",
+      pal_greyscale  = "Escala de grises",
 
       # Texto de los modales de información
       info_text_digraph  = paste0(
