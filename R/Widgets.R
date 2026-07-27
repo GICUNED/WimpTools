@@ -790,14 +790,14 @@ widget_implications <- function(x, lang = "en", ...) {
   plot_ideal$sizingPolicy$defaultHeight <- "100%"
   
   # IF Barchart
-  plot_if <- if_barchart(x, ...)
+  plot_if <- if_barchart(x, lang = lang, ...)
   plot_if$width <- "100%"
   plot_if$height <- "100%"
   plot_if$sizingPolicy$defaultWidth <- "100%"
   plot_if$sizingPolicy$defaultHeight <- "100%"
   
   # Hypo Plot
-  plot_hypo <- hypo_plot(x, ...)
+  plot_hypo <- hypo_plot(x, lang = lang, ...)
   plot_hypo$width <- "100%"
   plot_hypo$height <- "100%"
   plot_hypo$sizingPolicy$defaultWidth <- "100%"
@@ -961,6 +961,195 @@ widget_implications <- function(x, lang = "en", ...) {
         htmltools::tags$div(style = "flex: 1; width: 100%; height: 100%; min-height: 0; position: relative;", plot_hypo),
         gen_buttons("impl_tab_hypo"),
         gen_modals("impl_tab_hypo", tab_hypo)
+      )
+    )
+  )
+  
+  return(htmltools::browsable(ui))
+}
+
+#' Generate Tabbed HTML Widget for Wellness Analysis (Análisis de Bienestar) / Adjustment
+#'
+#' @description
+#' Creates a standalone HTML widget containing a two-tab interface for analyzing wellness.
+#' If one WimpGrid is provided, it shows the Self analysis and SSI structure.
+#' If two WimpGrids are provided, it shows the Self monitoring and SSI monitoring.
+#'
+#' @param x A `wimp` object representing the baseline evaluation.
+#' @param y An optional `wimp` object representing the post evaluation.
+#' @param lang Language parameter ("en" or "es").
+#' @param ... Additional arguments passed to the underlying plot functions.
+#'
+#' @return An object of class `htmltools::browsable`.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' widget_adjustment(example_wimp)
+#' widget_adjustment(example_wimp, example_wimp_post)
+#' }
+widget_adjustment <- function(x, y = NULL, lang = "en", ...) {
+  if (!inherits(x, "wimp")) stop("Input x must be a 'wimp' object.")
+  if (!is.null(y) && !inherits(y, "wimp")) stop("Input y must be a 'wimp' object.")
+  if (!lang %in% c("en", "es")) lang <- "en"
+  
+  t <- wt_i18n(lang)
+
+  tab1_id <- "bienestar_tab1"
+  tab2_id <- "bienestar_tab2"
+
+  if (is.null(y)) {
+    plot1 <- self_plot(x, ...)
+    plot2 <- ssi_heatmap(x, ...)
+    tab1_title <- if(lang=="es") "Análisis del Self" else "Self Analysis"
+    tab2_title <- if(lang=="es") "Estructura SSI" else "SSI Structure"
+  } else {
+    plot1 <- monitoring_self(x, y, ...)
+    plot2 <- monitoring_ssi(x, y, ...)
+    tab1_title <- if(lang=="es") "Monitorización del Self" else "Self Monitoring"
+    tab2_title <- if(lang=="es") "Monitorización SSI" else "SSI Monitoring"
+  }
+  
+  # Ensure plots occupy full container (plotly standard)
+  if (inherits(plot1, "plotly")) {
+    plot1 <- plotly::layout(plot1, autosize = TRUE)
+    plot1$sizingPolicy$defaultHeight <- "100%"
+    plot1$sizingPolicy$defaultWidth <- "100%"
+    plot1$height <- "100%"
+    plot1$width <- "100%"
+  }
+  if (inherits(plot2, "plotly")) {
+    plot2 <- plotly::layout(plot2, autosize = TRUE)
+    plot2$sizingPolicy$defaultHeight <- "100%"
+    plot2$sizingPolicy$defaultWidth <- "100%"
+    plot2$height <- "100%"
+    plot2$width <- "100%"
+  }
+  
+  css <- "
+    .wt-tab-container { width: 100%; height: 100vh; display: flex; flex-direction: column; font-family: 'Inter', Roboto, sans-serif; background: #fafafa; }
+    .wt-tab-header { display: flex; background: #fff; border-bottom: 2px solid #eaeaea; padding: 0 10px; flex-shrink: 0; }
+    .wt-tab-btn { background: none; border: none; padding: 14px 20px; cursor: pointer; font-size: 14px; font-weight: 600; color: #888; border-bottom: 3px solid transparent; transition: all 0.2s; }
+    .wt-tab-btn:hover { color: #333; }
+    .wt-tab-btn.active { color: #8cc63f; border-bottom-color: #8cc63f; }
+    .wt-tab-content { display: none; flex: 1; min-height: 0; position: relative; }
+    .wt-tab-content.active { display: flex; }
+  "
+  
+  js <- "
+    function openBienestarTab(evt, tabId) {
+      var i, tabcontent, tablinks;
+      tabcontent = document.getElementsByClassName('wt-tab-content');
+      for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = 'none';
+        tabcontent[i].classList.remove('active');
+      }
+      
+      tablinks = document.getElementsByClassName('wt-tab-btn');
+      for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(' active', '');
+      }
+      
+      var selectedTab = document.getElementById(tabId);
+      selectedTab.style.display = 'flex';
+      selectedTab.classList.add('active');
+      evt.currentTarget.className += ' active';
+      
+      window.dispatchEvent(new Event('resize'));
+    }
+
+    function downloadBienestarPlot(containerId, filename) {
+      var plotEl = document.querySelector('#' + containerId + ' .js-plotly-plot');
+      if (plotEl && window.Plotly) {
+        Plotly.downloadImage(plotEl, {format: 'png', width: plotEl.clientWidth, height: plotEl.clientHeight, filename: filename});
+      }
+    }
+  "
+
+  # Button Helper
+  .btn <- function(title_txt, onclick_fn, svg_body) {
+    htmltools::HTML(paste0(
+      "<div style='background-color:rgba(255,255,255,0.95);width:clamp(26px, 4vmin, 34px);height:clamp(26px, 4vmin, 34px);border-radius:6px;",
+      "box-shadow:0 2px 10px rgba(0,0,0,0.1);border:1px solid #ddd;display:flex;",
+      "align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;'",
+      " title='", title_txt, "'",
+      " onmouseover=\"this.style.backgroundColor='#f5f5f5'\"",
+      " onmouseout=\"this.style.backgroundColor='rgba(255,255,255,0.95)'\"",
+      " onclick=\"", onclick_fn, "\">",
+      "<svg width='60%' height='60%' viewBox='0 0 24 24' fill='none' stroke='#333'",
+      " stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'>",
+      svg_body, "</svg></div>"
+    ))
+  }
+
+  svg_fs <- "<path d='M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3'></path>"
+  svg_info <- "<circle cx='12' cy='12' r='10'></circle><line x1='12' y1='16' x2='12' y2='12'></line><line x1='12' y1='8' x2='12.01' y2='8'></line>"
+  svg_down <- "<path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'></path><polyline points='7 10 12 15 17 10'></polyline><line x1='12' y1='15' x2='12' y2='3'></line>"
+  svg_set  <- "<circle cx='12' cy='12' r='3'></circle><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z'></path>"
+
+  fullscreen_title <- if (lang == "es") "Pantalla Completa" else "Fullscreen"
+  fs_onclick <- "var el=this.closest('.wt-tab-container')||this.closest('.wt-tab-content'); if(!document.fullscreenElement){el.requestFullscreen().catch(e=>console.log(e))}else{document.exitFullscreen()}"
+  
+  gen_buttons <- function(tab_id) {
+    htmltools::HTML(paste0(
+      "<div style='position:absolute;bottom:15px;right:15px;z-index:1000;display:flex;flex-direction:column;gap:8px;align-items:center;'>",
+      .btn(t$info, paste0("var m=document.getElementById('", tab_id, "_info_modal'); m.style.display=(m.style.display==='block'?'none':'block');"), svg_info),
+      .btn(t$hm_settings, paste0("var m=document.getElementById('", tab_id, "_settings_modal'); m.style.display=(m.style.display==='block'?'none':'block');"), svg_set),
+      .btn(t$export_png, paste0("downloadBienestarPlot('", tab_id, "', '", tab_id, "_Export');"), svg_down),
+      .btn(fullscreen_title, fs_onclick, svg_fs),
+      "</div>"
+    ))
+  }
+  
+  gen_modals <- function(tab_id, title) {
+    htmltools::HTML(paste0("
+      <div id='", tab_id, "_info_modal' style='position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 450px; max-height: 80vh; overflow-y: auto; box-sizing: border-box; background-color: #fff; z-index: 2000; padding: 20px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); border: 1px solid #eaeaea; display: none; font-family: Inter, Roboto, sans-serif;'>
+        <div style='display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eaeaea; padding-bottom:10px; margin-bottom:15px;'>
+          <h3 style='margin:0; color:#444; font-size:16px;'>", title, " Info</h3>
+          <span style='cursor:pointer; font-size:20px; font-weight:bold; color:#888; line-height:1;' onclick=\"document.getElementById('", tab_id, "_info_modal').style.display='none';\">&times;</span>
+        </div>
+        <p style='margin:0; color:#666; font-size:13px; line-height:1.6;'>Información sobre ", title, "</p>
+      </div>
+      <div id='", tab_id, "_settings_modal' style='position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 450px; max-height: 80vh; overflow-y: auto; box-sizing: border-box; background-color: #fff; z-index: 2000; padding: 20px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); border: 1px solid #eaeaea; display: none; font-family: Inter, Roboto, sans-serif;'>
+        <div style='display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eaeaea; padding-bottom:10px; margin-bottom:15px;'>
+          <h3 style='margin:0; color:#444; font-size:16px;'>Ajustes de ", title, "</h3>
+          <span style='cursor:pointer; font-size:20px; font-weight:bold; color:#888; line-height:1;' onclick=\"document.getElementById('", tab_id, "_settings_modal').style.display='none';\">&times;</span>
+        </div>
+        <p style='margin:0; color:#666; font-size:13px; line-height:1.6;'>No hay ajustes configurables en esta versión.</p>
+      </div>
+    "))
+  }
+
+  ui <- htmltools::tagList(
+    htmltools::tags$style(htmltools::HTML(css)),
+    htmltools::tags$script(htmltools::HTML(js)),
+    
+    htmltools::tags$div(class = "wt-tab-container",
+      htmltools::tags$div(class = "wt-tab-header",
+        htmltools::tags$button(
+          class = "wt-tab-btn active", 
+          onclick = "openBienestarTab(event, 'bienestar_tab1')", 
+          tab1_title
+        ),
+        htmltools::tags$button(
+          class = "wt-tab-btn", 
+          onclick = "openBienestarTab(event, 'bienestar_tab2')", 
+          tab2_title
+        )
+      ),
+      
+      # Tab 1
+      htmltools::tags$div(id = "bienestar_tab1", class = "wt-tab-content active", 
+        htmltools::tags$div(style = "flex: 1; width: 100%; height: 100%; min-height: 0; position: relative;", plot1),
+        gen_buttons("bienestar_tab1"),
+        gen_modals("bienestar_tab1", tab1_title)
+      ),
+      
+      # Tab 2
+      htmltools::tags$div(id = "bienestar_tab2", class = "wt-tab-content", 
+        htmltools::tags$div(style = "flex: 1; width: 100%; height: 100%; min-height: 0; position: relative;", plot2),
+        gen_buttons("bienestar_tab2"),
+        gen_modals("bienestar_tab2", tab2_title)
       )
     )
   )

@@ -104,7 +104,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
                     show = TRUE, hide_direct = FALSE,
                     areas = FALSE, area_attr = "category", area_color = NA,
                     pad_side = 50, rounding = 10, min_weight = 0,
-                    interactive_options = TRUE, sim_data = NULL, export_name = NULL, lang = "en", ...) {
+                    interactive_options = TRUE, sim_data = NULL, export_name = NULL, lang = "en", is_ideal = FALSE, ...) {
 
   # --- Localization (see R/i18n.R) ---
   t <- wt_i18n(lang)
@@ -1469,10 +1469,10 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         fontFamily: 'Inter, Roboto, sans-serif'
       });
       infoModal.innerHTML = '<div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eaeaea; padding-bottom:10px; margin-bottom:15px;\">' +
-                            '<h3 style=\"margin:0; color:#444; font-size:16px;\">' + (x.sim_data ? (x.dict.network_view || 'Vista de Red') : x.dict.self_digraph) + '</h3>' +
+                            '<h3 style=\"margin:0; color:#444; font-size:16px;\">' + (x.sim_data ? (x.dict.network_view || 'Vista de Red') : (x.is_ideal ? 'Ideal Digraph' : x.dict.self_digraph)) + '</h3>' +
                             '<span id=\"close_info_modal\" style=\"cursor:pointer; font-size:20px; font-weight:bold; color:#888; line-height:1;\">&times;</span>' +
                             '</div>' +
-                            '<p style=\"margin:0; color:#666; font-size:13px; line-height:1.6;\">' + (x.sim_data ? (x.dict.info_text_sim_network || 'Simulación.') : x.dict.info_text_digraph) + '</p>';
+                            '<p style=\"margin:0; color:#666; font-size:13px; line-height:1.6;\">' + (x.sim_data ? (x.dict.info_text_sim_network || 'Simulación.') : (x.is_ideal ? (x.dict.info_text_ideal_digraph || x.dict.info_text_digraph) : x.dict.info_text_digraph)) + '</p>';
       container.appendChild(infoModal);
 
       // Info Button
@@ -2155,6 +2155,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
     "
 
     g$x$interactive_options <- interactive_options
+    g$x$is_ideal <- is_ideal
     g$x$min_weight    <- min_weight
     g$x$max_weight    <- max_w
     g$x$layouts       <- .get_all_layouts(wmatrix, vertex, area_attr)
@@ -2220,7 +2221,7 @@ idealdigraph <- function(wimp, hide_direct = FALSE, layout = "circle", ...) {
   # Extract ideal vector from new-format vertices
   ideal_vector <- wimp$vertices$ideal
   plot <- digraph(wimp = wimp, hide_direct = hide_direct,
-                  vertex_vector = ideal_vector, layout = layout, ...)
+                  vertex_vector = ideal_vector, layout = layout, is_ideal = TRUE, ...)
   return(plot)
 }
 

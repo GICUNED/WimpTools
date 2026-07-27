@@ -518,7 +518,7 @@ ssi_heatmap <- function(wimp, estimation = FALSE, palette = "Redgreen") {
 #' # Without labels for cleaner view
 #' hypo_plot(example_wimp, show.labels = FALSE)
 
-hypo_plot <- function(wimp, text_size = 1, show_labels = TRUE, ...) {
+hypo_plot <- function(wimp, text_size = 1, show_labels = TRUE, lang = "en", ...) {
 
   hypo_matrix <- wimp$global$hypo_matrix
   self_vector <- wimp$vertices$self
@@ -656,6 +656,213 @@ hypo_plot <- function(wimp, text_size = 1, show_labels = TRUE, ...) {
         )
       )
     )
+  t <- wt_i18n(lang)
+
+  hypo_data <- list(
+    dict = t,
+    constructs = df$construct,
+    col_rg = .construct_colors(wimp, mode = "red/green")[, "color"],
+    col_gs = .construct_colors(wimp, mode = "grey scale")[, "color"],
+    col_cb = .construct_colors(wimp, mode = "colorblind")[, "color"],
+    col_dk = .construct_colors(wimp, mode = "dark")[, "color"],
+    col_pt = .construct_colors(wimp, mode = "pastel")[, "color"],
+    col_vd = .construct_colors(wimp, mode = "viridis")[, "color"],
+    text_size = text_size,
+    orig_x = df$self,
+    orig_y = df$ideal,
+    layouts_x = list(df$self, df$self, df$self, df$self),
+    layouts_y = list(df$ideal, df$ideal, df$ideal, df$ideal)
+  )
+  
+  if (show_labels && exists("layouts_xshift")) {
+    hypo_data$layouts_xshift <- layouts$xshift
+    hypo_data$layouts_yshift <- layouts$yshift
+    hypo_data$layouts_xanchor <- layouts$xanchor
+    hypo_data$layouts_yanchor <- layouts$yanchor
+  }
+
+  js_hypo_panel <- "
+    function(el, p_x, data) {
+      var x = data;
+      var settingsModal = document.createElement('div');
+      settingsModal.id = 'hypo_settings_modal';
+      Object.assign(settingsModal.style, {
+        position: 'absolute', top: '10px', right: '10px',
+        width: '90%', maxWidth: '300px', maxHeight: '80vh', overflowY: 'auto', boxSizing: 'border-box',
+        backgroundColor: '#fff', zIndex: '2000', padding: '20px', borderRadius: '8px', 
+        boxShadow: '0 4px 20px rgba(0,0,0,0.2)', border: '1px solid #eaeaea', display: 'none', 
+        fontFamily: 'Inter, Roboto, sans-serif'
+      });
+      
+      var hypoHTML = '<div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eaeaea; padding-bottom:10px; margin-bottom:15px;\">' +
+                   '<h3 style=\"margin:0; color:#444; font-size:14px;\">' + (x.dict.vis_options || 'Ajustes') + '</h3>' +
+                   '<span id=\"close_hypo_settings\" style=\"cursor:pointer; font-size:20px; font-weight:bold; color:#888; line-height:1;\">&times;</span>' +
+                   '</div>';
+                   
+      hypoHTML += '<div style=\"margin-bottom:15px;\">' +
+                '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444; font-size:13px;\">' + (x.dict.color_palette || 'Paleta') + '</label>' +
+                '<select id=\"hypo_palette_sel\" style=\"width:100%; padding:4px; border-radius:4px;\">' +
+                '<option value=\"rg\" selected>' + (x.dict.pal_redgreen || 'Red-Green') + '</option>' +
+                '<option value=\"cb\">' + (x.dict.pal_colorblind || 'Colorblind') + '</option>' +
+                '<option value=\"gs\">' + (x.dict.pal_greyscale || 'Greyscale') + '</option>' +
+                '<option value=\"dk\">' + (x.dict.pal_dark || 'Dark') + '</option>' +
+                '<option value=\"col_pt\">' + (x.dict.pastel || 'Pastel') + '</option>' +
+                '<option value=\"col_vd\">' + (x.dict.viridis || 'Viridis') + '</option>' +
+                '</select></div>';
+                
+      hypoHTML += '<div style=\"margin-bottom:15px;\">' +
+                '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444; font-size:13px;\">' + (x.dict.text_size || 'Tamaño del Texto') + '</label>' +
+                '<input type=\"range\" id=\"hypo_text_size\" min=\"0.5\" max=\"2.5\" step=\"0.1\" value=\"' + x.text_size + '\" style=\"width:100%; accent-color:#8cc63f;\">' +
+                '</div>';
+                
+      hypoHTML += '<div style=\"margin-bottom:15px;\">' +
+                '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444; font-size:13px;\">' + (x.dict.filter_constructs || 'Filtrar Constructos') + '</label>' +
+                '<div id=\"hypo_filter_list\" style=\"max-height:180px; overflow-y:auto; border:1px solid #ddd; padding:5px; border-radius:4px; font-size:12px; background:#f9f9f9;\"></div>' +
+                '</div>';
+                
+      hypoHTML += '<div style=\"margin-bottom:15px;\">' +
+                '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444; font-size:13px;\">Etiquetas de Constructos</label>' +
+                '<div style=\"margin-bottom:5px; display:flex; gap:10px;\">' +
+                '<button id=\"btn_shuffle_labels\" style=\"flex:1; padding:6px; background:#f0f0f0; border:1px solid #ccc; border-radius:4px; cursor:pointer; font-size:12px; transition:0.2s;\">Reordenar</button>' +
+                '<button id=\"btn_manual_adj\" style=\"flex:1; padding:6px; background:#f0f0f0; border:1px solid #ccc; border-radius:4px; cursor:pointer; font-size:12px; transition:0.2s;\">Ajuste Manual</button>' +
+                '</div></div>';
+                
+      settingsModal.innerHTML = hypoHTML;
+      var container = el.closest('.wt-tab-content') || el.parentElement;
+      container.appendChild(settingsModal);
+      
+      var filterContainer = settingsModal.querySelector('#hypo_filter_list');
+      x.constructs.forEach(function(lbl, idx) {
+         var div = document.createElement('div');
+         div.style.marginBottom = '4px';
+         div.innerHTML = '<label style=\"cursor:pointer; display:flex; align-items:center; color:#555;\"><input type=\"checkbox\" checked value=\"' + idx + '\" class=\"hypo-construct-cb\" style=\"margin-right:6px; accent-color:#8cc63f;\"> ' + lbl + '</label>';
+         filterContainer.appendChild(div);
+      });
+      
+      settingsModal.querySelector('#close_hypo_settings').onclick = function() { settingsModal.style.display = 'none'; };
+      
+      var flexbox = el.parentElement.querySelector('div[style*=\"z-index: 1000\"]') || el.parentElement.querySelector('div[style*=\"z-index:1000\"]');
+      if (flexbox) {
+         var settingsBtn = document.createElement('div');
+         settingsBtn.style.cssText = 'background-color:rgba(255,255,255,0.95);width:clamp(26px, 4vmin, 34px);height:clamp(26px, 4vmin, 34px);border-radius:6px;box-shadow:0 2px 10px rgba(0,0,0,0.1);border:1px solid #ddd;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;';
+         settingsBtn.title = x.dict.vis_options || \"Ajustes\";
+         settingsBtn.onmouseover = function() { this.style.backgroundColor='#f5f5f5'; };
+         settingsBtn.onmouseout = function() { this.style.backgroundColor='rgba(255,255,255,0.95)'; };
+         settingsBtn.onclick = function() { settingsModal.style.display = (settingsModal.style.display === 'block' ? 'none' : 'block'); };
+         settingsBtn.innerHTML = \"<svg width='60%' height='60%' viewBox='0 0 24 24' fill='none' stroke='#333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='3'></circle><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z'></path></svg>\";
+         if (flexbox.children.length > 1) {
+            flexbox.insertBefore(settingsBtn, flexbox.children[1]);
+         } else {
+            flexbox.appendChild(settingsBtn);
+         }
+      }
+      
+      var origAnnotations = el.layout.annotations ? JSON.parse(JSON.stringify(el.layout.annotations)) : [];
+      var currentLayout = 0;
+      
+      settingsModal.querySelector('#btn_shuffle_labels').onmouseover = function() { this.style.background='#e4e4e4'; };
+      settingsModal.querySelector('#btn_shuffle_labels').onmouseout = function() { this.style.background='#f0f0f0'; };
+      settingsModal.querySelector('#btn_shuffle_labels').onclick = function() {
+         if (x.layouts_xshift && x.layouts_xshift.length > 0) {
+             currentLayout = (currentLayout + 1) % x.layouts_xshift.length;
+             updateHypo();
+         }
+      };
+      
+      var updateHypo = function() {
+        var pal = settingsModal.querySelector('#hypo_palette_sel').value;
+        var txtSz = parseFloat(settingsModal.querySelector('#hypo_text_size').value);
+        
+        var activeIndices = [];
+        settingsModal.querySelectorAll('.hypo-construct-cb').forEach(function(cb) {
+           if(cb.checked) activeIndices.push(parseInt(cb.value));
+        });
+        
+        var c_colors = x.col_rg;
+        if (pal === 'cb') c_colors = x.col_cb;
+        if (pal === 'gs') c_colors = x.col_gs;
+        if (pal === 'dk') c_colors = x.col_dk;
+        if (pal === 'col_pt') c_colors = x.col_pt;
+        if (pal === 'col_vd') c_colors = x.col_vd;
+        
+        var new_x = [], new_y = [], new_c = [], new_t = [];
+        for (var i = 0; i < activeIndices.length; i++) {
+           var idx = activeIndices[i];
+           new_x.push(x.orig_x[idx]);
+           new_y.push(x.orig_y[idx]);
+           new_c.push(c_colors[idx]);
+           new_t.push('<b>' + x.constructs[idx] + '</b><br>Ideal Similarity: ' + parseFloat(x.orig_y[idx]).toFixed(3) + '<br>Self Similarity: ' + parseFloat(x.orig_x[idx]).toFixed(3));
+        }
+        
+        var restyleData = {
+           x: [new_x],
+           y: [new_y],
+           'marker.color': [new_c],
+           text: [new_t]
+        };
+        Plotly.restyle(el, restyleData, [0]);
+        
+        var newAnnotations = [];
+        var seenTexts = {};
+        for (var i = 0; i < origAnnotations.length; i++) {
+           var ann = JSON.parse(JSON.stringify(origAnnotations[i]));
+           if (!ann.text || seenTexts[ann.text]) continue;
+           seenTexts[ann.text] = true;
+           
+           var c_idx = -1;
+           for (var k = 0; k < x.constructs.length; k++) {
+               if (x.constructs[k] === ann.text) {
+                   c_idx = k;
+                   break;
+               }
+           }
+           
+           if (c_idx !== -1 && x.layouts_xshift && x.layouts_xshift.length > currentLayout) {
+               ann.x = x.layouts_x[currentLayout][c_idx];
+               ann.y = x.layouts_y[currentLayout][c_idx];
+               ann.xshift = x.layouts_xshift[currentLayout][c_idx];
+               ann.yshift = x.layouts_yshift[currentLayout][c_idx];
+               if (x.layouts_xanchor) ann.xanchor = x.layouts_xanchor[currentLayout][c_idx];
+               if (x.layouts_yanchor) ann.yanchor = x.layouts_yanchor[currentLayout][c_idx];
+           }
+           
+           var isActive = false;
+           for (var j = 0; j < activeIndices.length; j++) {
+               if (x.constructs[activeIndices[j]] === ann.text) {
+                   isActive = true;
+                   break;
+               }
+           }
+           if (isActive) {
+               ann.font.size = 11 * txtSz;
+               newAnnotations.push(ann);
+           }
+        }
+        Plotly.relayout(el, { annotations: newAnnotations });
+      };
+      
+      settingsModal.querySelector('#hypo_palette_sel').onchange = updateHypo;
+      settingsModal.querySelector('#hypo_text_size').oninput = updateHypo;
+      settingsModal.querySelectorAll('.hypo-construct-cb').forEach(function(cb) {
+         cb.onchange = updateHypo;
+      });
+      
+      var isManual = false;
+      var btnManual = settingsModal.querySelector('#btn_manual_adj');
+      btnManual.onmouseover = function() { if(!isManual) this.style.background='#e4e4e4'; };
+      btnManual.onmouseout = function() { if(!isManual) this.style.background='#f0f0f0'; };
+      btnManual.onclick = function() {
+          isManual = !isManual;
+          this.style.background = isManual ? '#d0ebd0' : '#e4e4e4';
+          this.style.borderColor = isManual ? '#88c588' : '#ccc';
+          var currentConfig = (el._fullLayout && el._fullLayout._modeBar) ? el._fullLayout._modeBar.config : (el._context || { displayModeBar: false });
+          var newConfig = Object.assign({}, currentConfig, { edits: { annotationPosition: isManual } });
+          Plotly.react(el, el.data, el.layout, newConfig);
+      };
+    }
+  "
+  
+  fig <- fig %>% htmlwidgets::onRender(js_hypo_panel, data = hypo_data)
 
   return(fig)
 }

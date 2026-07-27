@@ -293,7 +293,7 @@ if_plot <- function(wimp, show = "all", center = "data", text_size = 1, ...) {
 #' @import plotly
 #' @examples
 #' if_barchart(example_wimp)
-if_barchart <- function(wimp, show = "all", ...) {
+if_barchart <- function(wimp, show = "all", lang = "en", ...) {
   # Align and extract base vectors
   wimp <- .align_wimp(wimp, exclude_dilemmatics = FALSE)
   self_vector <- wimp$vertices$self
@@ -337,12 +337,16 @@ if_barchart <- function(wimp, show = "all", ...) {
   if (show == "nodil") df <- df[-dil, ]
   if (show == "dil") df <- df[dil, ]
 
+  # Order df by global impact to simplify JS updates
+  df <- df[order(df$global), ]
+  df$right.poles <- factor(df$right.poles, levels = df$right.poles)
+  
   # Range for symmetric scaling
   range <- max(abs(df[c(1, 2, 3, 4)])) * 1.15
 
   # Positive / Negative Impact panel
   fig1 <- plot_ly(
-    data = df, x = ~PI, y = ~ reorder(right_poles, global),
+    data = df, x = ~PI, y = ~right.poles,
     type = "bar", orientation = "h",
     marker = list(
       color = "#AAF683",
@@ -400,7 +404,7 @@ if_barchart <- function(wimp, show = "all", ...) {
 
   # Positive / Negative Feedback panel
   fig2 <- plot_ly(
-    data = df, x = ~PF, y = ~ reorder(right_poles, global),
+    data = df, x = ~PF, y = ~right.poles,
     type = "bar", orientation = "h", name = "Feedback",
     marker = list(
       color = "#AAF683",
@@ -471,5 +475,150 @@ if_barchart <- function(wimp, show = "all", ...) {
       )
     ) %>%
     .plot_optimization()
+    
+  t <- wt_i18n(lang)
+
+  # Prepare original arrays for JS in the exact order they are plotted
+  if_data <- list(
+    dict = t,
+    constructs = df$construct,
+    right_poles = as.character(df$right.poles),
+    self_poles = df$self.poles,
+    pi = df$PI,
+    ni = df$NI,
+    pf = df$PF,
+    nf = df$NF,
+    pattern = pattern[match(df$right.poles, right_poles)],
+    col_rg = .construct_colors(wimp, mode = "red/green")[, "color"][match(df$right.poles, right_poles)],
+    col_gs = .construct_colors(wimp, mode = "grey scale")[, "color"][match(df$right.poles, right_poles)],
+    col_cb = .construct_colors(wimp, mode = "colorblind")[, "color"][match(df$right.poles, right_poles)],
+    col_dk = .construct_colors(wimp, mode = "dark")[, "color"][match(df$right.poles, right_poles)],
+    col_pt = .construct_colors(wimp, mode = "pastel")[, "color"][match(df$right.poles, right_poles)],
+    col_vd = .construct_colors(wimp, mode = "viridis")[, "color"][match(df$right.poles, right_poles)]
+  )
+
+  js_if_panel <- "
+    function(el, p_x, data) {
+      var x = data;
+      var settingsModal = document.createElement('div');
+      settingsModal.id = 'if_settings_modal';
+      Object.assign(settingsModal.style, {
+        position: 'absolute', top: '10px', right: '10px',
+        width: '90%', maxWidth: '300px', maxHeight: '80vh', overflowY: 'auto', boxSizing: 'border-box',
+        backgroundColor: '#fff', zIndex: '2000', padding: '20px', borderRadius: '8px', 
+        boxShadow: '0 4px 20px rgba(0,0,0,0.2)', border: '1px solid #eaeaea', display: 'none', 
+        fontFamily: 'Inter, Roboto, sans-serif'
+      });
+      
+      var html = '<div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eaeaea; padding-bottom:10px; margin-bottom:15px;\">' +
+                 '<h3 style=\"margin:0; color:#444; font-size:14px;\">' + (x.dict.vis_options || 'Ajustes') + '</h3>' +
+                 '<span id=\"close_if_settings\" style=\"cursor:pointer; font-size:20px; font-weight:bold; color:#888; line-height:1;\">&times;</span>' +
+                 '</div>';
+                 
+      html += '<div style=\"margin-bottom:15px;\">' +
+              '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444; font-size:13px;\">' + (x.dict.color_palette || 'Paleta') + '</label>' +
+              '<select id=\"if_palette_sel\" style=\"width:100%; padding:4px; border-radius:4px;\">' +
+              '<option value=\"rg\" selected>' + (x.dict.pal_redgreen || 'Red-Green') + '</option>' +
+              '<option value=\"cb\">' + (x.dict.pal_colorblind || 'Colorblind') + '</option>' +
+              '<option value=\"gs\">' + (x.dict.pal_greyscale || 'Greyscale') + '</option>' +
+              '<option value=\"dk\">' + (x.dict.pal_dark || 'Dark') + '</option>' +
+              '<option value=\"col_pt\">' + (x.dict.pastel || 'Pastel') + '</option>' +
+              '<option value=\"col_vd\">' + (x.dict.viridis || 'Viridis') + '</option>' +
+              '</select></div>';
+              
+      html += '<div style=\"margin-bottom:15px;\">' +
+              '<label style=\"display:block; margin-bottom:5px; font-weight:bold; color:#444; font-size:13px;\">' + (x.dict.filter_constructs || 'Filtrar Constructos') + '</label>' +
+              '<div id=\"if_filter_list\" style=\"max-height:180px; overflow-y:auto; border:1px solid #ddd; padding:5px; border-radius:4px; font-size:12px; background:#f9f9f9;\"></div>' +
+              '</div>';
+              
+      settingsModal.innerHTML = html;
+      var container = el.closest('.wt-tab-content') || el.parentElement;
+      container.appendChild(settingsModal);
+      
+      var filterContainer = settingsModal.querySelector('#if_filter_list');
+      x.constructs.forEach(function(lbl, idx) {
+         var div = document.createElement('div');
+         div.style.marginBottom = '4px';
+         div.innerHTML = '<label style=\"cursor:pointer; display:flex; align-items:center; color:#555;\"><input type=\"checkbox\" checked value=\"' + idx + '\" class=\"if-construct-cb\" style=\"margin-right:6px; accent-color:#8cc63f;\"> ' + lbl + '</label>';
+         filterContainer.appendChild(div);
+      });
+      
+      settingsModal.querySelector('#close_if_settings').onclick = function() { settingsModal.style.display = 'none'; };
+      
+      var flexbox = el.parentElement.querySelector('div[style*=\"z-index: 1000\"]') || el.parentElement.querySelector('div[style*=\"z-index:1000\"]');
+      if (flexbox) {
+         var settingsBtn = document.createElement('div');
+         settingsBtn.style.cssText = 'background-color:rgba(255,255,255,0.95);width:clamp(26px, 4vmin, 34px);height:clamp(26px, 4vmin, 34px);border-radius:6px;box-shadow:0 2px 10px rgba(0,0,0,0.1);border:1px solid #ddd;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;';
+         settingsBtn.title = x.dict.vis_options || \"Ajustes\";
+         settingsBtn.onmouseover = function() { this.style.backgroundColor='#f5f5f5'; };
+         settingsBtn.onmouseout = function() { this.style.backgroundColor='rgba(255,255,255,0.95)'; };
+         settingsBtn.onclick = function() { settingsModal.style.display = (settingsModal.style.display === 'block' ? 'none' : 'block'); };
+         settingsBtn.innerHTML = \"<svg width='60%' height='60%' viewBox='0 0 24 24' fill='none' stroke='#333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='3'></circle><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z'></path></svg>\";
+         if (flexbox.children.length > 1) {
+            flexbox.insertBefore(settingsBtn, flexbox.children[1]);
+         } else {
+            flexbox.appendChild(settingsBtn);
+         }
+      }
+      
+      var updateIf = function() {
+        var pal = settingsModal.querySelector('#if_palette_sel').value;
+        
+        var activeIndices = [];
+        settingsModal.querySelectorAll('.if-construct-cb').forEach(function(cb) {
+           if(cb.checked) activeIndices.push(parseInt(cb.value));
+        });
+        
+        var c_colors = x.col_rg;
+        if (pal === 'cb') c_colors = x.col_cb;
+        if (pal === 'gs') c_colors = x.col_gs;
+        if (pal === 'dk') c_colors = x.col_dk;
+        if (pal === 'col_pt') c_colors = x.col_pt;
+        if (pal === 'col_vd') c_colors = x.col_vd;
+        
+        var new_y = [], new_c = [], new_t_pi = [], new_t_ni = [], new_t_pf = [], new_t_nf = [];
+        var new_pi = [], new_ni = [], new_pf = [], new_nf = [];
+        
+        for (var i = 0; i < activeIndices.length; i++) {
+           var idx = activeIndices[i];
+           new_y.push(x.right_poles[idx]);
+           var color = c_colors[idx];
+           // Ensure dilemmatics stay yellow if shown, or handle normally
+           if (x.pattern[idx] === 1 && pal === 'rg') color = \"#FFD97D\";
+           new_c.push(color);
+           
+           new_pi.push(x.pi[idx]);
+           new_ni.push(x.ni[idx]);
+           new_pf.push(x.pf[idx]);
+           new_nf.push(x.nf[idx]);
+           
+           new_t_pi.push('<b>' + x.constructs[idx] + '</b><br>Self: ' + x.self_poles[idx] + '<br>Positive Impact: ' + parseFloat(x.pi[idx]).toFixed(2));
+           new_t_ni.push('<b>' + x.constructs[idx] + '</b><br>Self: ' + x.self_poles[idx] + '<br>Negative Impact: ' + parseFloat(x.ni[idx]).toFixed(2));
+           new_t_pf.push('<b>' + x.constructs[idx] + '</b><br>Self: ' + x.self_poles[idx] + '<br>Positive Feedback: ' + parseFloat(x.pf[idx]).toFixed(2));
+           new_t_nf.push('<b>' + x.constructs[idx] + '</b><br>Self: ' + x.self_poles[idx] + '<br>Negative Feedback: ' + parseFloat(x.nf[idx]).toFixed(2));
+        }
+        
+        Plotly.restyle(el, {
+           y: [new_y], x: [new_pi], 'marker.line.color': [new_c], hovertext: [new_t_pi]
+        }, [0]);
+        Plotly.restyle(el, {
+           y: [new_y], x: [new_ni], 'marker.line.color': [new_c], hovertext: [new_t_ni]
+        }, [1]);
+        Plotly.restyle(el, {
+           y: [new_y], x: [new_pf], 'marker.line.color': [new_c], hovertext: [new_t_pf]
+        }, [2]);
+        Plotly.restyle(el, {
+           y: [new_y], x: [new_nf], 'marker.line.color': [new_c], hovertext: [new_t_nf]
+        }, [3]);
+      };
+      
+      settingsModal.querySelector('#if_palette_sel').onchange = updateIf;
+      settingsModal.querySelectorAll('.if-construct-cb').forEach(function(cb) {
+         cb.onchange = updateIf;
+      });
+    }
+  "
+
+  fig <- fig %>% htmlwidgets::onRender(js_if_panel, data = if_data)
   return(fig)
 }

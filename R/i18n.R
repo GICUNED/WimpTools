@@ -86,6 +86,22 @@ wt_i18n <- function(lang = "en") {
         "affected (destination). More intense colors indicate a stronger structural ",
         "relationship."
       ),
+      info_text_ideal_digraph = paste0(
+        "The Ideal Digraph visualizes the cognitive system as it would be if all constructs ",
+        "were perfectly aligned with the individual's ideal pole. Nodes represent constructs, ",
+        "and edges represent implications. Exploring this structure reveals the desired or ",
+        "aspirational state of the psychological system."
+      ),
+      info_text_if = paste0(
+        "The Impact and Feedback (IF) Plot evaluates each construct based on two dimensions: ",
+        "Impact (ability to influence other constructs) and Feedback (susceptibility to be influenced). ",
+        "This helps identify which constructs drive the system and which ones are more reactive."
+      ),
+      info_text_hypo = paste0(
+        "The Hypothetical Scenarios visualization allows you to explore what would happen ",
+        "if specific constructs were modified. It simulates the propagation of change through ",
+        "the implication network, showing the systemic consequences of local interventions."
+      ),
 
       # Dropdown option labels — color palettes
       palette_labels = list(
@@ -227,6 +243,22 @@ wt_i18n <- function(lang = "en") {
         "influencia de un constructo (origen) sobre los dem\u00e1s, mientras que las columnas ",
         "representan el grado en que un constructo es afectado (destino). Colores m\u00e1s ",
         "intensos indican una relaci\u00f3n estructural m\u00e1s fuerte."
+      ),
+      info_text_ideal_digraph = paste0(
+        "El Digrafo del Ideal visualiza el sistema cognitivo tal como sería si todos los constructos ",
+        "estuvieran perfectamente alineados con el polo ideal del individuo. Los nodos representan ",
+        "constructos y las aristas implicaciones. Explorar esta estructura revela el estado ",
+        "deseado o aspiracional del sistema psicológico."
+      ),
+      info_text_if = paste0(
+        "El Gráfico de Impacto y Feedback evalúa cada constructo en base a dos dimensiones: ",
+        "Impacto (capacidad de influir sobre otros constructos) y Feedback (susceptibilidad de ser influido). ",
+        "Esto permite identificar qué constructos dirigen el sistema y cuáles son más reactivos."
+      ),
+      info_text_hypo = paste0(
+        "La visualización de Escenarios Hipotéticos permite explorar qué sucedería si se ",
+        "modificaran constructos específicos. Simula la propagación del cambio a través de la red ",
+        "de implicaciones, mostrando las consecuencias sistémicas de intervenciones locales."
       ),
 
       # Etiquetas de opciones desplegables — paletas de color

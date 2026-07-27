@@ -1,0 +1,11 @@
+---
+title: "Widget Bienestar"
+output: 
+  html_document:
+    mathjax: null
+---
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+library(WimpTools)
+widget_bienestar(example_wimp, example_wimp_post)
+```

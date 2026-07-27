@@ -171,7 +171,7 @@
             background-color: #666;
         }
         #editModeBtn.active {
-            background-color: #e63946;
+            background-color: #d4af37;
         }
 
         /* Dropdown styles */
@@ -224,7 +224,7 @@
         }
 
         .grid-stack {
-            height: 100%;
+            min-height: 100%;
             background: transparent;
         }
 
@@ -256,7 +256,7 @@
             z-index: 10;
             display: none;
             cursor: move;
-            border: 2px dashed #e63946;
+            border: 2px dashed #d4af37;
             border-radius: 8px;
         }
 
@@ -440,6 +440,51 @@
             font-weight: 600;
             border: 1px solid #d3ebb8;
         }
+        
+        /* Template Cards */
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+            margin-bottom: 20px;
+        }
+        .template-card {
+            border: 2px solid #eaeaea;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            background: #fafafa;
+        }
+        .template-card:hover {
+            border-color: #8cc63f;
+            background: #f0f7e6;
+        }
+        .template-card.selected {
+            border-color: #8cc63f;
+            background: #e8f3d6;
+            box-shadow: 0 0 0 2px rgba(140, 198, 63, 0.2);
+        }
+        .template-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: #555;
+        }
+        .template-card.selected .template-icon {
+            color: #8cc63f;
+        }
+        .template-title {
+            font-weight: 600;
+            font-size: 13px;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .template-desc {
+            font-size: 11px;
+            color: #777;
+        }
 
     </style>
 </head>
@@ -457,9 +502,10 @@
                 <a href="#" class="nav-item">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg> Inicio
                 </a>
-                <a href="#" class="nav-item active">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> Pacientes
+                <a href="#" class="nav-item active" onclick="showPatientsList(); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); this.classList.add('active'); return false;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> Pacientes
                 </a>
+
                 <a href="#" class="nav-item">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> Sugerencias / Análisis
                 </a>
@@ -482,92 +528,443 @@
                 </div>
             </div>
         </div>
-
         <div class="app-main-content">
-            <div class="header">
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <button onclick="document.getElementById('appSidebar').classList.toggle('collapsed')" style="background:none; border:none; cursor:pointer; padding:5px; color:#555;">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            
+            <!-- PATIENTS VIEW -->
+            <div id="patientsView" style="display: flex; flex-direction: column; width: 100%; height: 100%; background: #fdfdfd; overflow-y: auto;">
+                <div class="header">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <button onclick="document.getElementById('appSidebar').classList.toggle('collapsed')" style="background:none; border:none; cursor:pointer; padding:5px; color:#555;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                        </button>
+                        <h1 style="display: flex; align-items: center; gap: 8px; font-size: 18px; margin: 0; color: #333; font-weight: 600;">Pacientes</h1>
+                    </div>
+                    <button onclick="promptNewPatient()" style="background: #8cc63f; color: white; border: none; padding: 10px 18px; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(140, 198, 63, 0.3);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Nuevo Paciente
                     </button>
-                    <h1 style="display: flex; align-items: center; gap: 8px; font-size: 18px; margin: 0;">
-                        <span style="color: #666; font-weight: 500;">Pacientes</span>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                        <span style="color: #666; font-weight: 500;">Caso SU</span>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                        <span style="color: #333; font-weight: 600;">Dashboard</span>
-                    </h1>
+                </div>
+                
+                <div style="padding: 40px; width: 100%;">
+                    <div id="patientsListContainer" style="display: flex; flex-direction: column; gap: 15px;">
+                        
+                        <!-- Patient Card 1 -->
+                        <div class="patient-card" style="display: flex; align-items: center; background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: 0.2s; cursor: pointer;" onmouseover="this.style.borderColor='#8cc63f'" onmouseout="this.style.borderColor='#eaeaea'" onclick="openPatientDashboard('Caso SU', 'Conflicto sobre estilo comunicativo y miedo a la pérdida.', 'Mujer', '34 años', 'Caso abierto')">
+                            <div class="patient-photo" style="margin-right: 20px; width: 60px; height: 60px;">
+                                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            </div>
+                            <div class="patient-info" style="flex-grow: 1;">
+                                <div class="patient-name" style="font-size: 18px; margin-bottom: 6px;">Caso SU</div>
+                                <div class="patient-desc" style="margin-bottom: 12px;">Conflicto sobre estilo comunicativo y miedo a la pérdida.</div>
+                                <div class="patient-meta">
+                                    <span class="meta-tag">Mujer</span>
+                                    <span class="meta-tag">34 años</span>
+                                    <span class="meta-tag">Caso abierto</span>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 12px; margin-left: 20px; flex-shrink: 0; align-items: center;">
+                                <button onclick="event.stopPropagation(); openPatientDashboard('Caso SU', 'Conflicto sobre estilo comunicativo y miedo a la pérdida.', 'Mujer', '34 años', 'Caso abierto')" style="background: #8cc63f; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Ir al Dashboard" onmouseover="this.style.background='#7bb335'" onmouseout="this.style.background='#8cc63f'">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                                </button>
+                                <button onclick="event.stopPropagation(); this.closest('.patient-card').click(); toggleFilesMode();" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Archivos" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                </button>
+                                <button onclick="event.stopPropagation(); openEditPatientModal(this.closest('.patient-card'))" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Configurar Paciente" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Patient Card 2 -->
+                        <div class="patient-card" style="display: flex; align-items: center; background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: 0.2s; cursor: pointer;" onmouseover="this.style.borderColor='#8cc63f'" onmouseout="this.style.borderColor='#eaeaea'" onclick="openPatientDashboard('Caso MR', 'Ansiedad anticipatoria y evitación de situaciones sociales.', 'Hombre', '45 años', 'Seguimiento', '#e6f7ff', '#1890ff', '#91d5ff')">
+                            <div class="patient-photo" style="margin-right: 20px; width: 60px; height: 60px;">
+                                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            </div>
+                            <div class="patient-info" style="flex-grow: 1;">
+                                <div class="patient-name" style="font-size: 18px; margin-bottom: 6px;">Caso MR</div>
+                                <div class="patient-desc" style="margin-bottom: 12px;">Ansiedad anticipatoria y evitación de situaciones sociales.</div>
+                                <div class="patient-meta">
+                                    <span class="meta-tag">Hombre</span>
+                                    <span class="meta-tag">45 años</span>
+                                    <span class="meta-tag" style="background:#e6f7ff; color:#1890ff; border-color:#91d5ff;">Seguimiento</span>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 12px; margin-left: 20px; flex-shrink: 0; align-items: center;">
+                                <button onclick="event.stopPropagation(); openPatientDashboard('Caso MR', 'Ansiedad anticipatoria y evitación de situaciones sociales.', 'Hombre', '45 años', 'Seguimiento', '#e6f7ff', '#1890ff', '#91d5ff')" style="background: #8cc63f; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Ir al Dashboard" onmouseover="this.style.background='#7bb335'" onmouseout="this.style.background='#8cc63f'">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                                </button>
+                                <button onclick="event.stopPropagation(); this.closest('.patient-card').click(); toggleFilesMode();" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Archivos" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                </button>
+                                <button onclick="event.stopPropagation(); openEditPatientModal(this.closest('.patient-card'))" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Configurar Paciente" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Patient Card 3 -->
+                        <div class="patient-card" style="display: flex; align-items: center; background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: 0.2s; cursor: pointer;" onmouseover="this.style.borderColor='#8cc63f'" onmouseout="this.style.borderColor='#eaeaea'" onclick="openPatientDashboard('Caso LA', 'Reestructuración del sistema de constructos tras duelo.', 'Mujer', '28 años', 'Alta', '#f6ffed', '#52c41a', '#b7eb8f')">
+                            <div class="patient-photo" style="margin-right: 20px; width: 60px; height: 60px;">
+                                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            </div>
+                            <div class="patient-info" style="flex-grow: 1;">
+                                <div class="patient-name" style="font-size: 18px; margin-bottom: 6px;">Caso LA</div>
+                                <div class="patient-desc" style="margin-bottom: 12px;">Reestructuración del sistema de constructos tras duelo.</div>
+                                <div class="patient-meta">
+                                    <span class="meta-tag">Mujer</span>
+                                    <span class="meta-tag">28 años</span>
+                                    <span class="meta-tag" style="background:#f6ffed; color:#52c41a; border-color:#b7eb8f;">Alta</span>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 12px; margin-left: 20px; flex-shrink: 0; align-items: center;">
+                                <button onclick="event.stopPropagation(); openPatientDashboard('Caso LA', 'Reestructuración del sistema de constructos tras duelo.', 'Mujer', '28 años', 'Alta', '#f6ffed', '#52c41a', '#b7eb8f')" style="background: #8cc63f; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Ir al Dashboard" onmouseover="this.style.background='#7bb335'" onmouseout="this.style.background='#8cc63f'">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                                </button>
+                                <button onclick="event.stopPropagation(); this.closest('.patient-card').click(); toggleFilesMode();" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Archivos" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                </button>
+                                <button onclick="event.stopPropagation(); openEditPatientModal(this.closest('.patient-card'))" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Configurar Paciente" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
-    
-    <!-- Patient Banner -->
-    <div class="patient-banner">
-        <div class="patient-photo">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-        </div>
-        <div class="patient-info">
-            <div class="patient-name">Paciente: Caso SU</div>
-            <div class="patient-desc">Conflicto sobre estilo comunicativo y miedo a la pérdida.</div>
-        </div>
-        <div class="patient-meta">
-            <span class="meta-tag">Femenino</span>
-            <span class="meta-tag">34 años</span>
-            <span class="meta-tag">Caso abierto</span>
-        </div>
-    </div>
 
-    <!-- Tabs and Controls Bar -->
-    <div class="tabs-and-controls-bar" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eaeaea; background-color: #fff; padding-right: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); z-index: 10;">
-        <div class="dashboard-tabs" id="tabsBar" style="border-bottom: none; box-shadow: none; flex-grow: 1; padding-right: 0; z-index: 1;">
-            <!-- Tabs will be injected here -->
-            <button class="add-tab-btn" onclick="promptNewDashboard()" title="Nuevo Dashboard">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            </button>
-        </div>
-        <div class="controls" style="display: flex; gap: 8px;">
-            <button id="tabSettingsBtn" onclick="openTabSettings()" title="Configuración de Pestaña" style="display:flex; align-items:center; justify-content:center; padding:6px; width:28px; height:28px;">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            </button>
-            <button id="editModeBtn" onclick="toggleEditMode()" title="Modo Edición" style="display:flex; align-items:center; justify-content:center; padding:6px; width:28px; height:28px;">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-            </button>
-            <div class="dropdown">
-                <button class="dropbtn" title="Añadir Widget" style="display:flex; align-items:center; justify-content:center; padding:6px; width:28px; height:28px;">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                </button>
-                <div class="dropdown-content">
-                    <button onclick="addWidget('widget_digraph.html', 6, 10)">Mapa de Implicaciones</button>
-                    <button onclick="addWidget('widget_centrality.html', 6, 10)">Análisis de Centralidad</button>
-                    <button onclick="addWidget('widget_implications.html', 6, 10)">Análisis de Implicaciones</button>
-                    <button onclick="addWidget('widget_simulation.html', 6, 10)">Laboratorio de Dinámicas</button>
+            <!-- DASHBOARD VIEW -->
+            <div id="dashboardView" style="display: none; flex-direction: column; width: 100%; height: 100%;">
+                
+                <div class="header">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <button onclick="document.getElementById('appSidebar').classList.toggle('collapsed')" style="background:none; border:none; cursor:pointer; padding:5px; color:#555;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                        </button>
+                        <h1 style="display: flex; align-items: center; gap: 8px; font-size: 18px; margin: 0;">
+                            <span onclick="showPatientsList()" style="color: #666; font-weight: 500; cursor: pointer;" onmouseover="this.style.color='#333'" onmouseout="this.style.color='#666'">Pacientes</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            <span id="headerPatientName" style="color: #666; font-weight: 500;">Caso SU</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            <span style="color: #333; font-weight: 600;">Dashboard</span>
+                        </h1>
+                    </div>
                 </div>
-            </div>
-        </div>
-    </div>
+        
+                <!-- Patient Banner -->
+                <div class="patient-banner">
+                    <div class="patient-photo">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </div>
+                    <div class="patient-info">
+                        <div class="patient-name" id="bannerPatientName">Caso SU</div>
+                        <div class="patient-desc" id="bannerPatientDesc">Conflicto sobre estilo comunicativo y miedo a la pérdida.</div>
+                    </div>
+                    <div class="patient-meta" id="bannerPatientMeta">
+                        <span class="meta-tag">Femenino</span>
+                        <span class="meta-tag">34 años</span>
+                        <span class="meta-tag">Caso abierto</span>
+                    </div>
+                    <div style="margin-left: auto; display: flex; gap: 12px; align-items: center;">
+                        <button id="btnToggleFiles" onclick="toggleFilesMode()" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Archivos del Paciente" onmouseover="if(this.dataset.active !== 'true') this.style.background='#f0f0f0'" onmouseout="if(this.dataset.active !== 'true') this.style.background='white'">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        </button>
+                        <button onclick="if(typeof currentDashboardPatientCard !== 'undefined' && currentDashboardPatientCard) openEditPatientModal(currentDashboardPatientCard); else alert('Error: no se encontró la tarjeta original.');" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Editar Paciente" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        </button>
+                    </div>
+                </div>
 
-    <!-- The Grid Container -->
-    <div class="dashboard-container" id="dashboardsContainer">
-        <!-- Grids will be injected here dynamically -->
+                <!-- DASHBOARD MODE WRAPPER -->
+                <div id="dashboardModeWrapper" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
+                    <!-- Tabs and Controls Bar -->
+                    <div class="tabs-and-controls-bar" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eaeaea; background-color: #fff; padding-right: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); z-index: 10;">
+                    <div class="dashboard-tabs" id="tabsBar" style="border-bottom: none; box-shadow: none; flex-grow: 1; padding-right: 0; z-index: 1;">
+                        <!-- Tabs will be injected here -->
+                        <button class="add-tab-btn" onclick="promptNewDashboard()" title="Nuevo Dashboard">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
+                    </div>
+                    <div class="controls" style="display: flex; gap: 8px;">
+                        <div class="dropdown">
+                            <button class="dropbtn" title="Añadir Widget" style="display:flex; align-items:center; justify-content:center; padding:6px; width:28px; height:28px;">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            </button>
+                            <div class="dropdown-content">
+                                <button onclick="addWidget('widget_digraph.html', 6, 10, 'Mapa de Implicaciones')">Mapa de Implicaciones</button>
+                                <button onclick="addWidget('widget_centrality.html', 6, 10, 'Análisis de Centralidad')">Análisis de Centralidad</button>
+                                <button onclick="addWidget('widget_implications.html', 6, 10, 'Análisis de Implicaciones')">Análisis de Implicaciones</button>
+                                <button onclick="addWidget('widget_simulation.html', 6, 10, 'Laboratorio de Dinámicas')">Laboratorio de Dinámicas</button>
+                                <button onclick="addWidget('widget_adjustment.html', 6, 10, 'Análisis de Bienestar')">Análisis de Bienestar</button>
+                            </div>
+                        </div>
+                        <button id="editModeBtn" onclick="toggleEditMode()" title="Modo Edición" style="display:flex; align-items:center; justify-content:center; padding:6px; width:28px; height:28px;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                        </button>
+                        <button id="tabSettingsBtn" onclick="openTabSettings()" title="Configuración de Pestaña" style="display:flex; align-items:center; justify-content:center; padding:6px; width:28px; height:28px;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="dashboards-container" id="dashboardsContainer" style="flex: 1; min-height: 0; display: flex; flex-direction: column; overflow-y: auto;">
+                    </div>
+                </div> <!-- END DASHBOARD MODE WRAPPER -->
+
+                <!-- FILES MODE WRAPPER -->
+                <div id="filesModeWrapper" style="display: none; flex-direction: column; flex: 1; min-height: 0; background: #fafafa; padding: 30px; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                        <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #333;">Archivos</h2>
+                    </div>
+
+                    <div style="display: flex; gap: 20px; align-items: flex-start; flex: 1;">
+                        
+                        <!-- Left Column: Evaluaciones -->
+                        <div style="width: 280px; flex-shrink: 0; display: flex; flex-direction: column; gap: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 5px;">
+                                <div style="font-size: 12px; font-weight: 600; color: #888; letter-spacing: 0.5px;">ETAPAS</div>
+                                <button style="border: none; background: #f0f7e6; color: #66992b; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 4px; transition: 0.2s;" onmouseover="this.style.background='#e3f0d1'" onmouseout="this.style.background='#f0f7e6'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Nueva</button>
+                            </div>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <!-- Línea Base -->
+                                <div onclick="selectEtapa(this, 'Línea Base')" class="eval-card active" style="padding: 15px; border-radius: 8px; border: 2px solid #8cc63f; background: #fbfdf9; cursor: pointer; position: relative; box-shadow: 0 2px 8px rgba(140, 198, 63, 0.15);">
+                                    <div style="font-weight: 600; color: #333; margin-bottom: 4px; font-size: 14px;">Línea Base</div>
+                                    <div style="font-size: 13px; color: #888; display: flex; align-items: center; gap: 6px;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                        23/7/2026
+                                    </div>
+                                    <div style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #8cc63f;" class="eval-arrow">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                    </div>
+                                </div>
+                                
+                                <!-- Tratamiento -->
+                                <div onclick="selectEtapa(this, 'Tratamiento')" class="eval-card" style="padding: 15px; border-radius: 8px; border: 1px solid #eaeaea; background: white; cursor: pointer; position: relative; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.02);" onmouseover="if(!this.classList.contains('active')) this.style.borderColor='#ccc'" onmouseout="if(!this.classList.contains('active')) this.style.borderColor='#eaeaea'">
+                                    <div style="font-weight: 600; color: #333; margin-bottom: 4px; font-size: 14px;">Tratamiento</div>
+                                    <div style="font-size: 13px; color: #888; display: flex; align-items: center; gap: 6px;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                        15/10/2026
+                                    </div>
+                                    <div style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #8cc63f; display: none;" class="eval-arrow">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                    </div>
+                                </div>
+
+                                <!-- Seguimiento -->
+                                <div onclick="selectEtapa(this, 'Seguimiento')" class="eval-card" style="padding: 15px; border-radius: 8px; border: 1px solid #eaeaea; background: white; cursor: pointer; position: relative; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.02);" onmouseover="if(!this.classList.contains('active')) this.style.borderColor='#ccc'" onmouseout="if(!this.classList.contains('active')) this.style.borderColor='#eaeaea'">
+                                    <div style="font-weight: 600; color: #333; margin-bottom: 4px; font-size: 14px;">Seguimiento</div>
+                                    <div style="font-size: 13px; color: #888; display: flex; align-items: center; gap: 6px;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                        10/1/2027
+                                    </div>
+                                    <div style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #8cc63f; display: none;" class="eval-arrow">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Right Column: Rejillas -->
+                        <div style="flex: 1; border: 1px solid #eaeaea; border-radius: 12px; background: white; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
+                            
+                            <div style="padding: 20px 25px; border-bottom: 1px solid #eaeaea; display: flex; justify-content: space-between; align-items: center; background: white;">
+                                <div>
+                                    <div style="font-size: 13px; color: #888; margin-bottom: 4px; font-weight: 500;">Registros asociados a la etapa:</div>
+                                    <div style="font-size: 20px; font-weight: 600; color: #333;" id="currentEvalName">Línea Base</div>
+                                </div>
+                                <button style="border: 1px solid #ddd; background: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px; color: #555; transition: 0.2s;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg> Nuevo registro</button>
+                            </div>
+                            
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid #eaeaea; text-align: left; background: #fafafa;">
+                                        <th style="padding: 14px 25px; font-size: 12px; font-weight: 600; color: #888; letter-spacing: 0.5px;">TÍTULO</th>
+                                        <th style="padding: 14px 25px; font-size: 12px; font-weight: 600; color: #888; letter-spacing: 0.5px;">TIPO</th>
+                                        <th style="padding: 14px 25px; font-size: 12px; font-weight: 600; color: #888; letter-spacing: 0.5px;">ESTADO</th>
+                                        <th style="padding: 14px 25px; font-size: 12px; font-weight: 600; color: #888; letter-spacing: 0.5px;">ACTUALIZADO</th>
+                                        <th style="padding: 14px 25px; width: 40px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rejillasTbody">
+                                    <tr style="border-bottom: 1px solid #eaeaea; transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background='white'">
+                                        <td style="padding: 16px 25px; font-size: 14px; font-weight: 500; color: #333;">prueba 2</td>
+                                        <td style="padding: 16px 25px;"><span style="background: #f1f1f1; color: #555; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">WimpGrid</span></td>
+                                        <td style="padding: 16px 25px;"><span style="background: #f5f5f5; color: #888; padding: 4px 8px; border-radius: 4px; font-size: 12px; border: 1px solid #eee; font-weight: 500;">Borrador</span></td>
+                                        <td style="padding: 16px 25px; font-size: 14px; color: #555;">23/7/2026</td>
+                                        <td style="padding: 16px 25px; text-align: center;"><svg style="cursor:pointer; color:#888;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></td>
+                                    </tr>
+                                    <tr style="transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background='white'">
+                                        <td style="padding: 16px 25px; font-size: 14px; font-weight: 500; color: #333;">Prueba</td>
+                                        <td style="padding: 16px 25px;"><span style="background: #f1f1f1; color: #555; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">WimpGrid</span></td>
+                                        <td style="padding: 16px 25px;"><span style="background: #f6ffed; color: #52c41a; padding: 4px 8px; border-radius: 4px; font-size: 12px; border: 1px solid #b7eb8f; font-weight: 500;">Completada</span></td>
+                                        <td style="padding: 16px 25px; font-size: 14px; color: #555;">23/7/2026</td>
+                                        <td style="padding: 16px 25px; text-align: center;"><svg style="cursor:pointer; color:#888;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                    </div>
+                </div> <!-- END FILES MODE WRAPPER -->
+
+            </div> <!-- END DASHBOARD VIEW -->
     </div>
         </div> <!-- End app-main-content -->
     </div> <!-- End app-layout -->
 
-    <!-- Tab Settings Modal -->
-    <div id="tabSettingsModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:20px; border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,0.2); z-index:9999; min-width:320px; font-family:Inter, sans-serif;">
-        <h3 style="margin-top:0; color:#333; font-size:16px;">Configuración de Dashboard</h3>
+    <!-- New Tab Modal -->
+    <div id="newTabModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:25px; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.2); z-index:9999; width:450px; font-family:Inter, sans-serif;">
+        <h3 style="margin-top:0; color:#333; font-size:18px; margin-bottom: 20px;">Crear Nueva Vista</h3>
         
-        <label style="display:block; margin-bottom:5px; font-size:13px; color:#555;">Nombre del Dashboard:</label>
-        <input type="text" id="tabNameInput" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; margin-bottom:15px; font-family:inherit;">
+        <label style="display:block; margin-bottom:6px; font-size:13px; color:#555; font-weight: 500;">Nombre de la pestaña:</label>
+        <input type="text" id="newTabName" placeholder="P. ej. Análisis de Avance" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-bottom:15px; font-family:inherit; font-size: 14px; outline: none; transition: border 0.2s;" onfocus="this.style.borderColor='#8cc63f'" onblur="this.style.borderColor='#ddd'">
         
-        <label style="display:flex; align-items:center; gap:8px; margin-bottom:20px; font-size:14px; cursor:pointer; color:#444;">
-            <input type="checkbox" id="tabSharedInput" style="cursor:pointer;">
+        <label style="display:flex; align-items:center; gap:8px; margin-bottom:20px; font-size:14px; cursor:pointer; color:#444; font-weight: 500;">
+            <input type="checkbox" id="newTabShared" style="cursor:pointer; width: 16px; height: 16px; accent-color: #8cc63f;">
             Compartir vista con el paciente
         </label>
+        
+        <label style="display:block; margin-bottom:5px; font-size:13px; color:#555; font-weight: 500;">Selecciona una plantilla base:</label>
+        <select id="templateDropdown" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-bottom:20px; font-family:inherit; font-size: 14px; outline: none; transition: border 0.2s; cursor:pointer;" onfocus="this.style.borderColor='#8cc63f'" onblur="this.style.borderColor='#ddd'">
+            <option value="blank">Lienzo en Blanco (Vacío)</option>
+            <option value="full">Análisis Completo (Todos los widgets)</option>
+            <option value="overview">Visión General (Implicaciones y Centralidad)</option>
+            <option value="lab">Laboratorio Clínico (Grafo y Dinámicas)</option>
+        </select>
 
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <button onclick="deleteCurrentTab()" style="background:#fff; color:#e63946; border:1px solid #e63946; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:13px; transition:0.2s;" onmouseover="this.style.background='#e63946'; this.style.color='#fff';" onmouseout="this.style.background='#fff'; this.style.color='#e63946';">Eliminar</button>
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 10px;">
+            <button onclick="closeNewTabModal()" style="background:#f1f1f1; color:#555; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:14px; font-weight:500;">Cancelar</button>
+            <button onclick="createNewTab()" style="background:#8cc63f; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:14px; font-weight:600; box-shadow: 0 2px 4px rgba(140, 198, 63, 0.3);">Crear Vista</button>
+        </div>
+    </div>
+
+    <!-- Tab Settings Modal -->
+    <div id="tabSettingsModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:25px; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.2); z-index:9999; width:480px; font-family:Inter, sans-serif;">
+        <h3 style="margin-top:0; color:#333; font-size:18px; margin-bottom: 20px;">Configuración de Vista</h3>
+        
+        <label style="display:block; margin-bottom:6px; font-size:13px; color:#555; font-weight: 500;">Nombre del Dashboard:</label>
+        <input type="text" id="tabNameInput" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-bottom:15px; font-family:inherit; font-size: 14px; outline: none; transition: border 0.2s;" onfocus="this.style.borderColor='#8cc63f'" onblur="this.style.borderColor='#ddd'">
+        
+        <label style="display:flex; align-items:center; gap:8px; margin-bottom:15px; font-size:14px; cursor:pointer; color:#444; font-weight: 500;">
+            <input type="checkbox" id="tabSharedInput" style="cursor:pointer; width: 16px; height: 16px; accent-color: #8cc63f;">
+            Compartir vista con el paciente
+        </label>
+        
+        <button onclick="saveAsTemplate()" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px; background:#fafafa; color:#555; border:1px solid #eaeaea; padding:10px; border-radius:6px; margin-bottom:25px; cursor:pointer; font-size:13px; transition:0.2s;" onmouseover="this.style.background='#f0f7e6'; this.style.borderColor='#8cc63f'; this.style.color='#66992b'" onmouseout="this.style.background='#fafafa'; this.style.borderColor='#eaeaea'; this.style.color='#555'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            Guardar vista actual como plantilla
+        </button>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 10px; border-top: 1px solid #eaeaea; padding-top: 15px;">
+            <div style="display:flex; gap:8px; flex-wrap: wrap;">
+                <button onclick="deleteCurrentTab()" style="background:#fff; color:#e63946; border:1px solid #e63946; padding:8px 12px; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500; transition:0.2s;" onmouseover="this.style.background='#e63946'; this.style.color='#fff';" onmouseout="this.style.background='#fff'; this.style.color='#e63946';">Eliminar Pestaña</button>
+                <button onclick="clearCurrentTabWidgets()" style="background:#fff; color:#f0ad4e; border:1px solid #f0ad4e; padding:8px 12px; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500; transition:0.2s;" onmouseover="this.style.background='#f0ad4e'; this.style.color='#fff';" onmouseout="this.style.background='#fff'; this.style.color='#f0ad4e';">Limpiar Widgets</button>
+            </div>
             <div style="display:flex; gap:8px;">
-                <button onclick="document.getElementById('tabSettingsModal').style.display='none'" style="background:#f1f1f1; color:#333; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:13px;">Cancelar</button>
-                <button onclick="saveTabSettings()" style="background:#8cc63f; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:13px;">Guardar</button>
+                <button onclick="document.getElementById('tabSettingsModal').style.display='none'" style="background:#f1f1f1; color:#555; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:14px; font-weight:500;">Cancelar</button>
+                <button onclick="saveTabSettings()" style="background:#8cc63f; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:14px; font-weight:600; box-shadow: 0 2px 4px rgba(140, 198, 63, 0.3);">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Patient Modal -->
+    <div id="newPatientModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:25px; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.2); z-index:9999; width:500px; font-family:Inter, sans-serif;">
+        <h3 style="margin-top:0; color:#333; font-size:18px; margin-bottom: 20px;">Crear Nuevo Paciente</h3>
+        
+        <label style="display:block; margin-bottom:6px; font-size:13px; color:#555; font-weight: 500;">Nombre del paciente:</label>
+        <input type="text" id="newPatientName" placeholder="P. ej. Caso AB" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-bottom:15px; font-family:inherit; font-size: 14px; outline: none; transition: border 0.2s;" onfocus="this.style.borderColor='#8cc63f'" onblur="this.style.borderColor='#ddd'">
+        
+        <div style="display:flex; gap:15px; margin-bottom:15px;">
+            <div style="flex:1;">
+                <label style="display:block; margin-bottom:6px; font-size:13px; color:#555; font-weight: 500;">Edad:</label>
+                <input type="text" id="newPatientAge" placeholder="P. ej. 30 años" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; font-family:inherit; font-size: 14px; outline: none; transition: border 0.2s;" onfocus="this.style.borderColor='#8cc63f'" onblur="this.style.borderColor='#ddd'">
+            </div>
+            <div style="flex:1;">
+                <label style="display:block; margin-bottom:6px; font-size:13px; color:#555; font-weight: 500;">Género:</label>
+                <select id="newPatientGender" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; font-family:inherit; font-size: 14px; outline: none; transition: border 0.2s; cursor:pointer;" onfocus="this.style.borderColor='#8cc63f'" onblur="this.style.borderColor='#ddd'">
+                    <option value="Mujer">Mujer</option>
+                    <option value="Hombre">Hombre</option>
+                    <option value="Otro">Otro</option>
+                </select>
+            </div>
+        </div>
+
+        <label style="display:block; margin-bottom:6px; font-size:13px; color:#555; font-weight: 500;">Descripción del caso:</label>
+        <textarea id="newPatientDesc" placeholder="Breve descripción del motivo de consulta..." style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-bottom:15px; font-family:inherit; font-size: 14px; outline: none; transition: border 0.2s; resize: vertical; min-height: 80px;" onfocus="this.style.borderColor='#8cc63f'" onblur="this.style.borderColor='#ddd'"></textarea>
+
+        <div style="display:flex; gap:15px; margin-bottom:20px;">
+            <div style="flex:1;">
+                <label style="display:block; margin-bottom:6px; font-size:13px; color:#555; font-weight: 500;">Estado del caso:</label>
+                <select id="newPatientStatus" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; font-family:inherit; font-size: 14px; outline: none; transition: border 0.2s; cursor:pointer;" onfocus="this.style.borderColor='#8cc63f'" onblur="this.style.borderColor='#ddd'">
+                    <option value="Activo">Activo</option>
+                    <option value="Seguimiento">Seguimiento</option>
+                    <option value="Alta">Alta</option>
+                    <option value="Derivado">Derivado</option>
+                    <option value="Suspendido">Suspendido</option>
+                    <option value="Abandono">Abandono</option>
+                </select>
+            </div>
+            <div style="flex:1;">
+                <label style="display:block; margin-bottom:6px; font-size:13px; color:#555; font-weight: 500;">Etiquetas (separadas por coma):</label>
+                <input type="text" id="newPatientTags" placeholder="Ansiedad, Depresión..." style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; font-family:inherit; font-size: 14px; outline: none; transition: border 0.2s;" onfocus="this.style.borderColor='#8cc63f'" onblur="this.style.borderColor='#ddd'">
+            </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 10px;">
+            <button onclick="closeNewPatientModal()" style="background:#f1f1f1; color:#555; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:14px; font-weight:500;">Cancelar</button>
+            <button onclick="createNewPatient()" style="background:#8cc63f; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:14px; font-weight:600; box-shadow: 0 2px 4px rgba(140, 198, 63, 0.3);">Crear Paciente</button>
+        </div>
+    </div>
+
+    <!-- Edit Patient Modal -->
+    <div id="editPatientModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:25px; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.2); z-index:9999; width:500px; font-family:Inter, sans-serif;">
+        <h3 style="margin-top:0; color:#333; font-size:18px; margin-bottom: 20px;">Configurar Paciente</h3>
+        
+        <label style="display:block; margin-bottom:6px; font-size:13px; color:#555; font-weight: 500;">Nombre del paciente:</label>
+        <input type="text" id="editPatientName" placeholder="P. ej. Caso AB" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-bottom:15px; font-family:inherit; font-size: 14px; outline: none; transition: border 0.2s;" onfocus="this.style.borderColor='#8cc63f'" onblur="this.style.borderColor='#ddd'">
+        
+        <div style="display:flex; gap:15px; margin-bottom:15px;">
+            <div style="flex:1;">
+                <label style="display:block; margin-bottom:6px; font-size:13px; color:#555; font-weight: 500;">Edad:</label>
+                <input type="text" id="editPatientAge" placeholder="P. ej. 30 años" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; font-family:inherit; font-size: 14px; outline: none; transition: border 0.2s;" onfocus="this.style.borderColor='#8cc63f'" onblur="this.style.borderColor='#ddd'">
+            </div>
+            <div style="flex:1;">
+                <label style="display:block; margin-bottom:6px; font-size:13px; color:#555; font-weight: 500;">Género:</label>
+                <select id="editPatientGender" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; font-family:inherit; font-size: 14px; outline: none; transition: border 0.2s; cursor:pointer;" onfocus="this.style.borderColor='#8cc63f'" onblur="this.style.borderColor='#ddd'">
+                    <option value="Mujer">Mujer</option>
+                    <option value="Hombre">Hombre</option>
+                    <option value="Otro">Otro</option>
+                </select>
+            </div>
+        </div>
+
+        <label style="display:block; margin-bottom:6px; font-size:13px; color:#555; font-weight: 500;">Descripción del caso:</label>
+        <textarea id="editPatientDesc" placeholder="Breve descripción del motivo de consulta..." style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-bottom:15px; font-family:inherit; font-size: 14px; outline: none; transition: border 0.2s; resize: vertical; min-height: 80px;" onfocus="this.style.borderColor='#8cc63f'" onblur="this.style.borderColor='#ddd'"></textarea>
+
+        <div style="display:flex; gap:15px; margin-bottom:20px;">
+            <div style="flex:1;">
+                <label style="display:block; margin-bottom:6px; font-size:13px; color:#555; font-weight: 500;">Estado del caso:</label>
+                <select id="editPatientStatus" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; font-family:inherit; font-size: 14px; outline: none; transition: border 0.2s; cursor:pointer;" onfocus="this.style.borderColor='#8cc63f'" onblur="this.style.borderColor='#ddd'">
+                    <option value="Activo">Activo</option>
+                    <option value="Seguimiento">Seguimiento</option>
+                    <option value="Alta">Alta</option>
+                    <option value="Derivado">Derivado</option>
+                    <option value="Suspendido">Suspendido</option>
+                    <option value="Abandono">Abandono</option>
+                </select>
+            </div>
+            <div style="flex:1;">
+                <label style="display:block; margin-bottom:6px; font-size:13px; color:#555; font-weight: 500;">Etiquetas (separadas por coma):</label>
+                <input type="text" id="editPatientTags" placeholder="Ansiedad, Depresión..." style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; font-family:inherit; font-size: 14px; outline: none; transition: border 0.2s;" onfocus="this.style.borderColor='#8cc63f'" onblur="this.style.borderColor='#ddd'">
+            </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; margin-top: 10px;">
+            <button onclick="deletePatient()" style="background:#fff1f0; color:#f5222d; border:1px solid #ffa39e; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:14px; font-weight:500; transition:0.2s;" onmouseover="this.style.background='#ffccc7'" onmouseout="this.style.background='#fff1f0'">Eliminar Paciente</button>
+            <div style="display:flex; gap:10px;">
+                <button onclick="closeEditPatientModal()" style="background:#f1f1f1; color:#555; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:14px; font-weight:500;">Cancelar</button>
+                <button onclick="saveEditedPatient()" style="background:#8cc63f; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:14px; font-weight:600; box-shadow: 0 2px 4px rgba(140, 198, 63, 0.3);">Guardar Cambios</button>
             </div>
         </div>
     </div>
@@ -581,20 +978,139 @@
         let activeTabId = null;
         const grids = {};
 
+
+
         // Calculate row height dynamically to fit exactly 10 rows in available screen space
         // Subtracting 180px safely covers header, tabs padding, container padding, and grid margins
         const rowHeight = Math.floor((window.innerHeight - 180) / 10);
 
-        // Function to prompt and create a new dashboard
+        // Open the New Tab Modal
         function promptNewDashboard() {
-            const name = prompt("Nombre del nuevo dashboard:", "Dashboard " + (tabCount + 1));
-            if (name && name.trim() !== "") {
-                addDashboardTab(name.trim());
+            document.getElementById('newTabName').value = "Dashboard " + (tabCount + 1);
+            document.getElementById('newTabShared').checked = false;
+            document.getElementById('templateDropdown').value = 'blank';
+            
+            document.getElementById('newTabModal').style.display = 'block';
+            document.getElementById('newTabName').focus();
+        }
+
+        function closeNewTabModal() {
+            document.getElementById('newTabModal').style.display = 'none';
+        }
+
+        function createNewTab() {
+            const nameInput = document.getElementById('newTabName').value;
+            const isShared = document.getElementById('newTabShared').checked;
+            const selectedTpl = document.getElementById('templateDropdown').value;
+            const name = nameInput.trim() !== "" ? nameInput.trim() : "Dashboard " + (tabCount + 1);
+            
+            closeNewTabModal();
+            addDashboardTab(name, isShared);
+            
+            // Populate based on template
+            if (selectedTpl === 'full') {
+                addWidget('widget_digraph.html', 6, 6, 'Mapa de Implicaciones');
+                addWidget('widget_centrality.html', 6, 6, 'Análisis de Centralidad');
+                addWidget('widget_implications.html', 6, 6, 'Análisis de Implicaciones');
+                addWidget('widget_simulation.html', 6, 6, 'Laboratorio de Dinámicas');
+            } else if (selectedTpl === 'overview') {
+                addWidget('widget_implications.html', 6, 6, 'Análisis de Implicaciones');
+                addWidget('widget_centrality.html', 6, 6, 'Análisis de Centralidad');
+            } else if (selectedTpl === 'lab') {
+                addWidget('widget_digraph.html', 6, 8, 'Mapa de Implicaciones');
+                addWidget('widget_simulation.html', 6, 8, 'Laboratorio de Dinámicas');
             }
         }
 
+        // New Patient Functions
+        function promptNewPatient() {
+            document.getElementById('newPatientName').value = "";
+            document.getElementById('newPatientAge').value = "";
+            document.getElementById('newPatientGender').value = "Mujer";
+            document.getElementById('newPatientDesc').value = "";
+            document.getElementById('newPatientStatus').value = "Caso abierto";
+            document.getElementById('newPatientTags').value = "";
+            
+            document.getElementById('newPatientModal').style.display = 'block';
+            document.getElementById('newPatientName').focus();
+        }
+
+        function closeNewPatientModal() {
+            document.getElementById('newPatientModal').style.display = 'none';
+        }
+
+        function createNewPatient() {
+            const name = document.getElementById('newPatientName').value || "Sin Nombre";
+            const age = document.getElementById('newPatientAge').value || "-";
+            const gender = document.getElementById('newPatientGender').value;
+            const desc = document.getElementById('newPatientDesc').value || "Sin descripción";
+            const status = document.getElementById('newPatientStatus').value;
+            const tagsInput = document.getElementById('newPatientTags').value;
+            
+            let statusStyle = "";
+            let statusStyleArg1 = "";
+            let statusStyleArg2 = "";
+            let statusStyleArg3 = "";
+            if (status === "Seguimiento") {
+                statusStyle = "background:#e6f7ff; color:#1890ff; border-color:#91d5ff;";
+                statusStyleArg1 = "#e6f7ff";
+                statusStyleArg2 = "#1890ff";
+                statusStyleArg3 = "#91d5ff";
+            } else if (status === "Alta") {
+                statusStyle = "background:#f6ffed; color:#52c41a; border-color:#b7eb8f;";
+                statusStyleArg1 = "#f6ffed";
+                statusStyleArg2 = "#52c41a";
+                statusStyleArg3 = "#b7eb8f";
+            }
+            
+            const tagsHtml = tagsInput.split(',').filter(t => t.trim() !== '').map(t => `<span class="meta-tag">${t.trim()}</span>`).join('');
+
+            const patientCard = document.createElement('div');
+            patientCard.className = "patient-card";
+            patientCard.style = "display: flex; align-items: center; background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: 0.2s; cursor: pointer;";
+            patientCard.onmouseover = function() { this.style.borderColor='#8cc63f' };
+            patientCard.onmouseout = function() { this.style.borderColor='#eaeaea' };
+            
+            let args = `'${name.replace(/'/g, "\\'")}', '${desc.replace(/'/g, "\\'")}', '${gender.replace(/'/g, "\\'")}', '${age.replace(/'/g, "\\'")}', '${status.replace(/'/g, "\\'")}'`;
+            if (statusStyleArg1) {
+                args += `, '${statusStyleArg1}', '${statusStyleArg2}', '${statusStyleArg3}'`;
+            }
+            
+            patientCard.onclick = function() { eval(`openPatientDashboard(${args})`) };
+
+            patientCard.innerHTML = `
+                <div class="patient-photo" style="margin-right: 20px; width: 60px; height: 60px;">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
+                <div class="patient-info" style="flex-grow: 1;">
+                    <div class="patient-name" style="font-size: 18px; margin-bottom: 6px;">${name}</div>
+                    <div class="patient-desc" style="margin-bottom: 12px;">${desc}</div>
+                    <div class="patient-meta">
+                        <span class="meta-tag">${gender}</span>
+                        <span class="meta-tag">${age}</span>
+                        <span class="meta-tag" style="${statusStyle}">${status}</span>
+                        ${tagsHtml}
+                    </div>
+                </div>
+                <div style="display: flex; gap: 12px; margin-left: 20px; flex-shrink: 0; align-items: center;">
+                    <button onclick="event.stopPropagation(); openPatientDashboard(${args})" style="background: #8cc63f; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Ir al Dashboard" onmouseover="this.style.background='#7bb335'" onmouseout="this.style.background='#8cc63f'">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    </button>
+                    <button onclick="event.stopPropagation(); this.closest('.patient-card').click(); toggleFilesMode();" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Archivos" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    </button>
+                    <button onclick="event.stopPropagation(); openEditPatientModal(this.closest('.patient-card'))" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Configurar Paciente" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('patientsListContainer').appendChild(patientCard);
+            closeNewPatientModal();
+        }
+
         // Function to create a new dashboard tab and GridStack instance
-        function addDashboardTab(name) {
+        function addDashboardTab(name, isShared = false) {
             tabCount++;
             const tabId = 'tab_' + tabCount;
             const gridId = 'grid_' + tabCount;
@@ -603,8 +1119,15 @@
             const tabBtn = document.createElement('div');
             tabBtn.className = 'dashboard-tab';
             tabBtn.id = 'btn_' + tabId;
+            
+            let iconHtml = '';
+            if (isShared) {
+                tabBtn.dataset.shared = "true";
+                iconHtml = `<span class="shared-icon" style="margin-left:6px; color:#5b9bd5; display:inline-flex; align-items:center;" title="Compartido con el paciente"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>`;
+            }
+            
             tabBtn.innerHTML = `
-                <span class="tab-name-text" onclick="switchTab('${tabId}')" style="flex-grow:1; display:flex; align-items:center;">${name}</span>
+                <span class="tab-name-text" onclick="switchTab('${tabId}')" style="flex-grow:1; display:flex; align-items:center;">${name}${iconHtml}</span>
             `;
             // Insert before the Add (+) button
             const tabsBar = document.getElementById('tabsBar');
@@ -694,6 +1217,29 @@
                 document.getElementById('tabSettingsModal').style.display = 'none';
             }
         }
+
+        function clearCurrentTabWidgets() {
+            if (confirm("¿Seguro que quieres limpiar esta pestaña? Se borrarán todos los widgets que haya dentro.")) {
+                if (activeTabId && grids[activeTabId]) {
+                    grids[activeTabId].removeAll();
+                }
+                document.getElementById('tabSettingsModal').style.display = 'none';
+            }
+        }
+
+        function saveAsTemplate() {
+            const tplName = prompt("Nombre para esta nueva plantilla:");
+            if (tplName && tplName.trim() !== "") {
+                const dropdown = document.getElementById('templateDropdown');
+                const opt = document.createElement('option');
+                opt.value = 'custom_' + Date.now();
+                opt.text = "⭐ " + tplName.trim();
+                dropdown.appendChild(opt);
+                
+                alert("Plantilla '" + tplName.trim() + "' guardada con éxito en local. Podrás seleccionarla al crear una nueva vista (Mock funcional para desarrolladores).");
+                document.getElementById('tabSettingsModal').style.display = 'none';
+            }
+        }
         // --------------------------
         // Function to switch active tabs
         function switchTab(tabId) {
@@ -749,11 +1295,124 @@
         }
 
         // Function to add a new widget (to the ACTIVE grid)
-        function addWidget(url, w, h) {
+        function addWidget(url, w, h, title="Widget") {
             if (!activeTabId) return;
             
             widgetCount++;
             let id = 'widget_' + widgetCount;
+
+            let desc = "";
+            let extraSetup = "";
+            if (title === "Mapa de Implicaciones") desc = "Visualización en forma de red (grafo) de las relaciones e implicaciones lógicas entre los diferentes constructos.";
+            else if (title === "Análisis de Centralidad") desc = "Identificación matemática de los constructos más importantes y nucleares dentro del sistema del paciente.";
+            else if (title === "Análisis de Implicaciones") desc = "Matriz detallada de la probabilidad de cambio estructural al alterar un constructo específico.";
+            else if (title === "Laboratorio de Dinámicas") desc = "Simulación interactiva de intervenciones para predecir la resistencia al cambio sistémico.";
+            else if (title === "Análisis de Bienestar") {
+                desc = "Monitorización y estructura general (SSI) del self frente a los diferentes escenarios.";
+                extraSetup = `
+                    <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">
+                        <h4 style="margin:0; color:#555; font-size:13px;">Comparativa con Línea base: Seleccionar una WimpGrid</h4>
+                        <span style="color:#888; font-size:11px;">(opcional)</span>
+                    </div>
+                    <div style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
+                            <thead style="background: #f9f9f9; border-bottom: 1px solid #ddd;">
+                                <tr>
+                                    <th style="padding: 8px; font-weight: 600; color: #555; width: 30px; text-align: center;">#</th>
+                                    <th style="padding: 8px; font-weight: 600; color: #555;">Evaluación</th>
+                                    <th style="padding: 8px; font-weight: 600; color: #555;">Nombre</th>
+                                    <th style="padding: 8px; font-weight: 600; color: #555;">Tipo</th>
+                                    <th style="padding: 8px; font-weight: 600; color: #555;">Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody id="compare_tbody_${id}">
+                                <tr style="border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s;" onclick="document.getElementById('compare_none_${id}').checked = true; document.getElementById('btn_load_${id}').setAttribute('data-url', 'widget_adjustment_single.html');" onmouseover="this.style.backgroundColor='#f6ffed'" onmouseout="this.style.backgroundColor='transparent'">
+                                    <td style="padding: 8px; text-align: center;"><input type="radio" name="compare_ds_${id}" id="compare_none_${id}" value="none" checked></td>
+                                    <td style="padding: 8px; color: #333; font-weight: 500;" colspan="4">Ninguna (Analizar solo principal)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; display:none;" onclick="document.getElementById('compare_pre_${id}').checked = true; document.getElementById('btn_load_${id}').setAttribute('data-url', 'widget_adjustment_compare.html');" onmouseover="this.style.backgroundColor='#f6ffed'" onmouseout="this.style.backgroundColor='transparent'">
+                                    <td style="padding: 8px; text-align: center;"><input type="radio" name="compare_ds_${id}" id="compare_pre_${id}" value="pre"></td>
+                                    <td style="padding: 8px; color: #333; font-weight: 500;">Pre-Tratamiento</td>
+                                    <td style="padding: 8px; color: #666;">Entrevista Inicial</td>
+                                    <td style="padding: 8px; color: #666;">WimpGrid</td>
+                                    <td style="padding: 8px; color: #666;">10/01/2026</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s;" onclick="document.getElementById('compare_sesion5_${id}').checked = true; document.getElementById('btn_load_${id}').setAttribute('data-url', 'widget_adjustment_compare.html');" onmouseover="this.style.backgroundColor='#f6ffed'" onmouseout="this.style.backgroundColor='transparent'">
+                                    <td style="padding: 8px; text-align: center;"><input type="radio" name="compare_ds_${id}" id="compare_sesion5_${id}" value="sesion5"></td>
+                                    <td style="padding: 8px; color: #333; font-weight: 500;">Intermedio</td>
+                                    <td style="padding: 8px; color: #666;">Revisión Sesión 5</td>
+                                    <td style="padding: 8px; color: #666;">WimpGrid</td>
+                                    <td style="padding: 8px; color: #666;">15/02/2026</td>
+                                </tr>
+                                <tr style="cursor: pointer; transition: 0.2s;" onclick="document.getElementById('compare_post_${id}').checked = true; document.getElementById('btn_load_${id}').setAttribute('data-url', 'widget_adjustment_compare.html');" onmouseover="this.style.backgroundColor='#f6ffed'" onmouseout="this.style.backgroundColor='transparent'">
+                                    <td style="padding: 8px; text-align: center;"><input type="radio" name="compare_ds_${id}" id="compare_post_${id}" value="post"></td>
+                                    <td style="padding: 8px; color: #333; font-weight: 500;">Post-Tratamiento</td>
+                                    <td style="padding: 8px; color: #666;">Evaluación Final</td>
+                                    <td style="padding: 8px; color: #666;">WimpGrid</td>
+                                    <td style="padding: 8px; color: #666;">30/03/2026</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            let placeholderHTML = `
+                <div class="widget-setup" id="setup_${id}" style="padding: 20px; display: flex; flex-direction: column; height: 100%; overflow-y: auto; box-sizing: border-box;">
+                    <h3 style="margin-top:0; color:#333; font-size:16px; margin-bottom: 5px;">${title}</h3>
+                    <p style="margin-top:0; font-size:13px; color:#666; margin-bottom:15px; line-height:1.4;">${desc}</p>
+                    <hr style="border:none; border-top:1px solid #eee; margin-bottom:15px; width:100%;">
+                    
+                    <h3 style="margin-top:0; color:#333; font-size:15px; margin-bottom: 12px;">Parámetros</h3>
+                    <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">
+                        <h4 style="margin:0; color:#555; font-size:13px;">Origen de datos: Seleccionar una WimpGrid</h4>
+                        <span style="color:#d32f2f; font-size:11px; font-weight:500;">*obligatorio</span>
+                    </div>
+                    <div style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
+                            <thead style="background: #f9f9f9; border-bottom: 1px solid #ddd;">
+                                <tr>
+                                    <th style="padding: 8px; font-weight: 600; color: #555; width: 30px; text-align: center;">#</th>
+                                    <th style="padding: 8px; font-weight: 600; color: #555;">Evaluación</th>
+                                    <th style="padding: 8px; font-weight: 600; color: #555;">Nombre</th>
+                                    <th style="padding: 8px; font-weight: 600; color: #555;">Tipo</th>
+                                    <th style="padding: 8px; font-weight: 600; color: #555;">Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s;" onclick="document.getElementById('ds_pre_${id}').checked = true; updateComparisons('${id}', 'pre');" onmouseover="this.style.backgroundColor='#f6ffed'" onmouseout="this.style.backgroundColor='transparent'">
+                                    <td style="padding: 8px; text-align: center;"><input type="radio" name="ds_${id}" id="ds_pre_${id}" value="pre" checked onchange="updateComparisons('${id}', 'pre')"></td>
+                                    <td style="padding: 8px; color: #333; font-weight: 500;">Pre-Tratamiento</td>
+                                    <td style="padding: 8px; color: #666;">Entrevista Inicial</td>
+                                    <td style="padding: 8px; color: #666;">WimpGrid</td>
+                                    <td style="padding: 8px; color: #666;">10/01/2026</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s;" onclick="document.getElementById('ds_sesion5_${id}').checked = true; updateComparisons('${id}', 'sesion5');" onmouseover="this.style.backgroundColor='#f6ffed'" onmouseout="this.style.backgroundColor='transparent'">
+                                    <td style="padding: 8px; text-align: center;"><input type="radio" name="ds_${id}" id="ds_sesion5_${id}" value="sesion5" onchange="updateComparisons('${id}', 'sesion5')"></td>
+                                    <td style="padding: 8px; color: #333; font-weight: 500;">Intermedio</td>
+                                    <td style="padding: 8px; color: #666;">Revisión Sesión 5</td>
+                                    <td style="padding: 8px; color: #666;">WimpGrid</td>
+                                    <td style="padding: 8px; color: #666;">15/02/2026</td>
+                                </tr>
+                                <tr style="cursor: pointer; transition: 0.2s;" onclick="document.getElementById('ds_post_${id}').checked = true; updateComparisons('${id}', 'post');" onmouseover="this.style.backgroundColor='#f6ffed'" onmouseout="this.style.backgroundColor='transparent'">
+                                    <td style="padding: 8px; text-align: center;"><input type="radio" name="ds_${id}" id="ds_post_${id}" value="post" onchange="updateComparisons('${id}', 'post')"></td>
+                                    <td style="padding: 8px; color: #333; font-weight: 500;">Post-Tratamiento</td>
+                                    <td style="padding: 8px; color: #666;">Evaluación Final</td>
+                                    <td style="padding: 8px; color: #666;">WimpGrid</td>
+                                    <td style="padding: 8px; color: #666;">30/03/2026</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    ${extraSetup}
+
+                    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: auto;">
+                        <button onclick="removeWidget('${id}')" style="background:#f1f1f1; color:#555; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:500;">Cancelar</button>
+                        <button id="btn_load_${id}" data-url="${title === 'Análisis de Bienestar' ? 'widget_adjustment_single.html' : url}" onclick="loadWidgetIframe('${id}', this.getAttribute('data-url'))" style="background:#8cc63f; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:600; box-shadow: 0 2px 4px rgba(140, 198, 63, 0.3);">Cargar Widget</button>
+                    </div>
+                </div>
+            `;
 
             let widgetHTML = `
                 <div class="grid-stack-item" id="${id}" gs-w="${w}" gs-h="${h}">
@@ -762,12 +1421,21 @@
                             <div class="drag-hint">✥ Arrastrar</div>
                             <button class="delete-btn" onclick="removeWidget('${id}')" title="Borrar">✖</button>
                         </div>
-                        <iframe src="${url}" scrolling="no" allow="fullscreen" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>
+                        <div id="content_${id}" style="width: 100%; height: 100%; background: white;">
+                            ${placeholderHTML}
+                        </div>
                     </div>
                 </div>
             `;
 
             grids[activeTabId].addWidget(widgetHTML);
+        }
+
+        function loadWidgetIframe(id, url) {
+            const container = document.getElementById('content_' + id);
+            if(container) {
+                container.innerHTML = `<iframe src="${url}" scrolling="no" allow="fullscreen" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" style="width:100%; height:100%; border:none; display:block;"></iframe>`;
+            }
         }
 
         // Function to remove a widget (from the ACTIVE grid)
@@ -789,10 +1457,291 @@
             });
         });
 
+        // SPA Routing logic
+        function showPatientsList() {
+            document.getElementById('patientsView').style.display = 'flex';
+            document.getElementById('dashboardView').style.display = 'none';
+        }
+
+        let currentDashboardPatientCard = null;
+
+        function openPatientDashboard(name, desc, tag1, tag2, tag3, bg3='#f0f7e6', c3='#66992b', b3='#d3ebb8') {
+            if (window.event && window.event.target) {
+                const card = window.event.target.closest('.patient-card');
+                if (card) currentDashboardPatientCard = card;
+            }
+            
+            document.getElementById('patientsView').style.display = 'none';
+            document.getElementById('dashboardView').style.display = 'flex';
+            
+            // Reset to Dashboard mode (hide files mode)
+            document.getElementById('dashboardModeWrapper').style.display = 'flex';
+            document.getElementById('filesModeWrapper').style.display = 'none';
+            const btnFiles = document.getElementById('btnToggleFiles');
+            if (btnFiles) {
+                btnFiles.dataset.active = 'false';
+                btnFiles.style.background = 'white';
+                btnFiles.style.borderColor = '#ddd';
+            }
+
+            // Set sidebar active state
+            document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+            const pacNav = Array.from(document.querySelectorAll('.nav-item')).find(el => el.textContent.includes('Pacientes'));
+            if(pacNav) pacNav.classList.add('active');
+
+            document.getElementById('headerPatientName').innerText = name;
+            document.getElementById('bannerPatientName').innerText = name;
+            document.getElementById('bannerPatientDesc').innerText = desc;
+            
+            document.getElementById('bannerPatientMeta').innerHTML = `
+                <span class="meta-tag">${tag1}</span>
+                <span class="meta-tag">${tag2}</span>
+                <span class="meta-tag" style="background:${bg3}; color:${c3}; border-color:${b3};">${tag3}</span>
+            `;
+            
+            // Adjust grid height in case the window size changed while view was hidden
+            window.dispatchEvent(new Event('resize'));
+        }
+
         // Initialize the first default dashboard on load
         window.onload = function() {
             addDashboardTab("Principal");
         };
+        
+        function toggleFilesMode() {
+            const dashboardWrapper = document.getElementById('dashboardModeWrapper');
+            const filesWrapper = document.getElementById('filesModeWrapper');
+            const btn = document.getElementById('btnToggleFiles');
+            
+            if (filesWrapper.style.display === 'none') {
+                dashboardWrapper.style.display = 'none';
+                filesWrapper.style.display = 'flex';
+                btn.dataset.active = 'true';
+                btn.style.background = '#f0f7e6';
+                btn.style.borderColor = '#8cc63f';
+            } else {
+                dashboardWrapper.style.display = 'flex';
+                filesWrapper.style.display = 'none';
+                btn.dataset.active = 'false';
+                btn.style.background = 'white';
+                btn.style.borderColor = '#ddd';
+            }
+        }
+        
+        function selectEtapa(elem, name) {
+            document.querySelectorAll('.eval-card').forEach(card => {
+                card.classList.remove('active');
+                card.style.borderColor = '#eaeaea';
+                card.style.background = 'white';
+                const arrow = card.querySelector('.eval-arrow');
+                if(arrow) arrow.style.display = 'none';
+            });
+            elem.classList.add('active');
+            elem.style.borderColor = '#8cc63f';
+            elem.style.background = '#fbfdf9';
+            const arrow = elem.querySelector('.eval-arrow');
+            if(arrow) arrow.style.display = 'block';
+            
+            document.getElementById('currentEvalName').innerText = name;
+            
+            const tbody = document.getElementById('rejillasTbody');
+            
+            if (name === 'Línea Base') {
+                tbody.innerHTML = `
+                    <tr style="border-bottom: 1px solid #eaeaea; transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='#fcfcfc'" onmouseout="this.style.background='transparent'">
+                        <td style="padding: 16px 25px; font-weight: 500; color: #333; display: flex; align-items: center; gap: 12px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8cc63f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                            Entrevista Inicial
+                        </td>
+                        <td style="padding: 16px 25px;"><span style="background: #f0f0f0; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; color: #555;">WimpGrid</span></td>
+                        <td style="padding: 16px 25px;"><span style="background: #e6f4ea; color: #1e8e3e; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">Completado</span></td>
+                        <td style="padding: 16px 25px; color: #666; font-size: 13px;">23/7/2026</td>
+                        <td style="padding: 16px 25px; text-align: center;"><svg style="cursor:pointer; color:#888;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eaeaea; transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='#fcfcfc'" onmouseout="this.style.background='transparent'">
+                        <td style="padding: 16px 25px; font-weight: 500; color: #333; display: flex; align-items: center; gap: 12px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            Inventario de Depresión (BDI-II)
+                        </td>
+                        <td style="padding: 16px 25px;"><span style="background: #fef3c7; color: #d97706; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500;">Test Psicométrico</span></td>
+                        <td style="padding: 16px 25px;"><span style="background: #fff4e5; color: #b05a00; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">En progreso</span></td>
+                        <td style="padding: 16px 25px; color: #666; font-size: 13px;">25/7/2026</td>
+                        <td style="padding: 16px 25px; text-align: center;"><svg style="cursor:pointer; color:#888;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eaeaea; transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='#fcfcfc'" onmouseout="this.style.background='transparent'">
+                        <td style="padding: 16px 25px; font-weight: 500; color: #333; display: flex; align-items: center; gap: 12px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                            Rejilla Interpersonal Básica
+                        </td>
+                        <td style="padding: 16px 25px;"><span style="background: #ede9fe; color: #7c3aed; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500;">RepGrid</span></td>
+                        <td style="padding: 16px 25px;"><span style="background: #e6f4ea; color: #1e8e3e; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">Completado</span></td>
+                        <td style="padding: 16px 25px; color: #666; font-size: 13px;">27/7/2026</td>
+                        <td style="padding: 16px 25px; text-align: center;"><svg style="cursor:pointer; color:#888;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></td>
+                    </tr>
+                `;
+            } else if (name === 'Tratamiento') {
+                tbody.innerHTML = `
+                    <tr style="border-bottom: 1px solid #eaeaea; transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='#fcfcfc'" onmouseout="this.style.background='transparent'">
+                        <td style="padding: 16px 25px; font-weight: 500; color: #333; display: flex; align-items: center; gap: 12px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8cc63f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                            Revisión Sesión 5
+                        </td>
+                        <td style="padding: 16px 25px;"><span style="background: #f0f0f0; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; color: #555;">WimpGrid</span></td>
+                        <td style="padding: 16px 25px;"><span style="background: #e6f4ea; color: #1e8e3e; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">Completado</span></td>
+                        <td style="padding: 16px 25px; color: #666; font-size: 13px;">15/10/2026</td>
+                        <td style="padding: 16px 25px; text-align: center;"><svg style="cursor:pointer; color:#888;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eaeaea; transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='#fcfcfc'" onmouseout="this.style.background='transparent'">
+                        <td style="padding: 16px 25px; font-weight: 500; color: #333; display: flex; align-items: center; gap: 12px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            Diario de Terapia
+                        </td>
+                        <td style="padding: 16px 25px;"><span style="background: #e0f2fe; color: #0284c7; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500;">Documento</span></td>
+                        <td style="padding: 16px 25px;"><span style="background: #e6f4ea; color: #1e8e3e; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">Completado</span></td>
+                        <td style="padding: 16px 25px; color: #666; font-size: 13px;">16/10/2026</td>
+                        <td style="padding: 16px 25px; text-align: center;"><svg style="cursor:pointer; color:#888;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></td>
+                    </tr>
+                `;
+            } else if (name === 'Seguimiento') {
+                tbody.innerHTML = `
+                    <tr style="border-bottom: 1px solid #eaeaea; transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='#fcfcfc'" onmouseout="this.style.background='transparent'">
+                        <td style="padding: 16px 25px; font-weight: 500; color: #333; display: flex; align-items: center; gap: 12px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8cc63f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                            Evolución Seguimiento
+                        </td>
+                        <td style="padding: 16px 25px;"><span style="background: #f0f0f0; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; color: #555;">WimpGrid</span></td>
+                        <td style="padding: 16px 25px;"><span style="background: #e6f4ea; color: #1e8e3e; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">Completado</span></td>
+                        <td style="padding: 16px 25px; color: #666; font-size: 13px;">10/1/2027</td>
+                        <td style="padding: 16px 25px; text-align: center;"><svg style="cursor:pointer; color:#888;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></td>
+                    </tr>
+                `;
+            }
+        }
+        
+        function updateComparisons(id, selectedVal) {
+            let tbody = document.getElementById('compare_tbody_' + id);
+            if (!tbody) return;
+            let rows = tbody.querySelectorAll('tr');
+            rows.forEach(row => {
+                let radio = row.querySelector('input[type="radio"]');
+                if (radio && radio.value === selectedVal && selectedVal !== 'none') {
+                    row.style.display = 'none';
+                    if (radio.checked) {
+                        document.getElementById('compare_none_' + id).click();
+                    }
+                } else {
+                    row.style.display = '';
+                }
+            });
+        }
+
+        let currentEditingCard = null;
+
+        function openEditPatientModal(card) {
+            currentEditingCard = card;
+            
+            const nameElem = card.querySelector('.patient-name');
+            const descElem = card.querySelector('.patient-desc');
+            const name = nameElem ? nameElem.innerText : "";
+            const desc = descElem ? descElem.innerText : "";
+            const metaTags = card.querySelectorAll('.meta-tag');
+            
+            document.getElementById('editPatientName').value = name;
+            document.getElementById('editPatientDesc').value = desc;
+            
+            if(metaTags.length > 0) document.getElementById('editPatientGender').value = metaTags[0].innerText;
+            if(metaTags.length > 1) document.getElementById('editPatientAge').value = metaTags[1].innerText;
+            if(metaTags.length > 2) document.getElementById('editPatientStatus').value = metaTags[2].innerText;
+            
+            const tags = [];
+            for(let i=3; i<metaTags.length; i++) {
+                tags.push(metaTags[i].innerText);
+            }
+            document.getElementById('editPatientTags').value = tags.join(', ');
+            
+            document.getElementById('editPatientModal').style.display = 'block';
+        }
+
+        function closeEditPatientModal() {
+            document.getElementById('editPatientModal').style.display = 'none';
+            currentEditingCard = null;
+        }
+
+        function saveEditedPatient() {
+            if (!currentEditingCard) return;
+            
+            const name = document.getElementById('editPatientName').value || "Sin Nombre";
+            const age = document.getElementById('editPatientAge').value || "-";
+            const gender = document.getElementById('editPatientGender').value;
+            const desc = document.getElementById('editPatientDesc').value || "Sin descripción";
+            const status = document.getElementById('editPatientStatus').value;
+            const tagsInput = document.getElementById('editPatientTags').value;
+            
+            currentEditingCard.querySelector('.patient-name').innerText = name;
+            currentEditingCard.querySelector('.patient-desc').innerText = desc;
+            
+            let statusStyle = "";
+            let statusStyleArg1 = "", statusStyleArg2 = "", statusStyleArg3 = "";
+            
+            if (status === "Seguimiento") {
+                statusStyle = "background:#e6f7ff; color:#1890ff; border-color:#91d5ff;";
+                statusStyleArg1 = "#e6f7ff"; statusStyleArg2 = "#1890ff"; statusStyleArg3 = "#91d5ff";
+            } else if (status === "Alta") {
+                statusStyle = "background:#f6ffed; color:#52c41a; border-color:#b7eb8f;";
+                statusStyleArg1 = "#f6ffed"; statusStyleArg2 = "#52c41a"; statusStyleArg3 = "#b7eb8f";
+            } else if (status === "Derivado") {
+                statusStyle = "background:#fffb8f; color:#d48806; border-color:#ffe58f;";
+            } else if (status === "Suspendido") {
+                statusStyle = "background:#fff1f0; color:#f5222d; border-color:#ffa39e;";
+            } else if (status === "Abandono") {
+                statusStyle = "background:#f5f5f5; color:#595959; border-color:#d9d9d9;";
+            }
+            
+            const tagsHtml = tagsInput.split(',').filter(t => t.trim() !== '').map(t => `<span class="meta-tag">${t.trim()}</span>`).join('');
+            
+            currentEditingCard.querySelector('.patient-meta').innerHTML = `
+                <span class="meta-tag">${gender}</span>
+                <span class="meta-tag">${age}</span>
+                <span class="meta-tag" style="${statusStyle}">${status}</span>
+                ${tagsHtml}
+            `;
+            
+            let args = `'${name.replace(/'/g, "\\'")}', '${desc.replace(/'/g, "\\'")}', '${gender.replace(/'/g, "\\'")}', '${age.replace(/'/g, "\\'")}', '${status.replace(/'/g, "\\'")}'`;
+            if (statusStyleArg1) {
+                args += `, '${statusStyleArg1}', '${statusStyleArg2}', '${statusStyleArg3}'`;
+            }
+            
+            currentEditingCard.setAttribute('onclick', `openPatientDashboard(${args})`);
+            
+            const dashboardBtn = currentEditingCard.querySelectorAll('button')[0];
+            if (dashboardBtn) {
+                dashboardBtn.setAttribute('onclick', `event.stopPropagation(); openPatientDashboard(${args})`);
+            }
+            
+            if (typeof currentDashboardPatientCard !== 'undefined' && currentEditingCard === currentDashboardPatientCard) {
+                document.getElementById('headerPatientName').innerText = name;
+                document.getElementById('bannerPatientName').innerText = name;
+                document.getElementById('bannerPatientDesc').innerText = desc;
+                
+                // Keep the same tags logic for the banner
+                const bannerTagsHtml = tagsInput.split(',').filter(t => t.trim() !== '').map(t => `<span class="meta-tag">${t.trim()}</span>`).join('');
+                document.getElementById('bannerPatientMeta').innerHTML = `
+                    <span class="meta-tag">${gender}</span>
+                    <span class="meta-tag">${age}</span>
+                    <span class="meta-tag" style="${statusStyle}">${status}</span>
+                    ${bannerTagsHtml}
+                `;
+            }
+            
+            closeEditPatientModal();
+        }
+
+        function deletePatient() {
+            if (currentEditingCard && confirm("¿Estás seguro de que quieres eliminar este paciente?")) {
+                currentEditingCard.remove();
+                closeEditPatientModal();
+            }
+        }
     </script>
 </body>
 </html>

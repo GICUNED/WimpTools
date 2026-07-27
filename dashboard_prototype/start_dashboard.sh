@@ -4,10 +4,13 @@ Rscript --vanilla -e "
 devtools::load_all('..')
 library(htmltools)
 data(su_wimp)
+data(example_wimp)
 save_html(widget_digraph(su_wimp, lang='es'), 'widget_digraph.html')
 save_html(widget_centrality(su_wimp, lang='es'), 'widget_centrality.html')
 save_html(widget_implications(su_wimp, lang='es'), 'widget_implications.html')
 save_html(widget_simulation(su_wimp, lang='es'), 'widget_simulation.html')
+save_html(widget_adjustment(example_wimp, lang='es'), 'widget_adjustment_single.html')
+save_html(widget_adjustment(example_wimp, example_wimp_post, lang='es'), 'widget_adjustment_compare.html')
 "
 
 if [ $? -eq 0 ]; then
