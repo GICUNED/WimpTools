@@ -487,21 +487,26 @@
         }
 
         /* Hierarchical Data Source Selection */
+        /* Split-pane modern layout */
         .hier-container {
             display: flex;
-            gap: 15px;
+            border: 1px solid #eaeaea;
+            border-radius: 8px;
+            overflow: hidden;
+            height: 240px;
+            background: #fff;
             margin-bottom: 24px;
-            align-items: flex-start;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
         }
+        
         .hier-sidebar {
-            width: 180px;
+            width: 170px;
             flex-shrink: 0;
+            background: #f9f9f9;
+            border-right: 1px solid #eaeaea;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            max-height: 220px;
             overflow-y: auto;
-            padding-right: 4px;
         }
         
         /* Custom scrollbar for sidebar and main area */
@@ -520,37 +525,24 @@
         }
 
         .hier-stage {
-            padding: 10px 12px;
-            border-radius: 6px;
-            border: 1px solid #eaeaea;
-            background: #fff;
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
             cursor: pointer;
-            transition: 0.2s;
-            position: relative;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
         }
         .hier-stage:hover {
-            border-color: #ccc;
+            background: #f1f1f1;
         }
         .hier-stage.active {
-            border-color: #8cc63f;
             background: #fbfdf9;
-            box-shadow: 0 2px 5px rgba(140, 198, 63, 0.1);
-        }
-        .hier-stage.active::after {
-            content: '›';
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #8cc63f;
-            font-size: 18px;
-            line-height: 1;
+            border-left: 3px solid #8cc63f;
         }
         .hier-stage-title {
             font-size: 13px;
             font-weight: 600;
             color: #333;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
         .hier-stage-date {
             font-size: 11px;
@@ -559,12 +551,8 @@
         
         .hier-main {
             flex: 1;
-            border: 1px solid #eaeaea;
-            border-radius: 8px;
-            background: #fff;
             overflow-y: auto;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-            max-height: 220px;
+            background: #fff;
         }
         
         .hier-table {
@@ -1656,7 +1644,7 @@
                             <div class="hier-stage active" onclick="switchStage(this, 'compare_none_${id}_group')">
                                 <div class="hier-stage-title">Ninguna</div>
                             </div>
-                            <div class="hier-stage" style="display:none;" id="compare_pre_stage_${id}" onclick="switchStage(this, 'compare_pre_${id}_group')">
+                            <div class="hier-stage" id="compare_pre_stage_${id}" onclick="switchStage(this, 'compare_pre_${id}_group')">
                                 <div class="hier-stage-title">Pre-Tratamiento</div>
                                 <div class="hier-stage-date">10/01/2026</div>
                             </div>
