@@ -486,6 +486,188 @@
             color: #777;
         }
 
+        /* Hierarchical Data Source Selection */
+        .hier-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 24px;
+            align-items: flex-start;
+        }
+        .hier-sidebar {
+            width: 180px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 220px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        
+        /* Custom scrollbar for sidebar and main area */
+        .hier-sidebar::-webkit-scrollbar, .hier-main::-webkit-scrollbar {
+            width: 6px;
+        }
+        .hier-sidebar::-webkit-scrollbar-track, .hier-main::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .hier-sidebar::-webkit-scrollbar-thumb, .hier-main::-webkit-scrollbar-thumb {
+            background: #ddd;
+            border-radius: 10px;
+        }
+        .hier-sidebar::-webkit-scrollbar-thumb:hover, .hier-main::-webkit-scrollbar-thumb:hover {
+            background: #bbb;
+        }
+
+        .hier-stage {
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1px solid #eaeaea;
+            background: #fff;
+            cursor: pointer;
+            transition: 0.2s;
+            position: relative;
+        }
+        .hier-stage:hover {
+            border-color: #ccc;
+        }
+        .hier-stage.active {
+            border-color: #8cc63f;
+            background: #fbfdf9;
+            box-shadow: 0 2px 5px rgba(140, 198, 63, 0.1);
+        }
+        .hier-stage.active::after {
+            content: '›';
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #8cc63f;
+            font-size: 18px;
+            line-height: 1;
+        }
+        .hier-stage-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 2px;
+        }
+        .hier-stage-date {
+            font-size: 11px;
+            color: #888;
+        }
+        
+        .hier-main {
+            flex: 1;
+            border: 1px solid #eaeaea;
+            border-radius: 8px;
+            background: #fff;
+            overflow-y: auto;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            max-height: 220px;
+        }
+        
+        .hier-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        .hier-table th {
+            padding: 10px 15px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #888;
+            background: #f9f9f9;
+            border-bottom: 1px solid #eaeaea;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        .hier-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+            color: #555;
+            vertical-align: middle;
+        }
+        .hier-table tr {
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .hier-table tbody tr:hover {
+            background-color: #fcfcfc;
+        }
+        .hier-table tbody tr.selected {
+            background-color: #f6ffed;
+        }
+        .hier-table tbody tr.selected td {
+            color: #333;
+        }
+
+        /* Custom Radio Button */
+        .custom-radio {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #ccc;
+            border-radius: 50%;
+            margin: 0;
+            cursor: pointer;
+            position: relative;
+            outline: none;
+            transition: all 0.2s ease;
+            vertical-align: middle;
+        }
+        .custom-radio:checked {
+            border-color: #8cc63f;
+        }
+        .custom-radio:checked::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #8cc63f;
+        }
+        
+        .param-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .param-title {
+            margin: 0;
+            color: #222;
+            font-size: 15px;
+            font-weight: 700;
+        }
+        .param-req {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .param-req.mandatory {
+            background: #fff1f0;
+            color: #cf1322;
+            border: 1px solid #ffa39e;
+        }
+        .param-req.optional {
+            background: #f5f5f5;
+            color: #888;
+            border: 1px solid #d9d9d9;
+        }
     </style>
 </head>
 <body>
@@ -686,18 +868,9 @@
                         </button>
                     </div>
                     <div class="controls" style="display: flex; gap: 8px;">
-                        <div class="dropdown">
-                            <button class="dropbtn" title="Añadir Widget" style="display:flex; align-items:center; justify-content:center; padding:6px; width:28px; height:28px;">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                            </button>
-                            <div class="dropdown-content">
-                                <button onclick="addWidget('widget_digraph.html', 6, 10, 'Mapa de Implicaciones')">Mapa de Implicaciones</button>
-                                <button onclick="addWidget('widget_centrality.html', 6, 10, 'Análisis de Centralidad')">Análisis de Centralidad</button>
-                                <button onclick="addWidget('widget_implications.html', 6, 10, 'Análisis de Implicaciones')">Análisis de Implicaciones</button>
-                                <button onclick="addWidget('widget_simulation.html', 6, 10, 'Laboratorio de Dinámicas')">Laboratorio de Dinámicas</button>
-                                <button onclick="addWidget('widget_adjustment.html', 6, 10, 'Análisis de Bienestar')">Análisis de Bienestar</button>
-                            </div>
-                        </div>
+                        <button onclick="document.getElementById('addWidgetModal').style.display='block'" title="Añadir Widget" style="display:flex; align-items:center; justify-content:center; padding:6px; width:28px; height:28px; background:white; color:#555; border:1px solid #ddd; border-radius:6px; cursor:pointer; transition:0.2s;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
                         <button id="editModeBtn" onclick="toggleEditMode()" title="Modo Edición" style="display:flex; align-items:center; justify-content:center; padding:6px; width:28px; height:28px;">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                         </button>
@@ -787,18 +960,34 @@
                                     </tr>
                                 </thead>
                                 <tbody id="rejillasTbody">
-                                    <tr style="border-bottom: 1px solid #eaeaea; transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background='white'">
-                                        <td style="padding: 16px 25px; font-size: 14px; font-weight: 500; color: #333;">prueba 2</td>
-                                        <td style="padding: 16px 25px;"><span style="background: #f1f1f1; color: #555; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">WimpGrid</span></td>
-                                        <td style="padding: 16px 25px;"><span style="background: #f5f5f5; color: #888; padding: 4px 8px; border-radius: 4px; font-size: 12px; border: 1px solid #eee; font-weight: 500;">Borrador</span></td>
-                                        <td style="padding: 16px 25px; font-size: 14px; color: #555;">23/7/2026</td>
+                                    <tr style="border-bottom: 1px solid #eaeaea; transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='#fcfcfc'" onmouseout="this.style.background='transparent'">
+                                        <td style="padding: 16px 25px; font-weight: 500; color: #333; display: flex; align-items: center; gap: 12px;">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                                            Entrevista Inicial
+                                        </td>
+                                        <td style="padding: 16px 25px;"><span style="background: #fef3c7; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; color: #d97706;">WimpGrid</span></td>
+                                        <td style="padding: 16px 25px;"><span style="background: #e6f4ea; color: #1e8e3e; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">Completado</span></td>
+                                        <td style="padding: 16px 25px; color: #666; font-size: 13px;">23/7/2026</td>
                                         <td style="padding: 16px 25px; text-align: center;"><svg style="cursor:pointer; color:#888;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></td>
                                     </tr>
-                                    <tr style="transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background='white'">
-                                        <td style="padding: 16px 25px; font-size: 14px; font-weight: 500; color: #333;">Prueba</td>
-                                        <td style="padding: 16px 25px;"><span style="background: #f1f1f1; color: #555; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">WimpGrid</span></td>
-                                        <td style="padding: 16px 25px;"><span style="background: #f6ffed; color: #52c41a; padding: 4px 8px; border-radius: 4px; font-size: 12px; border: 1px solid #b7eb8f; font-weight: 500;">Completada</span></td>
-                                        <td style="padding: 16px 25px; font-size: 14px; color: #555;">23/7/2026</td>
+                                    <tr style="border-bottom: 1px solid #eaeaea; transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='#fcfcfc'" onmouseout="this.style.background='transparent'">
+                                        <td style="padding: 16px 25px; font-weight: 500; color: #333; display: flex; align-items: center; gap: 12px;">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="M9 14l2 2 4-4"></path></svg>
+                                            Inventario de Depresión (BDI-II)
+                                        </td>
+                                        <td style="padding: 16px 25px;"><span style="background: #e0f2fe; color: #0284c7; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500;">Test Psicométrico</span></td>
+                                        <td style="padding: 16px 25px;"><span style="background: #fff4e5; color: #b05a00; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">En progreso</span></td>
+                                        <td style="padding: 16px 25px; color: #666; font-size: 13px;">25/7/2026</td>
+                                        <td style="padding: 16px 25px; text-align: center;"><svg style="cursor:pointer; color:#888;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid #eaeaea; transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='#fcfcfc'" onmouseout="this.style.background='transparent'">
+                                        <td style="padding: 16px 25px; font-weight: 500; color: #333; display: flex; align-items: center; gap: 12px;">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                                            Rejilla Interpersonal Básica
+                                        </td>
+                                        <td style="padding: 16px 25px;"><span style="background: #ede9fe; color: #7c3aed; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500;">RepGrid</span></td>
+                                        <td style="padding: 16px 25px;"><span style="background: #e6f4ea; color: #1e8e3e; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">Completado</span></td>
+                                        <td style="padding: 16px 25px; color: #666; font-size: 13px;">27/7/2026</td>
                                         <td style="padding: 16px 25px; text-align: center;"><svg style="cursor:pointer; color:#888;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></td>
                                     </tr>
                                 </tbody>
@@ -840,30 +1029,151 @@
     </div>
 
     <!-- Tab Settings Modal -->
-    <div id="tabSettingsModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:25px; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.2); z-index:9999; width:480px; font-family:Inter, sans-serif;">
-        <h3 style="margin-top:0; color:#333; font-size:18px; margin-bottom: 20px;">Configuración de Vista</h3>
+    <div id="tabSettingsModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:25px; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.2); z-index:9999; width:450px; font-family:Inter, sans-serif;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0; color:#333; font-size:18px;">Configuración de Vista</h3>
+            <button onclick="document.getElementById('tabSettingsModal').style.display='none'" style="background:none; border:none; color:#888; cursor:pointer; padding:0; display:flex; align-items:center;" onmouseover="this.style.color='#333'" onmouseout="this.style.color='#888'" title="Cerrar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
         
-        <label style="display:block; margin-bottom:6px; font-size:13px; color:#555; font-weight: 500;">Nombre del Dashboard:</label>
-        <input type="text" id="tabNameInput" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-bottom:15px; font-family:inherit; font-size: 14px; outline: none; transition: border 0.2s;" onfocus="this.style.borderColor='#8cc63f'" onblur="this.style.borderColor='#ddd'">
+        <div style="margin-bottom: 20px;">
+            <label style="display:block; margin-bottom:6px; font-size:13px; color:#555; font-weight: 500;">Nombre del Dashboard</label>
+            <input type="text" id="tabNameInput" style="width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:6px; font-family:inherit; font-size: 14px; outline: none; transition: border 0.2s; box-sizing: border-box;" onfocus="this.style.borderColor='#8cc63f'" onblur="this.style.borderColor='#ddd'">
+        </div>
         
-        <label style="display:flex; align-items:center; gap:8px; margin-bottom:15px; font-size:14px; cursor:pointer; color:#444; font-weight: 500;">
-            <input type="checkbox" id="tabSharedInput" style="cursor:pointer; width: 16px; height: 16px; accent-color: #8cc63f;">
-            Compartir vista con el paciente
-        </label>
-        
-        <button onclick="saveAsTemplate()" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px; background:#fafafa; color:#555; border:1px solid #eaeaea; padding:10px; border-radius:6px; margin-bottom:25px; cursor:pointer; font-size:13px; transition:0.2s;" onmouseover="this.style.background='#f0f7e6'; this.style.borderColor='#8cc63f'; this.style.color='#66992b'" onmouseout="this.style.background='#fafafa'; this.style.borderColor='#eaeaea'; this.style.color='#555'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-            Guardar vista actual como plantilla
-        </button>
-
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 10px; border-top: 1px solid #eaeaea; padding-top: 15px;">
-            <div style="display:flex; gap:8px; flex-wrap: wrap;">
-                <button onclick="deleteCurrentTab()" style="background:#fff; color:#e63946; border:1px solid #e63946; padding:8px 12px; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500; transition:0.2s;" onmouseover="this.style.background='#e63946'; this.style.color='#fff';" onmouseout="this.style.background='#fff'; this.style.color='#e63946';">Eliminar Pestaña</button>
-                <button onclick="clearCurrentTabWidgets()" style="background:#fff; color:#f0ad4e; border:1px solid #f0ad4e; padding:8px 12px; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500; transition:0.2s;" onmouseover="this.style.background='#f0ad4e'; this.style.color='#fff';" onmouseout="this.style.background='#fff'; this.style.color='#f0ad4e';">Limpiar Widgets</button>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <div style="display:flex; flex-direction:column;">
+                <span style="font-size:14px; font-weight:500; color:#444;">Compartir vista</span>
+                <span style="font-size:12px; color:#888;">El paciente podrá ver este dashboard</span>
             </div>
-            <div style="display:flex; gap:8px;">
-                <button onclick="document.getElementById('tabSettingsModal').style.display='none'" style="background:#f1f1f1; color:#555; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:14px; font-weight:500;">Cancelar</button>
-                <button onclick="saveTabSettings()" style="background:#8cc63f; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:14px; font-weight:600; box-shadow: 0 2px 4px rgba(140, 198, 63, 0.3);">Guardar</button>
+            <!-- Custom Toggle -->
+            <label style="position:relative; display:inline-block; width:44px; height:24px;">
+                <input type="checkbox" id="tabSharedInput" style="opacity:0; width:0; height:0;" onchange="this.nextElementSibling.style.background = this.checked ? '#8cc63f' : '#ccc'; this.nextElementSibling.firstElementChild.style.transform = this.checked ? 'translateX(20px)' : 'translateX(0)';">
+                <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#ccc; transition:.3s; border-radius:24px;">
+                    <span style="position:absolute; content:''; height:18px; width:18px; left:3px; bottom:3px; background-color:white; transition:.3s; border-radius:50%; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span>
+                </span>
+            </label>
+        </div>
+        
+        <div style="margin-bottom:25px;">
+            <button onclick="saveAsTemplate()" style="display:inline-flex; align-items:center; gap:8px; background:none; color:#5b9bd5; border:none; padding:0; cursor:pointer; font-size:13px; font-weight:500; transition:0.2s;" onmouseover="this.style.color='#3a75a6'" onmouseout="this.style.color='#5b9bd5'">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                Guardar vista actual como plantilla
+            </button>
+        </div>
+
+        <div style="background: #fffafa; border: 1px solid #ffe3e3; border-radius: 8px; padding: 15px; margin-bottom: 25px;">
+            <div style="display:flex; gap:10px;">
+                <button onclick="clearCurrentTabWidgets()" style="flex:1; background:white; color:#f0ad4e; border:1px solid #f0ad4e; padding:8px; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500; transition:0.2s; display:flex; justify-content:center; align-items:center; gap:6px;" onmouseover="this.style.background='#f0ad4e'; this.style.color='white';" onmouseout="this.style.background='white'; this.style.color='#f0ad4e';">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><polyline points="21 3 21 8 16 8"></polyline></svg>
+                    Limpiar
+                </button>
+                <button onclick="deleteCurrentTab()" style="flex:1; background:white; color:#e63946; border:1px solid #e63946; padding:8px; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500; transition:0.2s; display:flex; justify-content:center; align-items:center; gap:6px;" onmouseover="this.style.background='#e63946'; this.style.color='white';" onmouseout="this.style.background='white'; this.style.color='#e63946';">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    Eliminar
+                </button>
+            </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; border-top: 1px solid #eaeaea; padding-top: 15px;">
+            <button onclick="document.getElementById('tabSettingsModal').style.display='none'" style="background:#f1f1f1; color:#555; border:none; padding:10px 16px; border-radius:6px; cursor:pointer; font-size:14px; font-weight:500;">Cancelar</button>
+            <button onclick="saveTabSettings()" style="background:#8cc63f; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-size:14px; font-weight:600; box-shadow: 0 2px 4px rgba(140, 198, 63, 0.3);">Guardar Cambios</button>
+        </div>
+    </div>
+
+    <!-- Add Widget Modal -->
+    <div id="addWidgetModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:30px; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.2); z-index:10000; width:500px; max-height:80vh; overflow-y:auto; font-family:Inter, sans-serif;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <div>
+                <h3 style="margin: 0; color:#333; font-size:20px;">Añadir Widget</h3>
+                <span style="font-size:13px; color:#777;">Selecciona un widget para añadir a la vista actual</span>
+            </div>
+            <button onclick="document.getElementById('addWidgetModal').style.display='none'" style="background:none; border:none; color:#888; cursor:pointer; padding:0; display:flex; align-items:center;" onmouseover="this.style.color='#333'" onmouseout="this.style.color='#888'" title="Cerrar">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:12px;">
+            <div onclick="addWidgetAndClose('widget_digraph.html', 6, 10, 'Mapa del Yo')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#8cc63f'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
+                <div style="background:#f0f7e6; color:#8cc63f; padding:10px; border-radius:8px; flex-shrink:0;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                </div>
+                <div style="flex-grow:1;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <h4 style="margin:0; font-size:15px; color:#333;">Mapa del Yo</h4>
+                        <span style="background:#f0f0f0; color:#555; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:600; text-transform:uppercase;">WimpTools</span>
+                    </div>
+                    <p style="margin:0 0 8px 0; font-size:13px; color:#666; line-height:1.4;">Red de constructos y sus implicaciones directas en formato de grafo relacional.</p>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <span style="font-size:11px; color:#888; background:#f9f9f9; border:1px solid #eee; padding:2px 6px; border-radius:4px;"><strong style="color:#d9534f; font-weight:600;">Obligatorio:</strong> WimpGrid</span>
+                    </div>
+                </div>
+            </div>
+
+            <div onclick="addWidgetAndClose('widget_centrality.html', 6, 10, 'Análisis de Centralidad')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#8cc63f'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
+                <div style="background:#f0f7e6; color:#8cc63f; padding:10px; border-radius:8px; flex-shrink:0;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle><line x1="21.17" y1="8" x2="12" y2="8"></line><line x1="3.95" y1="6.06" x2="8.54" y2="14"></line><line x1="10.88" y1="21.94" x2="15.46" y2="14"></line></svg>
+                </div>
+                <div style="flex-grow:1;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <h4 style="margin:0; font-size:15px; color:#333;">Análisis de Centralidad</h4>
+                        <span style="background:#f0f0f0; color:#555; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:600; text-transform:uppercase;">WimpTools</span>
+                    </div>
+                    <p style="margin:0 0 8px 0; font-size:13px; color:#666; line-height:1.4;">Gráfico interactivo de los constructos más nucleares del sistema en base a sus conexiones.</p>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <span style="font-size:11px; color:#888; background:#f9f9f9; border:1px solid #eee; padding:2px 6px; border-radius:4px;"><strong style="color:#d9534f; font-weight:600;">Obligatorio:</strong> WimpGrid</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div onclick="addWidgetAndClose('widget_implications.html', 6, 10, 'Análisis de Implicaciones')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#8cc63f'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
+                <div style="background:#f0f7e6; color:#8cc63f; padding:10px; border-radius:8px; flex-shrink:0;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                </div>
+                <div style="flex-grow:1;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <h4 style="margin:0; font-size:15px; color:#333;">Análisis de Implicaciones</h4>
+                        <span style="background:#f0f0f0; color:#555; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:600; text-transform:uppercase;">WimpTools</span>
+                    </div>
+                    <p style="margin:0 0 8px 0; font-size:13px; color:#666; line-height:1.4;">Tabla detallada con todas las implicaciones extraídas de la rejilla y sus conflictos lógicos.</p>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <span style="font-size:11px; color:#888; background:#f9f9f9; border:1px solid #eee; padding:2px 6px; border-radius:4px;"><strong style="color:#d9534f; font-weight:600;">Obligatorio:</strong> WimpGrid</span>
+                    </div>
+                </div>
+            </div>
+
+            <div onclick="addWidgetAndClose('widget_simulation.html', 6, 10, 'Laboratorio de Dinámicas')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#8cc63f'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
+                <div style="background:#f0f7e6; color:#8cc63f; padding:10px; border-radius:8px; flex-shrink:0;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                </div>
+                <div style="flex-grow:1;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <h4 style="margin:0; font-size:15px; color:#333;">Lab. de Dinámicas</h4>
+                        <span style="background:#f0f0f0; color:#555; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:600; text-transform:uppercase;">WimpTools</span>
+                    </div>
+                    <p style="margin:0 0 8px 0; font-size:13px; color:#666; line-height:1.4;">Simula escenarios de cambio en los constructos y observa su propagación a través del sistema.</p>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <span style="font-size:11px; color:#888; background:#f9f9f9; border:1px solid #eee; padding:2px 6px; border-radius:4px;"><strong style="color:#d9534f; font-weight:600;">Obligatorio:</strong> WimpGrid</span>
+                    </div>
+                </div>
+            </div>
+
+            <div onclick="addWidgetAndClose('widget_adjustment.html', 6, 10, 'Análisis de Bienestar')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#8cc63f'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
+                <div style="background:#f0f7e6; color:#8cc63f; padding:10px; border-radius:8px; flex-shrink:0;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                </div>
+                <div style="flex-grow:1;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <h4 style="margin:0; font-size:15px; color:#333;">Análisis de Bienestar</h4>
+                        <span style="background:#f0f0f0; color:#555; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:600; text-transform:uppercase;">WimpTools</span>
+                    </div>
+                    <p style="margin:0 0 8px 0; font-size:13px; color:#666; line-height:1.4;">Representación visual del estado de bienestar del paciente evaluando distancias del Yo-Ideal.</p>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <span style="font-size:11px; color:#888; background:#f9f9f9; border:1px solid #eee; padding:2px 6px; border-radius:4px;"><strong style="color:#d9534f; font-weight:600;">Obligatorio:</strong> WimpGrid</span>
+                        <span style="font-size:11px; color:#888; background:#f9f9f9; border:1px solid #eee; padding:2px 6px; border-radius:4px;"><strong style="color:#5cb85c; font-weight:600;">Opcional:</strong> WimpGrid (Comparativa)</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -872,6 +1182,15 @@
     <div id="newPatientModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:25px; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.2); z-index:9999; width:500px; font-family:Inter, sans-serif;">
         <h3 style="margin-top:0; color:#333; font-size:18px; margin-bottom: 20px;">Crear Nuevo Paciente</h3>
         
+        <div style="display:flex; align-items:center; gap: 15px; margin-bottom: 20px;">
+            <div style="width: 64px; height: 64px; border-radius: 50%; background: #f9f9f9; display:flex; align-items:center; justify-content:center; color: #aaa; border: 2px dashed #ddd; cursor: pointer; transition: 0.2s;" onmouseover="this.style.borderColor='#8cc63f'; this.style.color='#8cc63f'; this.style.background='#f0f7e6';" onmouseout="this.style.borderColor='#ddd'; this.style.color='#aaa'; this.style.background='#f9f9f9';" title="Subir foto">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            </div>
+            <div>
+                <span style="display:block; font-size: 13px; font-weight: 500; color: #333; margin-bottom:2px;">Foto de perfil</span>
+                <span style="font-size: 11px; color: #888;">Haz clic para subir una imagen (opcional)</span>
+            </div>
+        </div>
         <label style="display:block; margin-bottom:6px; font-size:13px; color:#555; font-weight: 500;">Nombre del paciente:</label>
         <input type="text" id="newPatientName" placeholder="P. ej. Caso AB" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-bottom:15px; font-family:inherit; font-size: 14px; outline: none; transition: border 0.2s;" onfocus="this.style.borderColor='#8cc63f'" onblur="this.style.borderColor='#ddd'">
         
@@ -921,6 +1240,15 @@
     <div id="editPatientModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:25px; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.2); z-index:9999; width:500px; font-family:Inter, sans-serif;">
         <h3 style="margin-top:0; color:#333; font-size:18px; margin-bottom: 20px;">Configurar Paciente</h3>
         
+        <div style="display:flex; align-items:center; gap: 15px; margin-bottom: 20px;">
+            <div style="width: 64px; height: 64px; border-radius: 50%; background: #f9f9f9; display:flex; align-items:center; justify-content:center; color: #aaa; border: 2px dashed #ddd; cursor: pointer; transition: 0.2s;" onmouseover="this.style.borderColor='#8cc63f'; this.style.color='#8cc63f'; this.style.background='#f0f7e6';" onmouseout="this.style.borderColor='#ddd'; this.style.color='#aaa'; this.style.background='#f9f9f9';" title="Subir foto">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            </div>
+            <div>
+                <span style="display:block; font-size: 13px; font-weight: 500; color: #333; margin-bottom:2px;">Foto de perfil</span>
+                <span style="font-size: 11px; color: #888;">Haz clic para subir o cambiar la imagen</span>
+            </div>
+        </div>
         <label style="display:block; margin-bottom:6px; font-size:13px; color:#555; font-weight: 500;">Nombre del paciente:</label>
         <input type="text" id="editPatientName" placeholder="P. ej. Caso AB" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-bottom:15px; font-family:inherit; font-size: 14px; outline: none; transition: border 0.2s;" onfocus="this.style.borderColor='#8cc63f'" onblur="this.style.borderColor='#ddd'">
         
@@ -1009,7 +1337,7 @@
             
             // Populate based on template
             if (selectedTpl === 'full') {
-                addWidget('widget_digraph.html', 6, 6, 'Mapa de Implicaciones');
+                addWidget('widget_digraph.html', 6, 6, 'Mapa del Yo');
                 addWidget('widget_centrality.html', 6, 6, 'Análisis de Centralidad');
                 addWidget('widget_implications.html', 6, 6, 'Análisis de Implicaciones');
                 addWidget('widget_simulation.html', 6, 6, 'Laboratorio de Dinámicas');
@@ -1017,7 +1345,7 @@
                 addWidget('widget_implications.html', 6, 6, 'Análisis de Implicaciones');
                 addWidget('widget_centrality.html', 6, 6, 'Análisis de Centralidad');
             } else if (selectedTpl === 'lab') {
-                addWidget('widget_digraph.html', 6, 8, 'Mapa de Implicaciones');
+                addWidget('widget_digraph.html', 6, 8, 'Mapa del Yo');
                 addWidget('widget_simulation.html', 6, 8, 'Laboratorio de Dinámicas');
             }
         }
@@ -1294,6 +1622,11 @@
             });
         }
 
+        function addWidgetAndClose(url, w, h, name) {
+            addWidget(url, w, h, name);
+            document.getElementById('addWidgetModal').style.display = 'none';
+        }
+
         // Function to add a new widget (to the ACTIVE grid)
         function addWidget(url, w, h, title="Widget") {
             if (!activeTabId) return;
@@ -1303,106 +1636,247 @@
 
             let desc = "";
             let extraSetup = "";
-            if (title === "Mapa de Implicaciones") desc = "Visualización en forma de red (grafo) de las relaciones e implicaciones lógicas entre los diferentes constructos.";
+            if (title === "Mapa del Yo") desc = "Visualización en forma de red (grafo) de las relaciones e implicaciones lógicas entre los diferentes constructos.";
             else if (title === "Análisis de Centralidad") desc = "Identificación matemática de los constructos más importantes y nucleares dentro del sistema del paciente.";
             else if (title === "Análisis de Implicaciones") desc = "Matriz detallada de la probabilidad de cambio estructural al alterar un constructo específico.";
             else if (title === "Laboratorio de Dinámicas") desc = "Simulación interactiva de intervenciones para predecir la resistencia al cambio sistémico.";
             else if (title === "Análisis de Bienestar") {
                 desc = "Monitorización y estructura general (SSI) del self frente a los diferentes escenarios.";
                 extraSetup = `
-                    <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">
-                        <h4 style="margin:0; color:#555; font-size:13px;">Comparativa con Línea base: Seleccionar una WimpGrid</h4>
-                        <span style="color:#888; font-size:11px;">(opcional)</span>
+                    <div class="param-header">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <h4 class="param-title">Línea Base Comparativa</h4>
+                            <span style="background: #fef3c7; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; color: #d97706; border: 1px solid #fde68a;">WimpGrid</span>
+                        </div>
+                        <span class="param-req optional">Opcional</span>
                     </div>
-                    <div style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
-                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
-                            <thead style="background: #f9f9f9; border-bottom: 1px solid #ddd;">
-                                <tr>
-                                    <th style="padding: 8px; font-weight: 600; color: #555; width: 30px; text-align: center;">#</th>
-                                    <th style="padding: 8px; font-weight: 600; color: #555;">Evaluación</th>
-                                    <th style="padding: 8px; font-weight: 600; color: #555;">Nombre</th>
-                                    <th style="padding: 8px; font-weight: 600; color: #555;">Tipo</th>
-                                    <th style="padding: 8px; font-weight: 600; color: #555;">Fecha</th>
-                                </tr>
-                            </thead>
-                            <tbody id="compare_tbody_${id}">
-                                <tr style="border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s;" onclick="document.getElementById('compare_none_${id}').checked = true; document.getElementById('btn_load_${id}').setAttribute('data-url', 'widget_adjustment_single.html');" onmouseover="this.style.backgroundColor='#f6ffed'" onmouseout="this.style.backgroundColor='transparent'">
-                                    <td style="padding: 8px; text-align: center;"><input type="radio" name="compare_ds_${id}" id="compare_none_${id}" value="none" checked></td>
-                                    <td style="padding: 8px; color: #333; font-weight: 500;" colspan="4">Ninguna (Analizar solo principal)</td>
-                                </tr>
-                                <tr style="border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; display:none;" onclick="document.getElementById('compare_pre_${id}').checked = true; document.getElementById('btn_load_${id}').setAttribute('data-url', 'widget_adjustment_compare.html');" onmouseover="this.style.backgroundColor='#f6ffed'" onmouseout="this.style.backgroundColor='transparent'">
-                                    <td style="padding: 8px; text-align: center;"><input type="radio" name="compare_ds_${id}" id="compare_pre_${id}" value="pre"></td>
-                                    <td style="padding: 8px; color: #333; font-weight: 500;">Pre-Tratamiento</td>
-                                    <td style="padding: 8px; color: #666;">Entrevista Inicial</td>
-                                    <td style="padding: 8px; color: #666;">WimpGrid</td>
-                                    <td style="padding: 8px; color: #666;">10/01/2026</td>
-                                </tr>
-                                <tr style="border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s;" onclick="document.getElementById('compare_sesion5_${id}').checked = true; document.getElementById('btn_load_${id}').setAttribute('data-url', 'widget_adjustment_compare.html');" onmouseover="this.style.backgroundColor='#f6ffed'" onmouseout="this.style.backgroundColor='transparent'">
-                                    <td style="padding: 8px; text-align: center;"><input type="radio" name="compare_ds_${id}" id="compare_sesion5_${id}" value="sesion5"></td>
-                                    <td style="padding: 8px; color: #333; font-weight: 500;">Intermedio</td>
-                                    <td style="padding: 8px; color: #666;">Revisión Sesión 5</td>
-                                    <td style="padding: 8px; color: #666;">WimpGrid</td>
-                                    <td style="padding: 8px; color: #666;">15/02/2026</td>
-                                </tr>
-                                <tr style="cursor: pointer; transition: 0.2s;" onclick="document.getElementById('compare_post_${id}').checked = true; document.getElementById('btn_load_${id}').setAttribute('data-url', 'widget_adjustment_compare.html');" onmouseover="this.style.backgroundColor='#f6ffed'" onmouseout="this.style.backgroundColor='transparent'">
-                                    <td style="padding: 8px; text-align: center;"><input type="radio" name="compare_ds_${id}" id="compare_post_${id}" value="post"></td>
-                                    <td style="padding: 8px; color: #333; font-weight: 500;">Post-Tratamiento</td>
-                                    <td style="padding: 8px; color: #666;">Evaluación Final</td>
-                                    <td style="padding: 8px; color: #666;">WimpGrid</td>
-                                    <td style="padding: 8px; color: #666;">30/03/2026</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    
+                    <div class="hier-container" id="compare_hier_${id}">
+                        <div class="hier-sidebar">
+                            <div class="hier-stage active" onclick="switchStage(this, 'compare_none_${id}_group')">
+                                <div class="hier-stage-title">Ninguna</div>
+                            </div>
+                            <div class="hier-stage" style="display:none;" id="compare_pre_stage_${id}" onclick="switchStage(this, 'compare_pre_${id}_group')">
+                                <div class="hier-stage-title">Pre-Tratamiento</div>
+                                <div class="hier-stage-date">10/01/2026</div>
+                            </div>
+                            <div class="hier-stage" onclick="switchStage(this, 'compare_sesion5_${id}_group')">
+                                <div class="hier-stage-title">Intermedio</div>
+                                <div class="hier-stage-date">15/02/2026</div>
+                            </div>
+                            <div class="hier-stage" onclick="switchStage(this, 'compare_post_${id}_group')">
+                                <div class="hier-stage-title">Post-Tratamiento</div>
+                                <div class="hier-stage-date">30/03/2026</div>
+                            </div>
+                        </div>
+                        
+                        <div class="hier-main">
+                            <table class="hier-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 40px; text-align: center;">#</th>
+                                        <th>Título</th>
+                                        <th>Tipo</th>
+                                        <th>Fecha</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="compare_none_${id}_group">
+                                    <tr class="selected" onclick="selectHierRow(this, 'compare_none_${id}'); document.getElementById('btn_load_${id}').setAttribute('data-url', 'widget_adjustment_single.html');">
+                                        <td style="text-align: center;"><input type="radio" class="custom-radio" name="compare_ds_${id}" id="compare_none_${id}" value="none" checked></td>
+                                        <td style="font-weight: 500;">(No usar comparativa)</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                    </tr>
+                                </tbody>
+                                <tbody id="compare_pre_${id}_group" style="display:none;">
+                                    <tr onclick="selectHierRow(this, 'compare_pre_${id}'); document.getElementById('btn_load_${id}').setAttribute('data-url', 'widget_adjustment_compare.html');">
+                                        <td style="text-align: center;"><input type="radio" class="custom-radio" name="compare_ds_${id}" id="compare_pre_${id}" value="pre"></td>
+                                        <td style="font-weight: 500; color: #333; display: flex; align-items: center; gap: 8px;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                                            Entrevista Inicial
+                                        </td>
+                                        <td><span style="background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; color: #d97706;">WimpGrid</span></td>
+                                        <td style="font-size: 12px; color: #666;">10/01/2026</td>
+                                    </tr>
+                                </tbody>
+                                <tbody id="compare_sesion5_${id}_group" style="display:none;">
+                                    <tr onclick="selectHierRow(this, 'compare_sesion5_${id}'); document.getElementById('btn_load_${id}').setAttribute('data-url', 'widget_adjustment_compare.html');">
+                                        <td style="text-align: center;"><input type="radio" class="custom-radio" name="compare_ds_${id}" id="compare_sesion5_${id}" value="sesion5"></td>
+                                        <td style="font-weight: 500; color: #333; display: flex; align-items: center; gap: 8px;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                                            Revisión Sesión 5
+                                        </td>
+                                        <td><span style="background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; color: #d97706;">WimpGrid</span></td>
+                                        <td style="font-size: 12px; color: #666;">15/02/2026</td>
+                                    </tr>
+                                </tbody>
+                                <tbody id="compare_post_${id}_group" style="display:none;">
+                                    <tr onclick="selectHierRow(this, 'compare_post_${id}'); document.getElementById('btn_load_${id}').setAttribute('data-url', 'widget_adjustment_compare.html');">
+                                        <td style="text-align: center;"><input type="radio" class="custom-radio" name="compare_ds_${id}" id="compare_post_${id}" value="post"></td>
+                                        <td style="font-weight: 500; color: #333; display: flex; align-items: center; gap: 8px;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                                            Evaluación Final
+                                        </td>
+                                        <td><span style="background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; color: #d97706;">WimpGrid</span></td>
+                                        <td style="font-size: 12px; color: #666;">30/03/2026</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 `;
             }
 
             let placeholderHTML = `
-                <div class="widget-setup" id="setup_${id}" style="padding: 20px; display: flex; flex-direction: column; height: 100%; overflow-y: auto; box-sizing: border-box;">
-                    <h3 style="margin-top:0; color:#333; font-size:16px; margin-bottom: 5px;">${title}</h3>
-                    <p style="margin-top:0; font-size:13px; color:#666; margin-bottom:15px; line-height:1.4;">${desc}</p>
-                    <hr style="border:none; border-top:1px solid #eee; margin-bottom:15px; width:100%;">
+                <div class="widget-setup" id="setup_${id}" style="padding: 24px; display: flex; flex-direction: column; height: 100%; overflow-y: auto; box-sizing: border-box; background: #fff;">
+                    <h3 style="margin-top:0; color:#333; font-size:18px; margin-bottom: 8px; font-weight: 700;">${title}</h3>
+                    <p style="margin-top:0; font-size:14px; color:#666; margin-bottom:24px; line-height:1.5;">${desc}</p>
                     
-                    <h3 style="margin-top:0; color:#333; font-size:15px; margin-bottom: 12px;">Parámetros</h3>
-                    <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">
-                        <h4 style="margin:0; color:#555; font-size:13px;">Origen de datos: Seleccionar una WimpGrid</h4>
-                        <span style="color:#d32f2f; font-size:11px; font-weight:500;">*obligatorio</span>
+                    <h3 style="margin-top:0; color:#333; font-size:16px; margin-bottom: 16px; font-weight: 600;">Configuración de Origen</h3>
+                    <div class="param-header">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <h4 class="param-title">Principal</h4>
+                            <span style="background: #fef3c7; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; color: #d97706; border: 1px solid #fde68a;">WimpGrid</span>
+                        </div>
+                        <span class="param-req mandatory">Obligatorio</span>
                     </div>
-                    <div style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
-                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
-                            <thead style="background: #f9f9f9; border-bottom: 1px solid #ddd;">
-                                <tr>
-                                    <th style="padding: 8px; font-weight: 600; color: #555; width: 30px; text-align: center;">#</th>
-                                    <th style="padding: 8px; font-weight: 600; color: #555;">Evaluación</th>
-                                    <th style="padding: 8px; font-weight: 600; color: #555;">Nombre</th>
-                                    <th style="padding: 8px; font-weight: 600; color: #555;">Tipo</th>
-                                    <th style="padding: 8px; font-weight: 600; color: #555;">Fecha</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr style="border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s;" onclick="document.getElementById('ds_pre_${id}').checked = true; updateComparisons('${id}', 'pre');" onmouseover="this.style.backgroundColor='#f6ffed'" onmouseout="this.style.backgroundColor='transparent'">
-                                    <td style="padding: 8px; text-align: center;"><input type="radio" name="ds_${id}" id="ds_pre_${id}" value="pre" checked onchange="updateComparisons('${id}', 'pre')"></td>
-                                    <td style="padding: 8px; color: #333; font-weight: 500;">Pre-Tratamiento</td>
-                                    <td style="padding: 8px; color: #666;">Entrevista Inicial</td>
-                                    <td style="padding: 8px; color: #666;">WimpGrid</td>
-                                    <td style="padding: 8px; color: #666;">10/01/2026</td>
-                                </tr>
-                                <tr style="border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s;" onclick="document.getElementById('ds_sesion5_${id}').checked = true; updateComparisons('${id}', 'sesion5');" onmouseover="this.style.backgroundColor='#f6ffed'" onmouseout="this.style.backgroundColor='transparent'">
-                                    <td style="padding: 8px; text-align: center;"><input type="radio" name="ds_${id}" id="ds_sesion5_${id}" value="sesion5" onchange="updateComparisons('${id}', 'sesion5')"></td>
-                                    <td style="padding: 8px; color: #333; font-weight: 500;">Intermedio</td>
-                                    <td style="padding: 8px; color: #666;">Revisión Sesión 5</td>
-                                    <td style="padding: 8px; color: #666;">WimpGrid</td>
-                                    <td style="padding: 8px; color: #666;">15/02/2026</td>
-                                </tr>
-                                <tr style="cursor: pointer; transition: 0.2s;" onclick="document.getElementById('ds_post_${id}').checked = true; updateComparisons('${id}', 'post');" onmouseover="this.style.backgroundColor='#f6ffed'" onmouseout="this.style.backgroundColor='transparent'">
-                                    <td style="padding: 8px; text-align: center;"><input type="radio" name="ds_${id}" id="ds_post_${id}" value="post" onchange="updateComparisons('${id}', 'post')"></td>
-                                    <td style="padding: 8px; color: #333; font-weight: 500;">Post-Tratamiento</td>
-                                    <td style="padding: 8px; color: #666;">Evaluación Final</td>
-                                    <td style="padding: 8px; color: #666;">WimpGrid</td>
-                                    <td style="padding: 8px; color: #666;">30/03/2026</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    
+                    <div class="hier-container" id="ds_hier_${id}">
+                        <div class="hier-sidebar">
+                            <div class="hier-stage active" onclick="switchStage(this, 'ds_pre_${id}_group')">
+                                <div class="hier-stage-title">Pre-Tratamiento</div>
+                                <div class="hier-stage-date">10/01/2026</div>
+                            </div>
+                            <div class="hier-stage" onclick="switchStage(this, 'ds_s1_${id}_group')">
+                                <div class="hier-stage-title">Sesión 1</div>
+                                <div class="hier-stage-date">17/01/2026</div>
+                            </div>
+                            <div class="hier-stage" onclick="switchStage(this, 'ds_s2_${id}_group')">
+                                <div class="hier-stage-title">Sesión 2</div>
+                                <div class="hier-stage-date">24/01/2026</div>
+                            </div>
+                            <div class="hier-stage" onclick="switchStage(this, 'ds_s3_${id}_group')">
+                                <div class="hier-stage-title">Sesión 3</div>
+                                <div class="hier-stage-date">31/01/2026</div>
+                            </div>
+                            <div class="hier-stage" onclick="switchStage(this, 'ds_s4_${id}_group')">
+                                <div class="hier-stage-title">Sesión 4</div>
+                                <div class="hier-stage-date">07/02/2026</div>
+                            </div>
+                            <div class="hier-stage" onclick="switchStage(this, 'ds_sesion5_${id}_group')">
+                                <div class="hier-stage-title">Intermedio (S5)</div>
+                                <div class="hier-stage-date">15/02/2026</div>
+                            </div>
+                            <div class="hier-stage" onclick="switchStage(this, 'ds_s6_${id}_group')">
+                                <div class="hier-stage-title">Sesión 6</div>
+                                <div class="hier-stage-date">22/02/2026</div>
+                            </div>
+                            <div class="hier-stage" onclick="switchStage(this, 'ds_s7_${id}_group')">
+                                <div class="hier-stage-title">Sesión 7</div>
+                                <div class="hier-stage-date">01/03/2026</div>
+                            </div>
+                            <div class="hier-stage" onclick="switchStage(this, 'ds_post_${id}_group')">
+                                <div class="hier-stage-title">Post-Tratamiento</div>
+                                <div class="hier-stage-date">30/03/2026</div>
+                            </div>
+                        </div>
+                        
+                        <div class="hier-main">
+                            <table class="hier-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 40px; text-align: center;">#</th>
+                                        <th>Título</th>
+                                        <th>Tipo</th>
+                                        <th>Fecha</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ds_pre_${id}_group">
+                                    <tr class="selected" onclick="selectHierRow(this, 'ds_pre_${id}'); updateComparisons('${id}', 'pre');">
+                                        <td style="text-align: center;"><input type="radio" class="custom-radio" name="ds_${id}" id="ds_pre_${id}" value="pre" checked onchange="updateComparisons('${id}', 'pre')"></td>
+                                        <td style="font-weight: 500; color: #333; display: flex; align-items: center; gap: 8px;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                                            Entrevista Inicial
+                                        </td>
+                                        <td><span style="background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; color: #d97706;">WimpGrid</span></td>
+                                        <td style="font-size: 12px; color: #666;">10/01/2026</td>
+                                    </tr>
+                                    <tr onclick="selectHierRow(this, 'ds_pre_2_${id}'); updateComparisons('${id}', 'pre2');">
+                                        <td style="text-align: center;"><input type="radio" class="custom-radio" name="ds_${id}" id="ds_pre_2_${id}" value="pre2" onchange="updateComparisons('${id}', 'pre2')"></td>
+                                        <td style="font-weight: 500; color: #333; display: flex; align-items: center; gap: 8px;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                                            Rejilla Familiar
+                                        </td>
+                                        <td><span style="background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; color: #d97706;">WimpGrid</span></td>
+                                        <td style="font-size: 12px; color: #666;">11/01/2026</td>
+                                    </tr>
+                                </tbody>
+                                
+                                <tbody id="ds_s1_${id}_group" style="display:none;">
+                                    <tr onclick="selectHierRow(this, 'ds_s1_${id}'); updateComparisons('${id}', 's1');">
+                                        <td style="text-align: center;"><input type="radio" class="custom-radio" name="ds_${id}" id="ds_s1_${id}" value="s1" onchange="updateComparisons('${id}', 's1')"></td>
+                                        <td style="font-weight: 500; color: #333; display: flex; align-items: center; gap: 8px;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                                            Rejilla de Sesión 1
+                                        </td>
+                                        <td><span style="background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; color: #d97706;">WimpGrid</span></td>
+                                        <td style="font-size: 12px; color: #666;">17/01/2026</td>
+                                    </tr>
+                                </tbody>
+                                
+                                <tbody id="ds_s2_${id}_group" style="display:none;">
+                                    <tr><td colspan="4" style="text-align:center; padding:20px; color:#999; font-size:12px;">No hay registros WimpGrid en esta etapa</td></tr>
+                                </tbody>
+                                
+                                <tbody id="ds_s3_${id}_group" style="display:none;">
+                                    <tr><td colspan="4" style="text-align:center; padding:20px; color:#999; font-size:12px;">No hay registros WimpGrid en esta etapa</td></tr>
+                                </tbody>
+                                
+                                <tbody id="ds_s4_${id}_group" style="display:none;">
+                                    <tr onclick="selectHierRow(this, 'ds_s4_${id}'); updateComparisons('${id}', 's4');">
+                                        <td style="text-align: center;"><input type="radio" class="custom-radio" name="ds_${id}" id="ds_s4_${id}" value="s4" onchange="updateComparisons('${id}', 's4')"></td>
+                                        <td style="font-weight: 500; color: #333; display: flex; align-items: center; gap: 8px;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                                            Mini Rejilla de Avance
+                                        </td>
+                                        <td><span style="background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; color: #d97706;">WimpGrid</span></td>
+                                        <td style="font-size: 12px; color: #666;">07/02/2026</td>
+                                    </tr>
+                                </tbody>
+
+                                <tbody id="ds_sesion5_${id}_group" style="display:none;">
+                                    <tr onclick="selectHierRow(this, 'ds_sesion5_${id}'); updateComparisons('${id}', 'sesion5');">
+                                        <td style="text-align: center;"><input type="radio" class="custom-radio" name="ds_${id}" id="ds_sesion5_${id}" value="sesion5" onchange="updateComparisons('${id}', 'sesion5')"></td>
+                                        <td style="font-weight: 500; color: #333; display: flex; align-items: center; gap: 8px;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                                            Revisión Sesión 5
+                                        </td>
+                                        <td><span style="background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; color: #d97706;">WimpGrid</span></td>
+                                        <td style="font-size: 12px; color: #666;">15/02/2026</td>
+                                    </tr>
+                                </tbody>
+                                
+                                <tbody id="ds_s6_${id}_group" style="display:none;">
+                                    <tr><td colspan="4" style="text-align:center; padding:20px; color:#999; font-size:12px;">No hay registros WimpGrid en esta etapa</td></tr>
+                                </tbody>
+                                
+                                <tbody id="ds_s7_${id}_group" style="display:none;">
+                                    <tr><td colspan="4" style="text-align:center; padding:20px; color:#999; font-size:12px;">No hay registros WimpGrid en esta etapa</td></tr>
+                                </tbody>
+                                
+                                <tbody id="ds_post_${id}_group" style="display:none;">
+                                    <tr onclick="selectHierRow(this, 'ds_post_${id}'); updateComparisons('${id}', 'post');">
+                                        <td style="text-align: center;"><input type="radio" class="custom-radio" name="ds_${id}" id="ds_post_${id}" value="post" onchange="updateComparisons('${id}', 'post')"></td>
+                                        <td style="font-weight: 500; color: #333; display: flex; align-items: center; gap: 8px;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                                            Evaluación Final
+                                        </td>
+                                        <td><span style="background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; color: #d97706;">WimpGrid</span></td>
+                                        <td style="font-size: 12px; color: #666;">30/03/2026</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                     
                     ${extraSetup}
@@ -1435,6 +1909,63 @@
             const container = document.getElementById('content_' + id);
             if(container) {
                 container.innerHTML = `<iframe src="${url}" scrolling="no" allow="fullscreen" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" style="width:100%; height:100%; border:none; display:block;"></iframe>`;
+            }
+        }
+
+        // UI Helper for hierarchical tab switching
+        function switchStage(btnElement, targetGroupId) {
+            // Manage active class on sidebar
+            const container = btnElement.closest('.hier-container');
+            container.querySelectorAll('.hier-stage').forEach(el => el.classList.remove('active'));
+            btnElement.classList.add('active');
+            
+            // Manage visible rows in the table
+            container.querySelectorAll('.hier-table tbody').forEach(tb => tb.style.display = 'none');
+            const targetGroup = container.querySelector('#' + targetGroupId);
+            if (targetGroup) {
+                targetGroup.style.display = '';
+                // Optional: Automatically select the row when the tab switches if not selected
+                if (!targetGroup.querySelector('.selected')) {
+                    // Try to click first radio row if available
+                    const firstRadioRow = targetGroup.querySelector('tr[onclick]');
+                    if (firstRadioRow) firstRadioRow.click();
+                }
+            }
+        }
+        
+        // Helper to select a hierarchical row visually and check the radio button
+        function selectHierRow(tr, radioId) {
+            const tbody = tr.parentElement;
+            tbody.querySelectorAll('tr').forEach(row => row.classList.remove('selected'));
+            tr.classList.add('selected');
+            document.getElementById(radioId).checked = true;
+        }
+
+        function updateComparisons(id, selectedVal) {
+            const container = document.getElementById('compare_hier_' + id);
+            if (!container) return;
+            
+            // Hide/show the corresponding stage button in the comparison panel
+            const stages = {
+                'pre': 'compare_pre_stage_' + id
+            };
+            
+            if (stages[selectedVal]) {
+                const stageBtn = document.getElementById(stages[selectedVal]);
+                if (stageBtn) {
+                    stageBtn.style.display = 'none';
+                    // If the active stage is hidden, reset to 'Ninguna'
+                    if (stageBtn.classList.contains('active')) {
+                        const noneBtn = container.querySelector('.hier-stage'); // First one is Ninguna
+                        noneBtn.click();
+                    }
+                }
+            }
+            
+            // Restore visibility for others (simplification for mock)
+            if (selectedVal !== 'pre') {
+                const stageBtn = document.getElementById('compare_pre_stage_' + id);
+                if (stageBtn) stageBtn.style.display = 'flex';
             }
         }
 
@@ -1550,20 +2081,20 @@
                 tbody.innerHTML = `
                     <tr style="border-bottom: 1px solid #eaeaea; transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='#fcfcfc'" onmouseout="this.style.background='transparent'">
                         <td style="padding: 16px 25px; font-weight: 500; color: #333; display: flex; align-items: center; gap: 12px;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8cc63f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
                             Entrevista Inicial
                         </td>
-                        <td style="padding: 16px 25px;"><span style="background: #f0f0f0; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; color: #555;">WimpGrid</span></td>
+                        <td style="padding: 16px 25px;"><span style="background: #fef3c7; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; color: #d97706;">WimpGrid</span></td>
                         <td style="padding: 16px 25px;"><span style="background: #e6f4ea; color: #1e8e3e; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">Completado</span></td>
                         <td style="padding: 16px 25px; color: #666; font-size: 13px;">23/7/2026</td>
                         <td style="padding: 16px 25px; text-align: center;"><svg style="cursor:pointer; color:#888;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></td>
                     </tr>
                     <tr style="border-bottom: 1px solid #eaeaea; transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='#fcfcfc'" onmouseout="this.style.background='transparent'">
                         <td style="padding: 16px 25px; font-weight: 500; color: #333; display: flex; align-items: center; gap: 12px;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="M9 14l2 2 4-4"></path></svg>
                             Inventario de Depresión (BDI-II)
                         </td>
-                        <td style="padding: 16px 25px;"><span style="background: #fef3c7; color: #d97706; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500;">Test Psicométrico</span></td>
+                        <td style="padding: 16px 25px;"><span style="background: #e0f2fe; color: #0284c7; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500;">Test Psicométrico</span></td>
                         <td style="padding: 16px 25px;"><span style="background: #fff4e5; color: #b05a00; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">En progreso</span></td>
                         <td style="padding: 16px 25px; color: #666; font-size: 13px;">25/7/2026</td>
                         <td style="padding: 16px 25px; text-align: center;"><svg style="cursor:pointer; color:#888;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></td>
@@ -1583,20 +2114,20 @@
                 tbody.innerHTML = `
                     <tr style="border-bottom: 1px solid #eaeaea; transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='#fcfcfc'" onmouseout="this.style.background='transparent'">
                         <td style="padding: 16px 25px; font-weight: 500; color: #333; display: flex; align-items: center; gap: 12px;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8cc63f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
                             Revisión Sesión 5
                         </td>
-                        <td style="padding: 16px 25px;"><span style="background: #f0f0f0; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; color: #555;">WimpGrid</span></td>
+                        <td style="padding: 16px 25px;"><span style="background: #fef3c7; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; color: #d97706;">WimpGrid</span></td>
                         <td style="padding: 16px 25px;"><span style="background: #e6f4ea; color: #1e8e3e; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">Completado</span></td>
                         <td style="padding: 16px 25px; color: #666; font-size: 13px;">15/10/2026</td>
                         <td style="padding: 16px 25px; text-align: center;"><svg style="cursor:pointer; color:#888;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></td>
                     </tr>
                     <tr style="border-bottom: 1px solid #eaeaea; transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='#fcfcfc'" onmouseout="this.style.background='transparent'">
                         <td style="padding: 16px 25px; font-weight: 500; color: #333; display: flex; align-items: center; gap: 12px;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                             Diario de Terapia
                         </td>
-                        <td style="padding: 16px 25px;"><span style="background: #e0f2fe; color: #0284c7; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500;">Documento</span></td>
+                        <td style="padding: 16px 25px;"><span style="background: #fef2f2; color: #ef4444; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500;">Documento</span></td>
                         <td style="padding: 16px 25px;"><span style="background: #e6f4ea; color: #1e8e3e; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">Completado</span></td>
                         <td style="padding: 16px 25px; color: #666; font-size: 13px;">16/10/2026</td>
                         <td style="padding: 16px 25px; text-align: center;"><svg style="cursor:pointer; color:#888;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></td>
@@ -1606,10 +2137,10 @@
                 tbody.innerHTML = `
                     <tr style="border-bottom: 1px solid #eaeaea; transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='#fcfcfc'" onmouseout="this.style.background='transparent'">
                         <td style="padding: 16px 25px; font-weight: 500; color: #333; display: flex; align-items: center; gap: 12px;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8cc63f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
                             Evolución Seguimiento
                         </td>
-                        <td style="padding: 16px 25px;"><span style="background: #f0f0f0; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; color: #555;">WimpGrid</span></td>
+                        <td style="padding: 16px 25px;"><span style="background: #fef3c7; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; color: #d97706;">WimpGrid</span></td>
                         <td style="padding: 16px 25px;"><span style="background: #e6f4ea; color: #1e8e3e; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">Completado</span></td>
                         <td style="padding: 16px 25px; color: #666; font-size: 13px;">10/1/2027</td>
                         <td style="padding: 16px 25px; text-align: center;"><svg style="cursor:pointer; color:#888;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></td>
