@@ -776,7 +776,7 @@
         <div class="app-sidebar" id="appSidebar">
             <div class="sidebar-logo">
                 <div style="font-size: 20px; font-weight: 800; color: #333; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8cc63f" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 12 2.1 7.1"></path><path d="M12 12l9.9 4.9"></path></svg>
+                    <img src="psychlab_logo.svg" alt="PsychLab" style="height: 30px; width: auto; display: block;">
                     PsychLab<span style="color: #8cc63f; font-size: 12px; vertical-align: top;">UNED</span>
                 </div>
             </div>
@@ -953,6 +953,9 @@
                         </button>
                         <button onclick="if(typeof currentDashboardPatientCard !== 'undefined' && currentDashboardPatientCard) openEditPatientModal(currentDashboardPatientCard); else alert('Error: no se encontró la tarjeta original.');" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Editar Paciente" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        </button>
+                        <button onclick="generateCaseAccess()" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Generar acceso del caso" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
                         </button>
                     </div>
                 </div>
@@ -1194,8 +1197,24 @@
             </button>
         </div>
 
-        <div style="display:flex; flex-direction:column; gap:12px;">
-            <div onclick="addWidgetAndClose('widget_digraph.html', 6, 10, 'Mapa del Yo')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#8cc63f'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
+        <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:18px;">
+            <input type="text" id="wcardSearch" placeholder="Buscar widget..." oninput="filterWidgetCards()" style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-family:inherit; font-size:13px; outline:none; background:white; width:100%; box-sizing:border-box;" onfocus="this.style.borderColor='#8cc63f'" onblur="this.style.borderColor='#ddd'">
+            <div style="display:flex; gap:10px;">
+                <select id="wcardSource" onchange="filterWidgetCards()" style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-family:inherit; font-size:13px; outline:none; background:white; flex:1;">
+                    <option value="">Fuente: todas</option>
+                    <option value="WimpGrid">WimpGrid</option>
+                    <option value="RepGrid">RepGrid</option>
+                </select>
+                <select id="wcardType" onchange="filterWidgetCards()" style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-family:inherit; font-size:13px; outline:none; background:white; flex:1;">
+                    <option value="">Tipo: todos</option>
+                    <option value="WimpTools">WimpTools</option>
+                    <option value="OpenRepGrid">OpenRepGrid</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="wcardList" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="wcard" data-pkg="WimpTools" data-file="WimpGrid" onclick="addWidgetAndClose('widget_digraph.html', 6, 10, 'Mapa del Yo')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#8cc63f'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
                 <div style="background:#f0f7e6; color:#8cc63f; padding:10px; border-radius:8px; flex-shrink:0;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
                 </div>
@@ -1211,7 +1230,7 @@
                 </div>
             </div>
 
-            <div onclick="addWidgetAndClose('widget_centrality.html', 6, 10, 'Análisis de Centralidad')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#8cc63f'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
+            <div class="wcard" data-pkg="WimpTools" data-file="WimpGrid" onclick="addWidgetAndClose('widget_centrality.html', 6, 10, 'Análisis de Centralidad')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#8cc63f'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
                 <div style="background:#f0f7e6; color:#8cc63f; padding:10px; border-radius:8px; flex-shrink:0;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle><line x1="21.17" y1="8" x2="12" y2="8"></line><line x1="3.95" y1="6.06" x2="8.54" y2="14"></line><line x1="10.88" y1="21.94" x2="15.46" y2="14"></line></svg>
                 </div>
@@ -1227,7 +1246,7 @@
                 </div>
             </div>
             
-            <div onclick="addWidgetAndClose('widget_implications.html', 6, 10, 'Análisis de Implicaciones')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#8cc63f'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
+            <div class="wcard" data-pkg="WimpTools" data-file="WimpGrid" onclick="addWidgetAndClose('widget_implications.html', 6, 10, 'Análisis de Implicaciones')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#8cc63f'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
                 <div style="background:#f0f7e6; color:#8cc63f; padding:10px; border-radius:8px; flex-shrink:0;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <!-- vector space: X and Y axes with arrows, and a diagonal vector -->
@@ -1251,7 +1270,7 @@
                 </div>
             </div>
 
-            <div onclick="addWidgetAndClose('widget_simulation.html', 6, 10, 'Laboratorio de Dinámicas')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#8cc63f'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
+            <div class="wcard" data-pkg="WimpTools" data-file="WimpGrid" onclick="addWidgetAndClose('widget_simulation.html', 6, 10, 'Laboratorio de Dinámicas')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#8cc63f'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
                 <div style="background:#f0f7e6; color:#8cc63f; padding:10px; border-radius:8px; flex-shrink:0;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <!-- flask/beaker -->
@@ -1272,7 +1291,7 @@
                 </div>
             </div>
 
-            <div onclick="addWidgetAndClose('widget_adjustment.html', 6, 10, 'Análisis de Bienestar')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#8cc63f'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
+            <div class="wcard" data-pkg="WimpTools" data-file="WimpGrid" onclick="addWidgetAndClose('widget_adjustment.html', 6, 10, 'Análisis de Bienestar')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#8cc63f'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
                 <div style="background:#f0f7e6; color:#8cc63f; padding:10px; border-radius:8px; flex-shrink:0;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <!-- smiley face -->
@@ -1294,6 +1313,91 @@
                     </div>
                 </div>
             </div>
+
+            <div class="wcard" data-pkg="OpenRepGrid" data-file="RepGrid" onclick="addWidgetAndClose('widget_repgrid_biplot.html', 6, 10, 'Biplot RepGrid')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#8cc63f'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
+                <div style="background:#f0f7e6; color:#8cc63f; padding:10px; border-radius:8px; flex-shrink:0;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="4" y1="20" x2="4" y2="4"></line>
+                        <line x1="4" y1="20" x2="20" y2="20"></line>
+                        <line x1="4" y1="20" x2="17" y2="7"></line>
+                        <circle cx="9" cy="11" r="1.5"></circle>
+                        <circle cx="14" cy="16" r="1.5"></circle>
+                    </svg>
+                </div>
+                <div style="flex-grow:1;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <h4 style="margin:0; font-size:15px; color:#333;">Biplot RepGrid</h4>
+                        <span style="background:#ede9fe; color:#7c3aed; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:600; text-transform:uppercase;">OpenRepGrid</span>
+                    </div>
+                    <p style="margin:0 0 8px 0; font-size:13px; color:#666; line-height:1.4;">Biplot de componentes principales de la rejilla de repertorio en 2D y 3D.</p>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <span style="font-size:11px; color:#888; background:#f9f9f9; border:1px solid #eee; padding:2px 6px; border-radius:4px;"><strong style="color:#d9534f; font-weight:600;">Obligatorio:</strong> RepGrid</span>
+                    </div>
+                </div>
+            </div>
+
+<div class="wcard" data-pkg="OpenRepGrid" data-file="RepGrid" onclick="addWidgetAndClose('widget_repgrid_cluster.html', 6, 10, 'Análisis de Cluster')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#8cc63f'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
+                <div style="background:#f0f7e6; color:#8cc63f; padding:10px; border-radius:8px; flex-shrink:0;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 4 12 4 12 12 20 12"></polyline>
+                        <polyline points="20 12 8 12 8 20 20 20"></polyline>
+                        <line x1="4" y1="14" x2="8" y2="14"></line>
+                    </svg>
+                </div>
+                <div style="flex-grow:1;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <h4 style="margin:0; font-size:15px; color:#333;">Análisis de Cluster</h4>
+                        <span style="background:#ede9fe; color:#7c3aed; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:600; text-transform:uppercase;">OpenRepGrid</span>
+                    </div>
+                    <p style="margin:0 0 8px 0; font-size:13px; color:#666; line-height:1.4;">Dendrogramas de agrupación jerárquica de constructos y elementos de la rejilla de repertorio.</p>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <span style="font-size:11px; color:#888; background:#f9f9f9; border:1px solid #eee; padding:2px 6px; border-radius:4px;"><strong style="color:#d9534f; font-weight:600;">Obligatorio:</strong> RepGrid</span>
+                    </div>
+                </div>
+            </div>
+
+<div class="wcard" data-pkg="OpenRepGrid" data-file="RepGrid" onclick="addWidgetAndClose('widget_repgrid_dilemmas.html', 6, 10, 'Dilemas Implicativos')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#8cc63f'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
+                <div style="background:#f0f7e6; color:#8cc63f; padding:10px; border-radius:8px; flex-shrink:0;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="5" cy="6" r="2"></circle>
+                        <circle cx="5" cy="18" r="2"></circle>
+                        <circle cx="19" cy="12" r="2"></circle>
+                        <line x1="7" y1="6" x2="17" y2="12"></line>
+                        <line x1="7" y1="18" x2="17" y2="12"></line>
+                    </svg>
+                </div>
+                <div style="flex-grow:1;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <h4 style="margin:0; font-size:15px; color:#333;">Dilemas Implicativos</h4>
+                        <span style="background:#ede9fe; color:#7c3aed; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:600; text-transform:uppercase;">OpenRepGrid</span>
+                    </div>
+                    <p style="margin:0 0 8px 0; font-size:13px; color:#666; line-height:1.4;">Gráfico y tabla de los dilemas implicativos: constructos congruentes y discrepantes que correlacionan entre sí.</p>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <span style="font-size:11px; color:#888; background:#f9f9f9; border:1px solid #eee; padding:2px 6px; border-radius:4px;"><strong style="color:#d9534f; font-weight:600;">Obligatorio:</strong> RepGrid</span>
+                    </div>
+                </div>
+            </div>
+
+<div class="wcard" data-pkg="OpenRepGrid" data-file="RepGrid" onclick="addWidgetAndClose('widget_repgrid_indices.html', 6, 10, 'Índices Cognitivos')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#8cc63f'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
+                <div style="background:#f0f7e6; color:#8cc63f; padding:10px; border-radius:8px; flex-shrink:0;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                </div>
+                <div style="flex-grow:1;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <h4 style="margin:0; font-size:15px; color:#333;">Índices Cognitivos</h4>
+                        <span style="background:#ede9fe; color:#7c3aed; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:600; text-transform:uppercase;">OpenRepGrid</span>
+                    </div>
+                    <p style="margin:0 0 8px 0; font-size:13px; color:#666; line-height:1.4;">Índices cognitivos de la rejilla: intensidad, PVAFF, conflicto, distancias yo-ideal y valores por constructo y elemento.</p>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <span style="font-size:11px; color:#888; background:#f9f9f9; border:1px solid #eee; padding:2px 6px; border-radius:4px;"><strong style="color:#d9534f; font-weight:600;">Obligatorio:</strong> RepGrid</span>
+                    </div>
+                </div>
+            </div>
+            <div id="wcardEmpty" style="display:none; text-align:center; padding:20px; color:#999; font-size:13px;">No hay widgets que coincidan con la búsqueda</div>
         </div>
     </div>
 
@@ -1385,6 +1489,9 @@
                 </select>
             </div>
         </div>
+
+        <label style="display:block; margin-bottom:6px; font-size:13px; color:#555; font-weight: 500;">Correo electrónico:</label>
+        <input type="email" id="editPatientEmail" placeholder="ejemplo@correo.com" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-bottom:15px; font-family:inherit; font-size: 14px; outline: none; transition: border 0.2s;" onfocus="this.style.borderColor='#8cc63f'" onblur="this.style.borderColor='#ddd'">
 
         <label style="display:block; margin-bottom:6px; font-size:13px; color:#555; font-weight: 500;">Descripción del caso:</label>
         <textarea id="editPatientDesc" placeholder="Breve descripción del motivo de consulta..." style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-bottom:15px; font-family:inherit; font-size: 14px; outline: none; transition: border 0.2s; resize: vertical; min-height: 80px;" onfocus="this.style.borderColor='#8cc63f'" onblur="this.style.borderColor='#ddd'"></textarea>
@@ -1781,6 +1888,22 @@
             });
         }
 
+        function filterWidgetCards() {
+            const norm = t => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            const q = norm(document.getElementById('wcardSearch').value.trim());
+            const src = document.getElementById('wcardSource').value;
+            const typ = document.getElementById('wcardType').value;
+            let visible = 0;
+            document.querySelectorAll('#wcardList .wcard').forEach(c => {
+                const ok = (!q || norm(c.textContent).includes(q)) &&
+                           (!src || c.dataset.file === src) &&
+                           (!typ || c.dataset.pkg === typ);
+                c.style.display = ok ? 'flex' : 'none';
+                if (ok) visible++;
+            });
+            document.getElementById('wcardEmpty').style.display = visible ? 'none' : 'block';
+        }
+
         function addWidgetAndClose(url, w, h, name) {
             addWidget(url, w, h, name);
             document.getElementById('addWidgetModal').style.display = 'none';
@@ -1798,6 +1921,10 @@
             if (title === "Mapa del Yo") desc = "Visualización en forma de red (grafo) de las relaciones e implicaciones lógicas entre los diferentes constructos.";
             else if (title === "Análisis de Centralidad") desc = "Identificación matemática de los constructos más importantes y nucleares dentro del sistema del paciente.";
             else if (title === "Análisis de Implicaciones") desc = "Matriz detallada de la probabilidad de cambio estructural al alterar un constructo específico.";
+            else if (title === "Índices Cognitivos") desc = "Resumen de los índices cognitivos de la rejilla de repertorio (estructura, conflicto y yo-ideal) y su detalle por constructo y por elemento.";
+            else if (title === "Dilemas Implicativos") desc = "Detección de dilemas implicativos: constructos congruentes y discrepantes con el ideal que correlacionan, de modo que cambiar uno implica cambiar el otro.";
+            else if (title === "Análisis de Cluster") desc = "Agrupación jerárquica (dendrograma) de constructos y de elementos para identificar los que se parecen entre sí.";
+            else if (title === "Biplot RepGrid") desc = "Biplot de componentes principales de la rejilla de repertorio, con los elementos como puntos y los constructos como vectores.";
             else if (title === "Laboratorio de Dinámicas") desc = "Simulación interactiva de intervenciones para predecir la resistencia al cambio sistémico.";
             else if (title === "Análisis de Bienestar") {
                 desc = "Monitorización y estructura general (SSI) del self frente a los diferentes escenarios.";
@@ -2047,6 +2174,16 @@
                 </div>
             `;
 
+            if (["Biplot RepGrid", "Análisis de Cluster", "Dilemas Implicativos", "Índices Cognitivos"].includes(title)) {
+                placeholderHTML = placeholderHTML
+                    .replace(/background: #fef3c7; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; color: #d97706; border: 1px solid #fde68a;">WimpGrid/g,
+                             'background: #ede9fe; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; color: #7c3aed; border: 1px solid #ddd6fe;">RepGrid')
+                    .replace(/background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; color: #d97706;">WimpGrid/g,
+                             'background: #ede9fe; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; color: #7c3aed;">RepGrid')
+                    .replace(/No hay registros WimpGrid/g, 'No hay registros RepGrid')
+                    .replace(/#f59e0b/g, '#8b5cf6');
+            }
+
             let widgetHTML = `
                 <div class="grid-stack-item" id="${id}" gs-w="${w}" gs-h="${h}">
                     <div class="grid-stack-item-content">
@@ -2202,6 +2339,16 @@
         }
 
         // Initialize the first default dashboard on load
+        function generateCaseAccess() {
+            const name = document.getElementById('bannerPatientName').innerText;
+            const email = (currentDashboardPatientCard && currentDashboardPatientCard.getAttribute('data-email')) || '';
+            if (!email) {
+                alert('Este caso no tiene un correo electrónico configurado. Añádelo en "Configurar Caso" antes de generar el acceso.');
+                return;
+            }
+            alert('Acceso a la aplicación generado para ' + name + ' y enviado a ' + email + ' (Mock funcional para desarrolladores).');
+        }
+
         window.onload = function() {
             addDashboardTab("Principal");
         };
@@ -2368,6 +2515,7 @@
                 tags.push(metaTags[i].innerText);
             }
             document.getElementById('editPatientTags').value = tags.join(', ');
+            document.getElementById('editPatientEmail').value = card.getAttribute('data-email') || '';
             
             document.getElementById('editPatientModal').style.display = 'block';
         }
@@ -2389,6 +2537,7 @@
             
             currentEditingCard.querySelector('.patient-name').innerText = name;
             currentEditingCard.querySelector('.patient-desc').innerText = desc;
+            currentEditingCard.setAttribute('data-email', document.getElementById('editPatientEmail').value || '');
             
             let statusStyle = "";
             let statusStyleArg1 = "", statusStyleArg2 = "", statusStyleArg3 = "";

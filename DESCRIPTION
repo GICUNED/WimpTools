@@ -29,6 +29,7 @@ Imports:
     igraph (>= 1.4.0),
     jsonlite (>= 1.8.0),
     magrittr (>= 2.0.0),
+    methods,
     plotly (>= 4.10.0),
     readxl (>= 1.4.0),
     stats,
@@ -37,6 +38,7 @@ Imports:
     utils,
     visNetwork (>= 2.1.0)
 Suggests: 
+    OpenRepGrid,
     knitr,
     rmarkdown
 VignetteBuilder: knitr

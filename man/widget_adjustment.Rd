@@ -2,30 +2,30 @@
 % Please edit documentation in R/Widgets.R
 \name{widget_adjustment}
 \alias{widget_adjustment}
-\title{Generate Tabbed HTML Widget for Wellness Analysis (Análisis de Bienestar)}
+\title{Generate Tabbed HTML Widget for Wellness Analysis (Análisis de Bienestar) / Adjustment}
 \usage{
 widget_adjustment(x, y = NULL, lang = "en", ...)
 }
 \arguments{
-\item{x}{First Subject's WimpGrid (e.g., pre-intervention). It must be a "wimp" S3 object.}
+\item{x}{A `wimp` object representing the baseline evaluation.}
 
-\item{y}{Optional. Second Subject's WimpGrid (e.g., post-intervention). If provided, comparative monitoring plots are generated.}
+\item{y}{An optional `wimp` object representing the post evaluation.}
 
 \item{lang}{Language parameter ("en" or "es").}
 
 \item{...}{Additional arguments passed to the underlying plot functions.}
 }
 \value{
-A `browsable` HTML object containing the tabbed interface.
+An object of class `htmltools::browsable`.
 }
 \description{
-Creates a standalone HTML widget containing a two-tab interface for analyzing psychological wellness.
-It can accept one or two wimp objects. If one is provided, it renders self_plot and ssi_heatmap.
-If two are provided, it renders monitoring_self and monitoring_ssi.
+Creates a standalone HTML widget containing a two-tab interface for analyzing wellness.
+If one WimpGrid is provided, it shows the Self analysis and SSI structure.
+If two WimpGrids are provided, it shows the Self monitoring and SSI monitoring.
 }
 \examples{
 \dontrun{
 widget_adjustment(example_wimp)
-widget_adjustment(example_wimp, example_wimp)
+widget_adjustment(example_wimp, example_wimp_post)
 }
 }

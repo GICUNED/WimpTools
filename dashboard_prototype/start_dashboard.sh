@@ -11,6 +11,10 @@ save_html(widget_implications(su_wimp, lang='es'), 'widget_implications.html')
 save_html(widget_simulation(su_wimp, lang='es'), 'widget_simulation.html')
 save_html(widget_adjustment(example_wimp, lang='es'), 'widget_adjustment_single.html')
 save_html(widget_adjustment(example_wimp, example_wimp_post, lang='es'), 'widget_adjustment_compare.html')
+save_html(widget_repgrid_biplot(OpenRepGrid::feixas2004, lang='es'), 'widget_repgrid_biplot.html')
+save_html(widget_repgrid_cluster(OpenRepGrid::feixas2004, lang='es'), 'widget_repgrid_cluster.html')
+save_html(widget_repgrid_dilemmas(OpenRepGrid::feixas2004, lang='es'), 'widget_repgrid_dilemmas.html')
+save_html(widget_repgrid_indices(OpenRepGrid::feixas2004, lang='es'), 'widget_repgrid_indices.html')
 "
 
 if [ $? -eq 0 ]; then

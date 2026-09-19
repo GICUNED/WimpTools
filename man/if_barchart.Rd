@@ -4,7 +4,7 @@
 \alias{if_barchart}
 \title{Impact and Feedback Bar Chart - if_barchart()}
 \usage{
-if_barchart(wimp, show = "all", ...)
+if_barchart(wimp, show = "all", lang = "en", ...)
 }
 \arguments{
 \item{wimp}{Subject's WimpGrid. It must be a "wimp" S3 object

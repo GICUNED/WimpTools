@@ -4,7 +4,7 @@
 \alias{hypo_plot}
 \title{Hypothetical Scenarios Plot  -- hypo_plot()}
 \usage{
-hypo_plot(wimp, text_size = 1, show_labels = TRUE, ...)
+hypo_plot(wimp, text_size = 1, show_labels = TRUE, lang = "en", ...)
 }
 \arguments{
 \item{wimp}{Subject's WimpGrid. It must be a "wimp" S3 object

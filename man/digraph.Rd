@@ -24,6 +24,7 @@ digraph(
   sim_data = NULL,
   export_name = NULL,
   lang = "en",
+  is_ideal = FALSE,
   ...
 )
 }

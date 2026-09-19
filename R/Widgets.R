@@ -1156,3 +1156,466 @@ widget_adjustment <- function(x, y = NULL, lang = "en", ...) {
   
   return(htmltools::browsable(ui))
 }
+
+# widget_repgrid_biplot -------------------------------------------------------
+
+#' RepGrid Biplot Widget for Psychlab
+#'
+#' @description Creates a two-tab HTML widget: Tab 1 shows the 2D biplot of a
+#'   repertory grid, Tab 2 shows the 3D biplot.
+#'
+#' @param x An \code{OpenRepGrid} \code{repgrid} object or a numeric ratings
+#'   matrix (see \code{\link{repgrid_biplot}}).
+#' @param lang Language for the UI. \code{"en"} (default) or \code{"es"}.
+#' @param ... Additional arguments passed to \code{repgrid_biplot}.
+#'
+#' @return A \code{browsable} HTML object with a two-tab interface.
+#' @export
+#'
+#' @importFrom htmltools tagList tags browsable HTML
+widget_repgrid_biplot <- function(x, lang = "en", ...) {
+  if (!lang %in% c("en", "es")) lang <- "en"
+  t <- wt_i18n(lang)
+  plots <- list(
+    repgrid_biplot(x, dim = 2, ...) %>% plotly::config(displayModeBar = FALSE),
+    repgrid_biplot(x, dim = 3, ...) %>% plotly::config(displayModeBar = FALSE)
+  )
+  .rg_tabbed_widget(plots, c(t$biplot_2d_tab, t$biplot_3d_tab),
+                    c("RepGrid_Biplot_2D", "RepGrid_Biplot_3D"),
+                    t$info_text_biplot, t)
+}
+
+# Internal: tabbed plotly widget shared by the RepGrid widgets ----------------
+.rg_tabbed_widget <- function(plots, labels, fnames, info, t, settings = NULL,
+                              export_js = NULL, extra_js = NULL) {
+  css <- "
+    body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
+    * { box-sizing: border-box; }
+    .wrg-container { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column;
+      font-family: 'Inter', 'Roboto', 'Segoe UI', sans-serif; }
+    .wrg-tab-header { overflow: hidden; border: 1px solid #eaeaea; background-color: #ffffff;
+      display: flex; border-radius: 4px 4px 0 0; }
+    .wrg-tab-header button { background-color: inherit; border: none; outline: none; cursor: pointer;
+      padding: 12px 24px; transition: 0.3s; font-size: 14px; font-weight: 600; color: #666666; flex-grow: 1; }
+    .wrg-tab-header button:hover { background-color: #f9f9f9; }
+    .wrg-tab-header button.wrg-active { background-color: #ffffff; color: #8cc63f; border-bottom: 2px solid #8cc63f; }
+    .wrg-tab-content { position: relative; display: none; padding: 0; border: 1px solid #ccc;
+      border-top: none; flex-grow: 1; height: 0; background-color: #ffffff; border-radius: 0 0 4px 4px; }
+    .wrg-tab-content > .html-widget { width: 100% !important; height: 100% !important; flex-grow: 1; }
+  "
+
+  js <- "
+    function openWrgTab(evt, tabName) {
+      var i, c = document.getElementsByClassName('wrg-tab-content'), b = document.getElementsByClassName('wrg-tab-btn');
+      for (i = 0; i < c.length; i++) { c[i].style.display = 'none'; }
+      for (i = 0; i < b.length; i++) { b[i].className = b[i].className.replace(' wrg-active', ''); }
+      document.getElementById(tabName).style.display = 'flex';
+      document.getElementById(tabName).style.flexDirection = 'column';
+      evt.currentTarget.className += ' wrg-active';
+      window.dispatchEvent(new Event('resize'));
+    }
+    function downloadWrgPlot(tabId, name) {
+      var el = document.querySelector('#' + tabId + ' .js-plotly-plot');
+      if (el && window.Plotly) {
+        Plotly.downloadImage(el, {format: 'png', width: el.clientWidth, height: el.clientHeight, filename: name});
+      }
+    }
+  "
+
+  svg_dl <- "<path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'></path><polyline points='7 10 12 15 17 10'></polyline><line x1='12' y1='15' x2='12' y2='3'></line>"
+  svg_i  <- "<circle cx='12' cy='12' r='10'></circle><line x1='12' y1='16' x2='12' y2='12'></line><line x1='12' y1='8' x2='12.01' y2='8'></line>"
+  svg_fs <- "<path d='M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3'></path>"
+
+  svg_set <- "<circle cx='12' cy='12' r='3'></circle><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z'></path>"
+
+  .btn <- function(title_txt, onclick_fn, svg_body) {
+    htmltools::HTML(paste0(
+      "<div style='background-color:rgba(255,255,255,0.95);width:clamp(26px, 4vmin, 34px);height:clamp(26px, 4vmin, 34px);border-radius:6px;",
+      "box-shadow:0 2px 10px rgba(0,0,0,0.1);border:1px solid #ddd;display:flex;",
+      "align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;'",
+      " title='", title_txt, "'",
+      " onmouseover=\"this.style.backgroundColor='#f5f5f5'\"",
+      " onmouseout=\"this.style.backgroundColor='rgba(255,255,255,0.95)'\"",
+      " onclick=\"", onclick_fn, "\">",
+      "<svg width='60%' height='60%' viewBox='0 0 24 24' fill='none' stroke='#333'",
+      " stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'>",
+      svg_body, "</svg></div>"))
+  }
+
+  .modal <- function(id, title_txt, body_txt) {
+    htmltools::HTML(paste0(
+      "<div id='", id, "' style='position:absolute;top:50%;left:50%;",
+      "transform:translate(-50%,-50%);width:90%;max-width:450px;max-height:80vh;overflow-y:auto;box-sizing:border-box;background:#fff;",
+      "z-index:2000;padding:20px;border-radius:8px;",
+      "box-shadow:0 4px 20px rgba(0,0,0,0.2);border:1px solid #eaeaea;display:none;",
+      "font-family:Inter,Roboto,sans-serif;'>",
+      "<div style='display:flex;justify-content:space-between;align-items:center;",
+      "border-bottom:1px solid #eaeaea;padding-bottom:10px;margin-bottom:15px;'>",
+      "<h3 style='margin:0;color:#444;font-size:16px;'>", title_txt, "</h3>",
+      "<span style='cursor:pointer;font-size:20px;font-weight:bold;color:#888;line-height:1;'",
+      " onclick=\"document.getElementById('", id, "').style.display='none';\">&times;</span>",
+      "</div>",
+      "<p style='margin:0;color:#666;font-size:13px;line-height:1.6;'>", body_txt, "</p>",
+      "</div>"))
+  }
+
+  fs_onclick <- "var el=this.closest('.wrg-container'); if(!document.fullscreenElement){el.requestFullscreen().catch(e=>console.log(e))}else{document.exitFullscreen()}"
+
+  .tab <- function(id, plot, modal_id, tab_title, fname, display, i) {
+    htmltools::tags$div(id = id, class = "wrg-tab-content",
+      style = if (display) "display:flex; flex-direction:column;" else NULL,
+      plot,
+      .modal(modal_id, tab_title, info),
+      htmltools::HTML("<div style='position:absolute;bottom:15px;right:15px;z-index:1000;display:flex;flex-direction:column;gap:8px;align-items:center;'>"),
+      .btn(t$info, sprintf("var m=document.getElementById('%s'); m.style.display=(m.style.display==='block'?'none':'block');", modal_id), svg_i),
+      if (!is.null(settings)) .btn(t$hm_settings, "var m=document.getElementById('wrg_settings_modal'); m.style.display=(m.style.display==='block'?'none':'block');", svg_set),
+      .btn(if (is.null(export_js) || is.na(export_js[i])) t$export_png else t$export_csv,
+           if (is.null(export_js) || is.na(export_js[i])) sprintf("downloadWrgPlot('%s','%s')", id, fname) else export_js[i],
+           svg_dl),
+      .btn(t$fullscreen, fs_onclick, svg_fs),
+      htmltools::HTML("</div>"))
+  }
+
+  n <- length(plots)
+  ids <- paste0("wrg_tab_", seq_len(n))
+  ui <- htmltools::tagList(
+    htmltools::tags$style(htmltools::HTML(css)),
+    htmltools::tags$script(htmltools::HTML(js)),
+    if (!is.null(settings)) htmltools::tags$script(htmltools::HTML(settings$js)),
+    if (!is.null(extra_js)) htmltools::tags$script(htmltools::HTML(extra_js)),
+    htmltools::tags$div(class = "wrg-container",
+      htmltools::tags$div(class = "wrg-tab-header",
+        lapply(seq_len(n), function(i) {
+          htmltools::tags$button(
+            class = if (i == 1) "wrg-tab-btn wrg-active" else "wrg-tab-btn",
+            onclick = sprintf("openWrgTab(event, '%s')", ids[i]), labels[i])
+        })),
+      lapply(seq_len(n), function(i) {
+        .tab(ids[i], plots[[i]], paste0("wrg_info_", i), labels[i], fnames[i], i == 1, i)
+      }),
+      if (!is.null(settings)) htmltools::HTML(paste0(
+        "<div id='wrg_settings_modal' style='position:absolute;",
+        "top:55px;right:10px;left:auto;transform:none;width:90%;max-width:300px;max-height:80vh;overflow-y:auto;box-sizing:border-box;background:#fff;",
+        "z-index:2000;padding:20px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.2);border:1px solid #eaeaea;display:none;",
+        "font-family:Inter,Roboto,sans-serif;'>",
+        "<div style='display:flex;justify-content:space-between;align-items:center;",
+        "border-bottom:1px solid #eaeaea;padding-bottom:10px;margin-bottom:15px;'>",
+        "<h3 style='margin:0;color:#444;font-size:16px;'>", t$hm_settings, "</h3>",
+        "<span style='cursor:pointer;font-size:20px;font-weight:bold;color:#888;line-height:1;'",
+        " onclick=\"document.getElementById('wrg_settings_modal').style.display='none';\">&times;</span>",
+        "</div>", settings$html, "</div>"))
+    )
+  )
+
+  htmltools::browsable(ui)
+}
+
+# widget_repgrid_cluster ------------------------------------------------------
+
+#' RepGrid Cluster Widget for Psychlab
+#'
+#' @description Creates a two-tab HTML widget: Tab 1 shows the dendrogram of
+#'   the constructs, Tab 2 the dendrogram of the elements
+#'   (see \code{\link{repgrid_cluster}}).
+#'
+#' @param x An \code{OpenRepGrid} \code{repgrid} object or a numeric ratings
+#'   matrix.
+#' @param lang Language for the UI. \code{"en"} (default) or \code{"es"}.
+#' @param ... Additional arguments passed to \code{repgrid_cluster}.
+#'
+#' @return A \code{browsable} HTML object with a two-tab interface.
+#' @export
+widget_repgrid_cluster <- function(x, lang = "en", ...) {
+  if (!lang %in% c("en", "es")) lang <- "en"
+  t <- wt_i18n(lang)
+  args <- list(...)
+  dist0   <- if (is.null(args$dist)) "euclidean" else args$dist
+  method0 <- if (is.null(args$method)) "ward.D" else args$method
+  dists   <- unique(c(.rg_cluster_dists, dist0))
+  methods <- unique(c(.rg_cluster_methods, method0))
+
+  plots <- list(
+    repgrid_cluster(x, along = "constructs", ...) %>% plotly::config(displayModeBar = FALSE),
+    repgrid_cluster(x, along = "elements", ...) %>% plotly::config(displayModeBar = FALSE)
+  )
+
+  # Precomputed layouts for every dist x method, swapped in by the menu
+  data <- list(
+    wrg_tab_1 = .rg_cluster_options(x, "constructs", dists, methods),
+    wrg_tab_2 = .rg_cluster_options(x, "elements",   dists, methods)
+  )
+  data_json <- jsonlite::toJSON(data, auto_unbox = FALSE, na = "null", digits = NA)
+
+  opts <- function(v, sel) paste0(sprintf("<option value='%s'%s>%s</option>", v,
+                                  ifelse(v == sel, " selected", ""), v), collapse = "")
+  sel_style <- "width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:inherit;outline:none;background:#fff;"
+  lbl_style <- "display:block;margin:0 0 6px 0;font-size:12px;font-weight:600;color:#555;"
+  html <- paste0(
+    "<label style='", lbl_style, "'>", t$cluster_dist, "</label>",
+    "<select id='wrg_dist' style='", sel_style, "margin-bottom:14px;' onchange='wrgUpdateCluster()'>",
+    opts(dists, dist0), "</select>",
+    "<label style='", lbl_style, "'>", t$cluster_method, "</label>",
+    "<select id='wrg_method' style='", sel_style, "' onchange='wrgUpdateCluster()'>",
+    opts(methods, method0), "</select>")
+
+  js <- paste0("
+    var WRG_DATA = ", data_json, ";
+    function wrgUpdateCluster() {
+      var key = document.getElementById('wrg_dist').value + '|' + document.getElementById('wrg_method').value;
+      Object.keys(WRG_DATA).forEach(function(tab) {
+        var d = WRG_DATA[tab][key], el = document.querySelector('#' + tab + ' .js-plotly-plot');
+        if (!d || !el || !window.Plotly) return;
+        Plotly.restyle(el, {x: [d.sx], y: [d.sy]}, [0]);
+        Plotly.restyle(el, {y: [d.pos]}, [1]);
+        Plotly.restyle(el, {x: [d.hx], y: [d.hy], text: [d.hx.map(function(h){ return 'd = ' + h.toFixed(2); })]}, [2]);
+        Plotly.relayout(el, {'xaxis.range': [d.hmax * 1.05, -d.hmax * 0.02], 'yaxis.ticktext': d.ticktext});
+      });
+    }
+  ")
+
+  .rg_tabbed_widget(plots, c(t$cluster_constructs_tab, t$cluster_elements_tab),
+                    c("RepGrid_Cluster_Constructs", "RepGrid_Cluster_Elements"),
+                    t$info_text_cluster, t,
+                    settings = list(html = html, js = js))
+}
+
+
+# widget_repgrid_dilemmas -----------------------------------------------------
+
+#' RepGrid Implicative Dilemmas Widget for Psychlab
+#'
+#' @description Creates a two-tab HTML widget: Tab 1 shows the diagram of the
+#'   implicative dilemmas, Tab 2 a table with each dilemma and the summary
+#'   indices (see \code{\link{repgrid_dilemmas}}).
+#'
+#' @param x An \code{OpenRepGrid} \code{repgrid} object. The self is assumed
+#'   in the first column and the ideal in the last one.
+#' @param lang Language for the UI. \code{"en"} (default) or \code{"es"}.
+#' @param ... Additional arguments passed to \code{OpenRepGrid::indexDilemma}.
+#'
+#' @return A \code{browsable} HTML object with a two-tab interface.
+#' @export
+widget_repgrid_dilemmas <- function(x, lang = "en", ...) {
+  if (!lang %in% c("en", "es")) lang <- "en"
+  t <- wt_i18n(lang)
+  args <- list(...)
+  mode0 <- if (is.null(args$diff.mode)) 1 else args$diff.mode
+  rmin0 <- if (is.null(args$r.min)) 0.35 else args$r.min
+  base  <- args[!names(args) %in% c("diff.mode", "r.min")]
+  modes <- unique(c(1, 0, mode0))
+  rmins <- sort(unique(c(round(seq(0.2, 0.7, by = 0.05), 2), rmin0)))
+
+  esc <- function(v) htmltools::htmlEscape(v)
+  rows_html <- function(dl) {
+    if (nrow(dl) == 0) {
+      paste0("<tr><td colspan='3' style='text-align:center;padding:20px;color:#999;'>", t$no_dilemmas, "</td></tr>")
+    } else {
+      paste0(sprintf("<tr><td>%s</td><td>%s</td><td style='text-align:right;'>%.3f</td></tr>",
+                     esc(dl$congruent), esc(dl$discrepant), dl$r), collapse = "\n")
+    }
+  }
+  view <- function(mode, rmin, inv = FALSE) {
+    a <- c(base, list(diff.mode = mode, r.min = rmin))
+    dd <- do.call(.rg_dilemma_data, c(list(x), a))
+    p  <- do.call(repgrid_dilemmas, c(list(x), a, list(only_involved = inv)))
+    b  <- plotly::plotly_build(p)$x
+    list(dd = dd, plot = p,
+         json = list(data = b$data, layout = b$layout),
+         rows = rows_html(dd$dilemmas),
+         kpi = c(n = as.character(dd$n_ids), pid = sprintf("%.1f%%", 100 * dd$pid),
+                 iid = sprintf("%.1f", dd$iid), picid = sprintf("%.2f", dd$picid)))
+  }
+
+  # Precompute every diff.mode x r.min view; the menu swaps them in
+  views <- list()
+  for (m in modes) for (r in rmins) {
+    views[[paste(m, r, "all", sep = "|")]] <- view(m, r, FALSE)
+    views[[paste(m, r, "inv", sep = "|")]] <- view(m, r, TRUE)
+  }
+  cur <- views[[paste(mode0, rmin0, "all", sep = "|")]]
+
+  plot <- cur$plot %>% plotly::config(displayModeBar = FALSE)
+  payload <- lapply(views, function(v) list(fig = v$json, rows = v$rows, kpi = as.list(v$kpi)))
+  payload_json <- jsonlite::toJSON(payload, auto_unbox = TRUE, null = "null", na = "null", digits = NA)
+
+  kpi <- function(label, id, value) paste0(
+    "<div style='flex:1;min-width:110px;border:1px solid #eaeaea;border-radius:8px;padding:10px 14px;background:#fbfdf9;'>",
+    "<div style='font-size:11px;color:#888;font-weight:600;'>", label, "</div>",
+    "<div id='", id, "' style='font-size:20px;color:#333;font-weight:700;'>", value, "</div></div>")
+  table_html <- paste0(
+    "<div style='width:100%;height:100%;display:flex;flex-direction:column;font-family:Inter,Roboto,sans-serif;'>",
+    "<div style='display:flex;gap:12px;flex-wrap:wrap;padding:16px 20px 8px 20px;flex-shrink:0;'>",
+    kpi(t$n_dilemmas, "wrg_kpi_n", cur$kpi[["n"]]), kpi("PID", "wrg_kpi_pid", cur$kpi[["pid"]]),
+    kpi("IID", "wrg_kpi_iid", cur$kpi[["iid"]]), kpi("PICID", "wrg_kpi_picid", cur$kpi[["picid"]]),
+    "</div>",
+    "<div style='flex:1;overflow:auto;padding:8px 70px 60px 20px;'>",
+    "<table id='wrg_dil_table' style='width:100%;border-collapse:collapse;font-size:13px;'>",
+    "<thead><tr style='background:#f8f9fa;border-bottom:2px solid #8cc63f;'>",
+    "<th>", t$congruent, "</th><th>", t$discrepant, "</th><th style='text-align:right;'>", t$correlation, "</th>",
+    "</tr></thead><tbody id='wrg_dil_tbody'>", cur$rows, "</tbody></table></div></div>",
+    "<style>#wrg_dil_table thead th{padding:10px 14px;text-align:left;font-weight:600;color:#555;font-size:12px;}",
+    "#wrg_dil_table tbody tr{border-bottom:1px solid #f0f0f0;}#wrg_dil_table tbody tr:hover{background:#f4f9ef;}",
+    "#wrg_dil_table tbody td{padding:9px 14px;color:#333;}</style>")
+
+  sel_style <- "width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:inherit;outline:none;background:#fff;"
+  lbl_style <- "display:block;margin:0 0 6px 0;font-size:12px;font-weight:600;color:#555;"
+  mode_lab <- c(`1` = t$dil_mode_diff, `0` = t$dil_mode_mid)
+  html <- paste0(
+    "<label style='", lbl_style, "'>", t$dil_mode, "</label>",
+    "<select id='wrg_dil_mode' style='", sel_style, "margin-bottom:14px;' onchange='wrgUpdateDilemmas()'>",
+    paste0(sprintf("<option value='%s'%s>%s</option>", modes, ifelse(modes == mode0, " selected", ""),
+                   mode_lab[as.character(modes)]), collapse = ""), "</select>",
+    "<label style='", lbl_style, "display:flex;justify-content:space-between;'><span>", t$dil_rmin,
+    "</span><span id='wrg_dil_rmin_val' style='color:#8cc63f;'>", sprintf("%.2f", rmin0), "</span></label>",
+    "<input id='wrg_dil_rmin' type='range' min='0' max='", length(rmins) - 1, "' step='1' value='",
+    which(rmins == rmin0) - 1, "' style='width:100%;accent-color:#8cc63f;' oninput='wrgUpdateDilemmas()'>",
+    "<div style='display:flex;justify-content:space-between;font-size:11px;color:#999;'><span>",
+    sprintf("%.2f", min(rmins)), "</span><span>", sprintf("%.2f", max(rmins)), "</span></div>",
+    "<label style='display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13px;color:#555;cursor:pointer;'>",
+    "<input id='wrg_dil_only' type='checkbox' style='accent-color:#8cc63f;' onchange='wrgUpdateDilemmas()'>",
+    t$dil_toggle, "</label>")
+
+  js <- paste0("
+    var WRG_DIL = ", payload_json, ";
+    var WRG_RMINS = ", jsonlite::toJSON(rmins), ";
+    function wrgUpdateDilemmas() {
+      var r = WRG_RMINS[parseInt(document.getElementById('wrg_dil_rmin').value, 10)];
+      document.getElementById('wrg_dil_rmin_val').innerText = r.toFixed(2);
+      var key = document.getElementById('wrg_dil_mode').value + '|' + r + '|' + (document.getElementById('wrg_dil_only').checked ? 'inv' : 'all');
+      var v = WRG_DIL[key]; if (!v) return;
+      var el = document.querySelector('#wrg_tab_1 .js-plotly-plot');
+      if (el && window.Plotly) Plotly.react(el, v.fig.data, v.fig.layout, {displayModeBar: false, responsive: true});
+      document.getElementById('wrg_dil_tbody').innerHTML = v.rows;
+      ['n', 'pid', 'iid', 'picid'].forEach(function(k) { document.getElementById('wrg_kpi_' + k).innerText = v.kpi[k]; });
+    }
+  ")
+
+  csv_js <- sprintf("
+    function downloadDilemmasCSV() {
+      var rows = [['%s','%s','%s']];
+      document.querySelectorAll('#wrg_dil_table tbody tr').forEach(function(r) {
+        if (r.cells.length === 3) rows.push(Array.from(r.cells).map(function(c){ return '\"' + c.innerText.trim().replace(/\"/g, '\"\"') + '\"'; }));
+      });
+      var a = document.createElement('a');
+      a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(rows.map(function(r){ return r.join(','); }).join('\\n'));
+      a.download = 'RepGrid_Implicative_Dilemmas.csv';
+      a.click();
+    }", t$congruent, t$discrepant, t$correlation)
+
+  .rg_tabbed_widget(list(plot, htmltools::HTML(table_html)),
+                    c(t$dilemma_graph_tab, t$dilemma_table_tab),
+                    c("RepGrid_Dilemmas", "RepGrid_Dilemmas_Table"),
+                    t$info_text_dilemma, t,
+                    settings = list(html = html, js = js),
+                    export_js = c(NA, "downloadDilemmasCSV()"),
+                    extra_js = csv_js)
+}
+
+
+# widget_repgrid_indices ------------------------------------------------------
+
+#' RepGrid Cognitive Indices Widget for Psychlab
+#'
+#' @description Creates a three-tab HTML widget: Tab 1 lists the global
+#'   cognitive indices of the grid with a short description, Tab 2 and Tab 3
+#'   give intensity, polarization and conflict for each construct and each
+#'   element (see \code{\link{repgrid_indices}}).
+#'
+#' @param x An \code{OpenRepGrid} \code{repgrid} object. The self is assumed
+#'   in the first column and the ideal in the last one.
+#' @param lang Language for the UI. \code{"en"} (default) or \code{"es"}.
+#'
+#' @return A \code{browsable} HTML object with a three-tab interface.
+#' @export
+widget_repgrid_indices <- function(x, lang = "en") {
+  if (!lang %in% c("en", "es")) lang <- "en"
+  t <- wt_i18n(lang)
+  ix <- repgrid_indices(x)
+  esc <- function(v) htmltools::htmlEscape(v)
+  fmt <- function(v, unit = "") {
+    unit <- rep_len(unit, length(v))
+    out <- ifelse(unit == "%", sprintf("%.2f%%", v), sprintf("%.2f", v))
+    ifelse(is.na(v) | is.nan(v), "\u2014", out)
+  }
+
+  th <- function(label, tbl, i, right = FALSE) sprintf(
+    "<th onclick=\"wrgSortTable('%s', %d)\" style='cursor:pointer;user-select:none;%s'>%s <span style='font-size:13px;color:#aaa;'>&#8597;</span></th>",
+    tbl, i, if (right) "text-align:right;" else "", label)
+  shell <- function(inner) paste0(
+    "<div style='width:100%;height:100%;overflow:auto;padding:16px 70px 60px 20px;box-sizing:border-box;font-family:Inter,Roboto,sans-serif;'>",
+    inner, "</div>")
+
+  # Tab 1: global indices, grouped
+  g <- ix$global
+  rows <- character(0)
+  for (grp in unique(g$group)) {
+    rows <- c(rows, sprintf("<tr class='wrg-grp'><td colspan='3'>%s</td></tr>", esc(t[[paste0("idx_g_", grp)]])))
+    sub <- g[g$group == grp, ]
+    rows <- c(rows, sprintf(
+      "<tr><td style='font-weight:600;white-space:nowrap;'>%s</td><td style='text-align:right;font-weight:700;color:#333;'>%s</td><td style='color:#777;'>%s</td></tr>",
+      esc(unlist(t[paste0("idx_n_", sub$key)])), fmt(sub$value, sub$unit), esc(unlist(t[paste0("idx_d_", sub$key)]))))
+  }
+  tab1 <- shell(paste0(
+    "<table id='wrg_idx_global' class='wrg-idx'><thead><tr><th>", t$idx_index,
+    "</th><th style='text-align:right;'>", t$idx_value, "</th><th>", t$idx_desc, "</th></tr></thead><tbody>",
+    paste(rows, collapse = "\n"), "</tbody></table>"))
+
+  # Tabs 2 and 3: per construct / per element, sortable
+  per_table <- function(df, id, first_label, first_col) {
+    body <- paste0(sprintf(
+      "<tr><td>%s</td><td style='text-align:right;'>%s</td><td style='text-align:right;'>%s</td><td style='text-align:right;'>%s</td></tr>",
+      esc(df[[first_col]]), fmt(df$intensity), fmt(df$polarization, "%"), fmt(df$conflict, "%")), collapse = "\n")
+    shell(paste0(
+      "<table id='", id, "' class='wrg-idx'><thead><tr>", th(first_label, id, 0),
+      th(t$idx_intensity, id, 1, TRUE), th(t$idx_polarization, id, 2, TRUE), th(t$idx_conflict, id, 3, TRUE),
+      "</tr></thead><tbody>", body, "</tbody></table>"))
+  }
+  tab2 <- per_table(ix$constructs, "wrg_idx_constructs", t$idx_construct, "construct")
+  tab3 <- per_table(ix$elements, "wrg_idx_elements", t$idx_element, "element")
+
+  css <- "<style>
+    .wrg-idx{width:100%;border-collapse:collapse;font-size:13px;}
+    .wrg-idx thead th{padding:10px 14px;text-align:left;font-weight:600;color:#555;font-size:12px;background:#f8f9fa;border-bottom:2px solid #8cc63f;white-space:nowrap;}
+    .wrg-idx thead th:hover{background:#eef7e0;}
+    .wrg-idx tbody tr{border-bottom:1px solid #f0f0f0;}
+    .wrg-idx tbody tr:hover{background:#f4f9ef;}
+    .wrg-idx tbody td{padding:9px 14px;color:#333;}
+    .wrg-idx tr.wrg-grp td{background:#fbfdf9;color:#8cc63f;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.4px;padding:12px 14px 6px;border-bottom:1px solid #e3efd0;}
+  </style>"
+
+  js <- "
+    var _wrgDir = {};
+    function wrgSortTable(id, col) {
+      var tb = document.querySelector('#' + id + ' tbody');
+      var rows = Array.from(tb.querySelectorAll('tr'));
+      var k = id + col; _wrgDir[k] = !_wrgDir[k]; var asc = _wrgDir[k];
+      rows.sort(function(a, b) {
+        var va = a.cells[col].innerText.trim(), vb = b.cells[col].innerText.trim();
+        var na = parseFloat(va), nb = parseFloat(vb);
+        if (!isNaN(na) && !isNaN(nb)) return asc ? na - nb : nb - na;
+        return asc ? va.localeCompare(vb) : vb.localeCompare(va);
+      });
+      rows.forEach(function(r) { tb.appendChild(r); });
+    }
+    function downloadIndicesCSV(id, name) {
+      var rows = [];
+      document.querySelectorAll('#' + id + ' tr').forEach(function(r) {
+        if (r.style.display === 'none') return;
+        rows.push(Array.from(r.cells).map(function(c) { return '\"' + c.innerText.replace(/[\\u2195\\u2191\\u2193]/g, '').trim().replace(/\"/g, '\"\"') + '\"'; }).join(','));
+      });
+      var a = document.createElement('a');
+      a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(rows.join('\\n'));
+      a.download = name + '.csv';
+      a.click();
+    }"
+
+  .rg_tabbed_widget(
+    list(htmltools::HTML(paste0(css, tab1)), htmltools::HTML(tab2), htmltools::HTML(tab3)),
+    c(t$idx_tab_global, t$idx_tab_constructs, t$idx_tab_elements),
+    c("RepGrid_Indices", "RepGrid_Indices_Constructs", "RepGrid_Indices_Elements"),
+    t$info_text_indices, t,
+    export_js = c("downloadIndicesCSV('wrg_idx_global', 'RepGrid_Indices')",
+                  "downloadIndicesCSV('wrg_idx_constructs', 'RepGrid_Indices_Constructs')",
+                  "downloadIndicesCSV('wrg_idx_elements', 'RepGrid_Indices_Elements')"),
+    extra_js = js)
+}
