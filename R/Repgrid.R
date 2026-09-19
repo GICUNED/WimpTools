@@ -603,3 +603,109 @@ repgrid_indices <- function(x) {
     stringsAsFactors = FALSE)
   list(global = global, constructs = constructs, elements = elements)
 }
+
+# importrepgrid_json ----------------------------------------------------------------
+
+#' Import a Repertory Grid from JSON -- importrepgrid_json()
+#'
+#' @description Reads a repertory grid (RepGrid) stored in the JSON format
+#'   used by the PsychLab web application and returns an
+#'   \code{OpenRepGrid} \code{repgrid} object, ready to be used with
+#'   \code{\link{repgrid_biplot}}, \code{\link{repgrid_cluster}},
+#'   \code{\link{repgrid_dilemmas}}, \code{\link{repgrid_indices}} and the
+#'   \code{widget_repgrid_*} functions.
+#'
+#' @param x A path to a \code{.json} file, a JSON string, or a list already
+#'   parsed with \code{jsonlite::fromJSON(simplifyVector = FALSE)}.
+#'
+#' @details The record must have \code{type = "repgrid"} (when present) and a
+#'   \code{data} object with \code{scaleMin}, \code{scaleMax},
+#'   \code{elements} (names) and \code{constructs}, each one with
+#'   \code{left}, \code{right} and \code{ratings} (one value per element,
+#'   \code{null} for a missing rating). By convention of the package the self
+#'   is the first element and the ideal self the last one.
+#'
+#'   The rest of the record (\code{id}, \code{title}, \code{status},
+#'   \code{patientId}, \code{patientName}, \code{notes}, \code{params},
+#'   \code{createdAt}, \code{updatedAt}) is kept in the \code{meta} slot of the
+#'   returned object, e.g. \code{x@meta$title}.
+#'
+#' @return An \code{OpenRepGrid} \code{repgrid} object.
+#' @author Alejandro Sanfeliciano
+#' @export
+#' @examples
+#' json <- '{"type": "repgrid", "title": "Demo", "data": {
+#'   "scaleMin": 1, "scaleMax": 5,
+#'   "elements": ["Self", "Mother", "Ideal"],
+#'   "constructs": [
+#'     {"left": "calm", "right": "anxious", "ratings": [2, 4, 1]},
+#'     {"left": "open", "right": "closed", "ratings": [3, 5, 2]},
+#'     {"left": "active", "right": "passive", "ratings": [1, 2, 1]}]}}'
+#' rg <- importrepgrid_json(json)
+#' rg@meta$title
+importrepgrid_json <- function(x) {
+  if (!requireNamespace("OpenRepGrid", quietly = TRUE)) {
+    stop("Package 'OpenRepGrid' is required to import a RepGrid.")
+  }
+  rec <- if (is.list(x)) {
+    x
+  } else if (is.character(x) && length(x) == 1) {
+    tryCatch(jsonlite::fromJSON(x, simplifyVector = FALSE),
+             error = function(e) stop("`x` is not a valid JSON file or string: ",
+                                      conditionMessage(e), call. = FALSE))
+  } else {
+    stop("`x` must be a path, a JSON string or a parsed list.")
+  }
+
+  type <- rec$type
+  if (!is.null(type) && !identical(tolower(type), "repgrid")) {
+    stop("The record has type '", type, "', not 'repgrid'.",
+         if (identical(tolower(type), "wimpgrid")) " Use importwimp() for WimpGrids." else "",
+         call. = FALSE)
+  }
+  d <- rec$data
+  if (is.null(d)) stop("The record has no `data` field.", call. = FALSE)
+
+  # Elements: plain strings or objects with a name
+  els <- vapply(d$elements, function(e) {
+    if (is.list(e)) as.character(e$name %||% e$label %||% "") else as.character(e)
+  }, "")
+  if (length(els) < 2) stop("At least 2 elements are needed.", call. = FALSE)
+  cons <- d$constructs
+  if (length(cons) < 2) stop("At least 2 constructs are needed.", call. = FALSE)
+
+  ne <- length(els)
+  rating_mat <- t(vapply(seq_along(cons), function(i) {
+    r <- cons[[i]]$ratings
+    if (length(r) != ne) {
+      stop("Construct ", i, " has ", length(r), " ratings but there are ", ne,
+           " elements.", call. = FALSE)
+    }
+    vapply(r, function(v) if (is.null(v)) NA_real_ else as.numeric(v), 0)
+  }, numeric(ne)))
+  if (anyNA(rating_mat)) {
+    warning("The grid has missing ratings; some functions need complete grids.",
+            call. = FALSE)
+  }
+
+  smin <- as.numeric(d$scaleMin %||% min(rating_mat, na.rm = TRUE))
+  smax <- as.numeric(d$scaleMax %||% max(rating_mat, na.rm = TRUE))
+  if (!is.finite(smin) || !is.finite(smax) || smin >= smax) {
+    stop("`scaleMin` must be lower than `scaleMax`.", call. = FALSE)
+  }
+  if (any(rating_mat < smin | rating_mat > smax, na.rm = TRUE)) {
+    stop("Some ratings are outside the scale [", smin, ", ", smax, "].", call. = FALSE)
+  }
+
+  pole <- function(k) vapply(cons, function(cn) as.character(cn[[k]] %||% ""), "")
+  rg <- OpenRepGrid::makeRepgrid(list(
+    name = els, l.name = pole("left"), r.name = pole("right"),
+    scores = as.vector(t(rating_mat))))
+  rg <- OpenRepGrid::setScale(rg, smin, smax)
+
+  meta <- rec[setdiff(names(rec), "data")]
+  rg@meta <- meta[!vapply(meta, is.null, TRUE)]
+  rg
+}
+
+`%||%` <- function(a, b) if (is.null(a)) b else a
