@@ -785,7 +785,7 @@
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg> Inicio
                 </a>
                 <a href="#" class="nav-item active" onclick="showPatientsList(); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); this.classList.add('active'); return false;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> Pacientes
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> Casos
                 </a>
 
                 <a href="#" class="nav-item">
@@ -819,11 +819,11 @@
                         <button onclick="document.getElementById('appSidebar').classList.toggle('collapsed')" style="background:none; border:none; cursor:pointer; padding:5px; color:#555;">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
                         </button>
-                        <h1 style="display: flex; align-items: center; gap: 8px; font-size: 18px; margin: 0; color: #333; font-weight: 600;">Pacientes</h1>
+                        <h1 style="display: flex; align-items: center; gap: 8px; font-size: 18px; margin: 0; color: #333; font-weight: 600;">Casos</h1>
                     </div>
                     <button onclick="promptNewPatient()" style="background: #8cc63f; color: white; border: none; padding: 10px 18px; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(140, 198, 63, 0.3);">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        Nuevo Paciente
+                        Nuevo Caso
                     </button>
                 </div>
                 
@@ -851,7 +851,7 @@
                                 <button onclick="event.stopPropagation(); this.closest('.patient-card').click(); toggleFilesMode();" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Archivos" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                                 </button>
-                                <button onclick="event.stopPropagation(); openEditPatientModal(this.closest('.patient-card'))" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Configurar Paciente" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
+                                <button onclick="event.stopPropagation(); openEditPatientModal(this.closest('.patient-card'))" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Configurar Caso" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                                 </button>
                             </div>
@@ -878,7 +878,7 @@
                                 <button onclick="event.stopPropagation(); this.closest('.patient-card').click(); toggleFilesMode();" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Archivos" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                                 </button>
-                                <button onclick="event.stopPropagation(); openEditPatientModal(this.closest('.patient-card'))" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Configurar Paciente" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
+                                <button onclick="event.stopPropagation(); openEditPatientModal(this.closest('.patient-card'))" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Configurar Caso" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                                 </button>
                             </div>
@@ -905,7 +905,7 @@
                                 <button onclick="event.stopPropagation(); this.closest('.patient-card').click(); toggleFilesMode();" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Archivos" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                                 </button>
-                                <button onclick="event.stopPropagation(); openEditPatientModal(this.closest('.patient-card'))" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Configurar Paciente" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
+                                <button onclick="event.stopPropagation(); openEditPatientModal(this.closest('.patient-card'))" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Configurar Caso" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                                 </button>
                             </div>
@@ -924,7 +924,7 @@
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
                         </button>
                         <h1 style="display: flex; align-items: center; gap: 8px; font-size: 18px; margin: 0;">
-                            <span onclick="showPatientsList()" style="color: #666; font-weight: 500; cursor: pointer;" onmouseover="this.style.color='#333'" onmouseout="this.style.color='#666'">Pacientes</span>
+                            <span onclick="showPatientsList()" style="color: #666; font-weight: 500; cursor: pointer;" onmouseover="this.style.color='#333'" onmouseout="this.style.color='#666'">Casos</span>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                             <span id="headerPatientName" style="color: #666; font-weight: 500;">Caso SU</span>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
@@ -948,10 +948,10 @@
                         <span class="meta-tag">Caso abierto</span>
                     </div>
                     <div style="margin-left: auto; display: flex; gap: 12px; align-items: center;">
-                        <button id="btnToggleFiles" onclick="toggleFilesMode()" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Archivos del Paciente" onmouseover="if(this.dataset.active !== 'true') this.style.background='#f0f0f0'" onmouseout="if(this.dataset.active !== 'true') this.style.background='white'">
+                        <button id="btnToggleFiles" onclick="toggleFilesMode()" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Archivos del Caso" onmouseover="if(this.dataset.active !== 'true') this.style.background='#f0f0f0'" onmouseout="if(this.dataset.active !== 'true') this.style.background='white'">
                             <svg id="btnToggleFilesIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                         </button>
-                        <button onclick="if(typeof currentDashboardPatientCard !== 'undefined' && currentDashboardPatientCard) openEditPatientModal(currentDashboardPatientCard); else alert('Error: no se encontró la tarjeta original.');" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Editar Paciente" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
+                        <button onclick="if(typeof currentDashboardPatientCard !== 'undefined' && currentDashboardPatientCard) openEditPatientModal(currentDashboardPatientCard); else alert('Error: no se encontró la tarjeta original.');" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Editar Caso" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                         </button>
                         <button onclick="generateCaseAccess()" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Generar acceso del caso" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
@@ -1114,7 +1114,7 @@
         
         <label style="display:flex; align-items:center; gap:8px; margin-bottom:20px; font-size:14px; cursor:pointer; color:#444; font-weight: 500;">
             <input type="checkbox" id="newTabShared" style="cursor:pointer; width: 16px; height: 16px; accent-color: #8cc63f;">
-            Compartir vista con el paciente
+            Compartir vista con el caso
         </label>
         
         <label style="display:block; margin-bottom:5px; font-size:13px; color:#555; font-weight: 500;">Selecciona una plantilla base:</label>
@@ -1148,7 +1148,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
             <div style="display:flex; flex-direction:column;">
                 <span style="font-size:14px; font-weight:500; color:#444;">Compartir vista</span>
-                <span style="font-size:12px; color:#888;">El paciente podrá ver este dashboard</span>
+                <span style="font-size:12px; color:#888;">El caso podrá ver este dashboard</span>
             </div>
             <!-- Custom Toggle -->
             <label style="position:relative; display:inline-block; width:44px; height:24px;">
@@ -1306,7 +1306,7 @@
                         <h4 style="margin:0; font-size:15px; color:#333;">Análisis de Bienestar</h4>
                         <span style="background:#f0f0f0; color:#555; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:600; text-transform:uppercase;">WimpTools</span>
                     </div>
-                    <p style="margin:0 0 8px 0; font-size:13px; color:#666; line-height:1.4;">Representación visual del estado de bienestar del paciente evaluando distancias del Yo-Ideal.</p>
+                    <p style="margin:0 0 8px 0; font-size:13px; color:#666; line-height:1.4;">Representación visual del estado de bienestar del caso evaluando distancias del Yo-Ideal.</p>
                     <div style="display:flex; gap:6px; flex-wrap:wrap;">
                         <span style="font-size:11px; color:#888; background:#f9f9f9; border:1px solid #eee; padding:2px 6px; border-radius:4px;"><strong style="color:#d9534f; font-weight:600;">Obligatorio:</strong> WimpGrid</span>
                         <span style="font-size:11px; color:#888; background:#f9f9f9; border:1px solid #eee; padding:2px 6px; border-radius:4px;"><strong style="color:#5cb85c; font-weight:600;">Opcional:</strong> WimpGrid (Comparativa)</span>
@@ -1403,7 +1403,7 @@
 
     <!-- New Patient Modal -->
     <div id="newPatientModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:25px; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.2); z-index:9999; width:500px; font-family:Inter, sans-serif;">
-        <h3 style="margin-top:0; color:#333; font-size:18px; margin-bottom: 20px;">Crear Nuevo Paciente</h3>
+        <h3 style="margin-top:0; color:#333; font-size:18px; margin-bottom: 20px;">Crear Nuevo Caso</h3>
         
         <div style="display:flex; align-items:center; gap: 15px; margin-bottom: 20px;">
             <div style="width: 64px; height: 64px; border-radius: 50%; background: #f9f9f9; display:flex; align-items:center; justify-content:center; color: #aaa; border: 2px dashed #ddd; cursor: pointer; transition: 0.2s;" onmouseover="this.style.borderColor='#8cc63f'; this.style.color='#8cc63f'; this.style.background='#f0f7e6';" onmouseout="this.style.borderColor='#ddd'; this.style.color='#aaa'; this.style.background='#f9f9f9';" title="Subir foto">
@@ -1414,7 +1414,7 @@
                 <span style="font-size: 11px; color: #888;">Haz clic para subir una imagen (opcional)</span>
             </div>
         </div>
-        <label style="display:block; margin-bottom:6px; font-size:13px; color:#555; font-weight: 500;">Nombre del paciente:</label>
+        <label style="display:block; margin-bottom:6px; font-size:13px; color:#555; font-weight: 500;">Nombre del caso:</label>
         <input type="text" id="newPatientName" placeholder="P. ej. Caso AB" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-bottom:15px; font-family:inherit; font-size: 14px; outline: none; transition: border 0.2s;" onfocus="this.style.borderColor='#8cc63f'" onblur="this.style.borderColor='#ddd'">
         
         <div style="display:flex; gap:15px; margin-bottom:15px;">
@@ -1455,13 +1455,13 @@
 
         <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 10px;">
             <button onclick="closeNewPatientModal()" style="background:#f1f1f1; color:#555; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:14px; font-weight:500;">Cancelar</button>
-            <button onclick="createNewPatient()" style="background:#8cc63f; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:14px; font-weight:600; box-shadow: 0 2px 4px rgba(140, 198, 63, 0.3);">Crear Paciente</button>
+            <button onclick="createNewPatient()" style="background:#8cc63f; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:14px; font-weight:600; box-shadow: 0 2px 4px rgba(140, 198, 63, 0.3);">Crear Caso</button>
         </div>
     </div>
 
     <!-- Edit Patient Modal -->
     <div id="editPatientModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:25px; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.2); z-index:9999; width:500px; font-family:Inter, sans-serif;">
-        <h3 style="margin-top:0; color:#333; font-size:18px; margin-bottom: 20px;">Configurar Paciente</h3>
+        <h3 style="margin-top:0; color:#333; font-size:18px; margin-bottom: 20px;">Configurar Caso</h3>
         
         <div style="display:flex; align-items:center; gap: 15px; margin-bottom: 20px;">
             <div style="width: 64px; height: 64px; border-radius: 50%; background: #f9f9f9; display:flex; align-items:center; justify-content:center; color: #aaa; border: 2px dashed #ddd; cursor: pointer; transition: 0.2s;" onmouseover="this.style.borderColor='#8cc63f'; this.style.color='#8cc63f'; this.style.background='#f0f7e6';" onmouseout="this.style.borderColor='#ddd'; this.style.color='#aaa'; this.style.background='#f9f9f9';" title="Subir foto">
@@ -1472,7 +1472,7 @@
                 <span style="font-size: 11px; color: #888;">Haz clic para subir o cambiar la imagen</span>
             </div>
         </div>
-        <label style="display:block; margin-bottom:6px; font-size:13px; color:#555; font-weight: 500;">Nombre del paciente:</label>
+        <label style="display:block; margin-bottom:6px; font-size:13px; color:#555; font-weight: 500;">Nombre del caso:</label>
         <input type="text" id="editPatientName" placeholder="P. ej. Caso AB" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-bottom:15px; font-family:inherit; font-size: 14px; outline: none; transition: border 0.2s;" onfocus="this.style.borderColor='#8cc63f'" onblur="this.style.borderColor='#ddd'">
         
         <div style="display:flex; gap:15px; margin-bottom:15px;">
@@ -1515,7 +1515,7 @@
         </div>
 
         <div style="display:flex; justify-content:space-between; margin-top: 10px;">
-            <button onclick="deletePatient()" style="background:#fff1f0; color:#f5222d; border:1px solid #ffa39e; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:14px; font-weight:500; transition:0.2s;" onmouseover="this.style.background='#ffccc7'" onmouseout="this.style.background='#fff1f0'">Eliminar Paciente</button>
+            <button onclick="deletePatient()" style="background:#fff1f0; color:#f5222d; border:1px solid #ffa39e; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:14px; font-weight:500; transition:0.2s;" onmouseover="this.style.background='#ffccc7'" onmouseout="this.style.background='#fff1f0'">Eliminar Caso</button>
             <div style="display:flex; gap:10px;">
                 <button onclick="closeEditPatientModal()" style="background:#f1f1f1; color:#555; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:14px; font-weight:500;">Cancelar</button>
                 <button onclick="saveEditedPatient()" style="background:#8cc63f; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:14px; font-weight:600; box-shadow: 0 2px 4px rgba(140, 198, 63, 0.3);">Guardar Cambios</button>
@@ -1653,7 +1653,7 @@
                     <button onclick="event.stopPropagation(); this.closest('.patient-card').click(); toggleFilesMode();" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Archivos" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                     </button>
-                    <button onclick="event.stopPropagation(); openEditPatientModal(this.closest('.patient-card'))" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Configurar Paciente" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
+                    <button onclick="event.stopPropagation(); openEditPatientModal(this.closest('.patient-card'))" style="background: white; color: #555; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center;" title="Configurar Caso" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                     </button>
                 </div>
@@ -1677,7 +1677,7 @@
             let iconHtml = '';
             if (isShared) {
                 tabBtn.dataset.shared = "true";
-                iconHtml = `<span class="shared-icon" style="margin-left:6px; color:#5b9bd5; display:inline-flex; align-items:center;" title="Compartido con el paciente"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>`;
+                iconHtml = `<span class="shared-icon" style="margin-left:6px; color:#5b9bd5; display:inline-flex; align-items:center;" title="Compartido con el caso"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>`;
             }
             
             tabBtn.innerHTML = `
@@ -1705,7 +1705,7 @@
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                 </div>
                 <div class="empty-state-title">Este dashboard está vacío</div>
-                <div class="empty-state-subtitle">Añade un widget para empezar a visualizar el análisis del paciente</div>
+                <div class="empty-state-subtitle">Añade un widget para empezar a visualizar el análisis del caso</div>
                 <div class="empty-state-divider"></div>
                 <div class="empty-state-hints">
                     <div class="empty-state-hint">
@@ -1789,7 +1789,7 @@
                     icon.className = 'shared-icon';
                     icon.style.marginLeft = '6px';
                     icon.style.color = '#5b9bd5';
-                    icon.title = 'Compartido con el paciente';
+                    icon.title = 'Compartido con el caso';
                     icon.style.display = 'inline-flex';
                     icon.style.alignItems = 'center';
                     icon.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`;
@@ -1919,7 +1919,7 @@
             let desc = "";
             let extraSetup = "";
             if (title === "Mapa del Yo") desc = "Visualización en forma de red (grafo) de las relaciones e implicaciones lógicas entre los diferentes constructos.";
-            else if (title === "Análisis de Centralidad") desc = "Identificación matemática de los constructos más importantes y nucleares dentro del sistema del paciente.";
+            else if (title === "Análisis de Centralidad") desc = "Identificación matemática de los constructos más importantes y nucleares dentro del sistema del caso.";
             else if (title === "Análisis de Implicaciones") desc = "Matriz detallada de la probabilidad de cambio estructural al alterar un constructo específico.";
             else if (title === "Índices Cognitivos") desc = "Resumen de los índices cognitivos de la rejilla de repertorio (estructura, conflicto y yo-ideal) y su detalle por constructo y por elemento.";
             else if (title === "Dilemas Implicativos") desc = "Detección de dilemas implicativos: constructos congruentes y discrepantes con el ideal que correlacionan, de modo que cambiar uno implica cambiar el otro.";
@@ -2321,7 +2321,7 @@
 
             // Set sidebar active state
             document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
-            const pacNav = Array.from(document.querySelectorAll('.nav-item')).find(el => el.textContent.includes('Pacientes'));
+            const pacNav = Array.from(document.querySelectorAll('.nav-item')).find(el => el.textContent.includes('Casos'));
             if(pacNav) pacNav.classList.add('active');
 
             document.getElementById('headerPatientName').innerText = name;
@@ -2380,7 +2380,7 @@
                 btn.style.background = 'white';
                 btn.style.borderColor = '#ddd';
                 btn.style.color = '#555';
-                btn.title = 'Archivos del Paciente';
+                btn.title = 'Archivos del Caso';
                 btn.innerHTML = _iconFiles;
             }
         }
@@ -2596,7 +2596,7 @@
         }
 
         function deletePatient() {
-            if (currentEditingCard && confirm("¿Estás seguro de que quieres eliminar este paciente?")) {
+            if (currentEditingCard && confirm("¿Estás seguro de que quieres eliminar este caso?")) {
                 currentEditingCard.remove();
                 closeEditPatientModal();
             }
