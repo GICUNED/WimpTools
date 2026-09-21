@@ -556,7 +556,7 @@ repgrid_dilemmas <- function(x, text_size = 1, only_involved = FALSE, ...) {
     # that left almost no room for the actual plot area, cutting the pole
     # labels off against the edges. Shortened labels above let this shrink
     # to a still-generous but no longer overflowing margin.
-    margin = list(l = 195, r = 195, t = 20, b = 20),
+    margin = list(l = 220, r = 220, t = 20, b = 20),
     annotations = ann, showlegend = FALSE)
 }
 
