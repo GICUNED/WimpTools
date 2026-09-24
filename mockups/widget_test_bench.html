@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Banco de pruebas de widgets</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    background: #f0f2f5;
+    margin: 0;
+    padding: 0;
+  }
+  header {
+    background: white;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  header h1 {
+    font-size: 15px;
+    margin: 0;
+    color: #333;
+    white-space: nowrap;
+  }
+  .field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .field label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+  }
+  select, input[type=number] {
+    font-family: inherit;
+    font-size: 13px;
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: white;
+  }
+  select { min-width: 220px; }
+  input[type=number] { width: 80px; }
+  button {
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 6px;
+    border: none;
+    background: #7ccf00;
+    color: white;
+    cursor: pointer;
+  }
+  button:hover { background: #6bb800; }
+  button.secondary {
+    background: #eee;
+    color: #444;
+  }
+  button.secondary:hover { background: #ddd; }
+  #presetsToggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #666;
+  }
+  main { padding: 20px; }
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 24px 0 10px;
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .card-head {
+    padding: 6px 10px;
+    background: #fafafa;
+    border-bottom: 1px solid #eee;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #555;
+    font-family: 'JetBrains Mono', monospace;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+  }
+  .card-head .remove {
+    cursor: pointer;
+    color: #bbb;
+    font-size: 14px;
+    line-height: 1;
+    background: none;
+    border: none;
+    padding: 0 2px;
+  }
+  .card-head .remove:hover { color: #e00; }
+  .card iframe {
+    border: none;
+    display: block;
+    background: white;
+  }
+  .empty {
+    color: #999;
+    font-size: 13px;
+    padding: 40px;
+    text-align: center;
+  }
+  #customForm {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🧪 Banco de pruebas de widgets</h1>
+  <div class="field">
+    <label for="widgetSelect">Widget</label>
+    <select id="widgetSelect"></select>
+  </div>
+  <div class="field">
+    <label>Altura</label>
+    <input type="number" id="heightInput" value="480" min="100" step="10">
+    <span style="font-size:12px;color:#888;">px</span>
+  </div>
+  <button id="reloadAllBtn" class="secondary">Recargar todo</button>
+</header>
+
+<main>
+  <div class="section-title">Anchos predefinidos</div>
+  <div class="row" id="presetRow"></div>
+
+  <div class="section-title">Ancho y alto personalizados</div>
+  <div id="customForm">
+    <div class="field">
+      <label>Ancho</label>
+      <input type="number" id="customWidth" value="320" min="60" step="10">
+      <span style="font-size:12px;color:#888;">px</span>
+    </div>
+    <div class="field">
+      <label>Alto</label>
+      <input type="number" id="customHeight" value="480" min="80" step="10">
+      <span style="font-size:12px;color:#888;">px</span>
+    </div>
+    <button id="addCustomBtn">+ Añadir</button>
+  </div>
+  <div class="row" id="customRow">
+    <div class="empty" id="customEmpty">Añade un tamaño personalizado arriba para verlo aquí.</div>
+  </div>
+</main>
+
+<script>
+  const WIDGETS = [
+    'widget_digraph.html',
+    'widget_centrality.html',
+    'widget_implications.html',
+    'widget_simulation.html',
+    'widget_adjustment_single.html',
+    'widget_adjustment_compare.html',
+    'widget_repgrid_biplot.html',
+    'widget_repgrid_cluster.html',
+    'widget_repgrid_dilemmas.html',
+    'widget_repgrid_indices.html',
+  ];
+  const PRESET_WIDTHS = [150, 200, 250, 300, 380, 460, 560, 700, 900, 1100];
+
+  const widgetSelect = document.getElementById('widgetSelect');
+  WIDGETS.forEach(w => {
+    const opt = document.createElement('option');
+    opt.value = w;
+    opt.textContent = w;
+    widgetSelect.appendChild(opt);
+  });
+
+  const STORAGE_KEY = 'wt_bench_state_v1';
+  function loadState() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    } catch (e) { return {}; }
+  }
+  function saveState(patch) {
+    try {
+      const s = Object.assign(loadState(), patch);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+    } catch (e) {}
+  }
+  const state = loadState();
+  if (state.widget && WIDGETS.includes(state.widget)) widgetSelect.value = state.widget;
+  if (state.height) document.getElementById('heightInput').value = state.height;
+
+  function currentWidget() { return widgetSelect.value; }
+  function currentHeight() { return parseInt(document.getElementById('heightInput').value, 10) || 480; }
+  function cacheBustSrc(w) { return 'widgets/' + w + '?cb=' + Date.now() + '_' + Math.random().toString(36).slice(2); }
+
+  function makeCard(widthPx, heightPx, removable) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.width = widthPx + 'px';
+
+    const head = document.createElement('div');
+    head.className = 'card-head';
+    const label = document.createElement('span');
+    label.textContent = widthPx + ' x ' + heightPx + 'px';
+    head.appendChild(label);
+    if (removable) {
+      const rm = document.createElement('button');
+      rm.className = 'remove';
+      rm.textContent = '✕';
+      rm.title = 'Quitar';
+      rm.onclick = () => card.remove();
+      head.appendChild(rm);
+    }
+    card.appendChild(head);
+
+    const iframe = document.createElement('iframe');
+    iframe.style.width = widthPx + 'px';
+    iframe.style.height = heightPx + 'px';
+    iframe.src = cacheBustSrc(currentWidget());
+    card.appendChild(iframe);
+
+    return card;
+  }
+
+  function renderPresets() {
+    const row = document.getElementById('presetRow');
+    row.innerHTML = '';
+    const h = currentHeight();
+    PRESET_WIDTHS.forEach(w => row.appendChild(makeCard(w, h, false)));
+  }
+
+  function renderAllIframes() {
+    renderPresets();
+    // custom cards: just refresh their iframe src, keep sizes as-is
+    document.querySelectorAll('#customRow .card iframe').forEach(f => {
+      f.src = cacheBustSrc(currentWidget());
+    });
+  }
+
+  document.getElementById('widgetSelect').addEventListener('change', () => {
+    saveState({ widget: currentWidget() });
+    renderAllIframes();
+  });
+  document.getElementById('heightInput').addEventListener('change', () => {
+    saveState({ height: currentHeight() });
+    renderPresets();
+  });
+  document.getElementById('reloadAllBtn').addEventListener('click', renderAllIframes);
+
+  document.getElementById('addCustomBtn').addEventListener('click', () => {
+    const w = parseInt(document.getElementById('customWidth').value, 10) || 320;
+    const h = parseInt(document.getElementById('customHeight').value, 10) || 480;
+    const row = document.getElementById('customRow');
+    const empty = document.getElementById('customEmpty');
+    if (empty) empty.remove();
+    row.appendChild(makeCard(w, h, true));
+  });
+
+  renderPresets();
+</script>
+
+</body>
+</html>

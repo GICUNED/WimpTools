@@ -1183,9 +1183,13 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
         } else {
           Object.assign(p.style, {
             position: 'absolute', zIndex: '1000', backgroundColor: 'rgba(255, 255, 255, 0.95)',
-            padding: '10px', borderRadius: '8px', boxShadow: '0 2px 15px rgba(0,0,0,0.15)',
-            border: '1px solid #ddd', fontFamily: 'Segoe UI, Tahoma, sans-serif', fontSize: '12px',
-            width: '90%', maxWidth: '220px', boxSizing: 'border-box', maxHeight: '40px', overflowY: 'hidden', transition: 'all 0.3s ease'
+            padding: 'clamp(5px, 1.6vw, 8px)', borderRadius: '8px', boxShadow: '0 2px 15px rgba(0,0,0,0.15)',
+            border: '1px solid #ddd', fontFamily: 'Segoe UI, Tahoma, sans-serif', fontSize: 'clamp(10px, 2.2vw, 12px)',
+            // clamp() instead of a flat 90% - at a narrow widget width, 90%
+            // of the container swallowed almost the whole card; this keeps
+            // a usable floor and a much smaller cap than the panel's
+            // original fixed 220px, which read as oversized at any width.
+            width: 'clamp(72px, 24vw, 140px)', boxSizing: 'border-box', maxHeight: '40px', overflowY: 'hidden', transition: 'all 0.3s ease'
           }, positionStyles);
         }
 

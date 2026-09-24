@@ -504,6 +504,12 @@ pb_plot <- function(wimp, text_size = 1, lang = "en", ...) {
 
   # Set plot limits with margin
   limit <- max(abs(pb_mat_df$p), abs(pb_mat_df$b)) * 1.1
+  # Presence (p) is a degree-based measure and is never negative, so the
+  # x-axis only needs to reach from 0 out to the data (plus a small right
+  # margin) - a symmetric autorange left a sliver of unused negative space
+  # that became proportionally more visible as the widget got narrower.
+  x_right <- max(pb_mat_df$p, na.rm = TRUE) * 1.3
+  if (!is.finite(x_right) || x_right <= 0) x_right <- 0.1
   # Round values for display
   pb_mat_df$p <- round(pb_mat_df$p, 3)
   pb_mat_df$b <- round(pb_mat_df$b, 3)
@@ -549,9 +555,12 @@ pb_plot <- function(wimp, text_size = 1, lang = "en", ...) {
     layout(
       title = "",
       xaxis = list(title = list(text = t$pb_axis_x, font = list(size = 20),
-                                standoff = 25)),
+                                standoff = 4), range = c(0, x_right),
+                  tickformat = ".1f", tickfont = list(size = 13)),
       yaxis = list(title = list(text = t$pb_axis_y,
-                                font = list(size = 20), standoff = 25)),
+                                font = list(size = 20), standoff = 4),
+                  tickformat = ".1f", tickfont = list(size = 13)),
+      margin = list(l = 55, r = 20, t = 10, b = 40),
       plot_bgcolor = "white",
       font = list(family = "Arial"),
       showlegend = FALSE,
@@ -587,6 +596,24 @@ pb_plot <- function(wimp, text_size = 1, lang = "en", ...) {
     }
   }
 
+  # plotly_build() resolves each add_annotations() call above into TWO
+  # identical entries in the built layout (same text, same position) -
+  # a quirk of chaining add_annotations() in a loop after add_markers() in
+  # this plotly version. Building the plot ourselves here and keeping only
+  # the first copy of each label avoids shipping a widget whose annotation
+  # list is silently double the size it should be.
+  p <- plotly::plotly_build(p)
+  ann <- p$x$layout$annotations
+  if (length(ann) > 0) {
+    seen_ann_text <- character(0)
+    keep <- vapply(ann, function(a) {
+      if (a$text %in% seen_ann_text) return(FALSE)
+      seen_ann_text[[length(seen_ann_text) + 1]] <<- a$text
+      TRUE
+    }, logical(1))
+    p$x$layout$annotations <- ann[keep]
+  }
+
   # Add Javascript interactivity
   pb_data <- list(
     dict = t,
@@ -611,6 +638,7 @@ pb_plot <- function(wimp, text_size = 1, lang = "en", ...) {
   js_pb_panel <- "
     function(el, p_x, data) {
       var x = data;
+      var pbUserAdjustedTextSize = false;
       var settingsModal = document.createElement('div');
       settingsModal.id = 'pb_settings_modal';
       Object.assign(settingsModal.style, {
@@ -735,48 +763,54 @@ pb_plot <- function(wimp, text_size = 1, lang = "en", ...) {
         };
         Plotly.restyle(el, restyleData, [0]);
         
-        var newAnnotations = [];
+        // Position the surviving labels with the SAME real-size-aware
+        // layout fitPbLabels() uses (computePbLayout, defined below), not
+        // the original R-computed positions (origAnnotations/x.layouts_*) -
+        // those were solved for an 800x600 reference canvas and for every
+        // construct, not the plot's actual current pixel size or whatever
+        // subset the filter checkboxes leave active. Falling back to them
+        // here is exactly what made labels visibly jump back whenever the
+        // text-size slider or a filter checkbox was touched.
         var seenTexts = {};
-        for (var i = 0; i < origAnnotations.length; i++) {
-           var ann = JSON.parse(JSON.stringify(origAnnotations[i]));
-           if (!ann.text || seenTexts[ann.text]) continue;
-           seenTexts[ann.text] = true;
-           
-           // Find the construct index by matching text
-           var c_idx = -1;
-           for (var k = 0; k < x.constructs.length; k++) {
-               if (x.constructs[k] === ann.text) {
-                   c_idx = k;
-                   break;
-               }
-           }
-           
-           if (c_idx !== -1 && x.layouts_x && x.layouts_x.length > currentLayout) {
-               ann.x = x.layouts_x[currentLayout][c_idx];
-               ann.y = x.layouts_y[currentLayout][c_idx];
-               ann.xshift = x.layouts_xshift[currentLayout][c_idx];
-               ann.yshift = x.layouts_yshift[currentLayout][c_idx];
-               if (x.layouts_xanchor) ann.xanchor = x.layouts_xanchor[currentLayout][c_idx];
-               if (x.layouts_yanchor) ann.yanchor = x.layouts_yanchor[currentLayout][c_idx];
-           }
-           
-           var isActive = false;
-           for (var j = 0; j < activeIndices.length; j++) {
-               if (x.constructs[activeIndices[j]] === ann.text) {
-                   isActive = true;
-                   break;
-               }
-           }
-           if (isActive) {
-               ann.font.size = 12 * txtSz;
-               newAnnotations.push(ann);
-           }
-        }
+        var uniqueAnn = origAnnotations.filter(function(a) {
+          if (!a.text || seenTexts[a.text]) return false;
+          seenTexts[a.text] = true;
+          return true;
+        });
+        var activeSet = {};
+        activeIndices.forEach(function(idx) { activeSet[x.constructs[idx]] = true; });
+        var activeAnn = uniqueAnn.filter(function(a) { return activeSet[a.text]; });
+
+        var fontPx = Math.max(6, Math.round(12 * txtSz));
+        var w = el.clientWidth || 640;
+        var marginL = el._fullLayout ? el._fullLayout.margin.l : 55;
+        var marginB = el._fullLayout ? el._fullLayout.margin.b : 40;
+        var innerW = Math.max(20, w - marginL - 20);
+        var innerH = Math.max(20, (el.clientHeight || 480) - marginB - 10);
+        var activeX = activeAnn.map(function(a) {
+          var k = x.constructs.indexOf(a.text); return x.orig_x[k];
+        });
+        var activeY = activeAnn.map(function(a) {
+          var k = x.constructs.indexOf(a.text); return x.orig_y[k];
+        });
+        var fresh = activeAnn.length
+          ? computePbLayout(activeX, activeY, activeAnn.map(function(a) { return a.text; }), innerW, innerH, fontPx)
+          : {xshift: [], yshift: [], xanchor: [], yanchor: []};
+
+        var newAnnotations = activeAnn.map(function(a, i) {
+          var ann = JSON.parse(JSON.stringify(a));
+          ann.font.size = fontPx;
+          if (fresh.xshift[i] !== undefined) {
+            ann.xshift = fresh.xshift[i]; ann.yshift = fresh.yshift[i];
+            ann.xanchor = fresh.xanchor[i]; ann.yanchor = fresh.yanchor[i];
+          }
+          return ann;
+        });
         Plotly.relayout(el, { annotations: newAnnotations });
       };
       
       settingsModal.querySelector('#pb_palette_sel').onchange = updatePB;
-      settingsModal.querySelector('#pb_text_size').oninput = updatePB;
+      settingsModal.querySelector('#pb_text_size').oninput = function() { pbUserAdjustedTextSize = true; updatePB(); };
       settingsModal.querySelectorAll('.pb-construct-cb').forEach(function(cb) {
          cb.onchange = updatePB;
       });
@@ -793,6 +827,237 @@ pb_plot <- function(wimp, text_size = 1, lang = "en", ...) {
           var newConfig = Object.assign({}, currentConfig, { edits: { annotationPosition: isManual } });
           Plotly.react(el, el.data, el.layout, newConfig);
       };
+
+      // The collision-free placement further up (.calculate_pb_layouts, in
+      // R) solves overlap in a FIXED 800x600 reference canvas - correct
+      // only when the real plot happens to render near that size. Once the
+      // widget is resized to anything else, the real pixel spacing between
+      // points no longer matches what that layout planned around: two
+      // points comfortably apart in an 800px-wide reference end up much
+      // closer together in a real 300px-wide plot, so their (roughly
+      // fixed-size) label boxes collide even though the precomputed
+      // xanchor/xshift were technically non-overlapping on paper. The fix
+      // is to re-run placement here in JS, in the plot's ACTUAL current
+      // pixel dimensions, every time it resizes - not just rescale the font
+      // on positions computed for a different size.
+      //
+      // Two earlier attempts here: a spring that let labels drift far from
+      // their point (looked broken), then one constrained to spin at a
+      // near-fixed radius (too busy with this many labels). Back to 8
+      // fixed slots around the point - right/left/top/bottom and the four
+      // diagonals, same small offsets a human would pick by hand - but
+      // instead of just counting overlapping pixels to score each slot,
+      // score it the way same-sign charges would feel it: every other
+      // point and every already-placed label contributes a repulsion
+      // energy that grows sharply at short range (inverse-square), so a
+      // slot that's merely close to a crowd loses out to one with real
+      // breathing room, not only one that's technically overlap-free.
+      function computePbLayout(xs, ys, labels, canvasW, canvasH, fontPx) {
+        var n = xs.length;
+        var xMin = Math.min.apply(null, xs), xMax = Math.max.apply(null, xs);
+        var yMin = Math.min.apply(null, ys), yMax = Math.max.apply(null, ys);
+        var xRange = (xMax - xMin) || 1, yRange = (yMax - yMin) || 1;
+        // +y here means up, matching how Plotly's own xshift/yshift work
+        // (a positive yshift moves an annotation up on screen) - so these
+        // can be used as shift values directly, with no sign flip.
+        var px = xs.map(function(v) { return (v - xMin) / xRange * canvasW; });
+        var py = ys.map(function(v) { return (v - yMin) / yRange * canvasH; });
+        var charW = fontPx * 0.58, charH = fontPx * 1.25;
+        var labelW = labels.map(function(l) { return (l ? String(l).length : 4) * charW; });
+        var labelH = labelW.map(function() { return charH; });
+
+        var gapOrtho = 5, gapDiag = 2;
+        var candidates = [
+          {dx: gapOrtho, dy: 0, xa: 'left', ya: 'middle'},
+          {dx: -gapOrtho, dy: 0, xa: 'right', ya: 'middle'},
+          {dx: 0, dy: gapOrtho, xa: 'center', ya: 'bottom'},
+          {dx: 0, dy: -gapOrtho, xa: 'center', ya: 'top'},
+          {dx: gapDiag, dy: gapDiag, xa: 'left', ya: 'bottom'},
+          {dx: -gapDiag, dy: gapDiag, xa: 'right', ya: 'bottom'},
+          {dx: gapDiag, dy: -gapDiag, xa: 'left', ya: 'top'},
+          {dx: -gapDiag, dy: -gapDiag, xa: 'right', ya: 'top'}
+        ];
+
+        var placed = []; // {cx, cy, left, right, bottom, top} of labels placed so far
+        var out = {xshift: [], yshift: [], xanchor: [], yanchor: []};
+
+        for (var i = 0; i < n; i++) {
+          var tw = labelW[i], th = labelH[i];
+          var bestCand = candidates[0], bestEnergy = Infinity, bestOverlap = Infinity;
+
+          for (var c = 0; c < candidates.length; c++) {
+            var cand = candidates[c];
+            var cx = px[i] + cand.dx, cy = py[i] + cand.dy;
+            var left = cx, right = cx;
+            if (cand.xa === 'left') { left = cx; right = cx + tw; }
+            else if (cand.xa === 'right') { left = cx - tw; right = cx; }
+            else { left = cx - tw / 2; right = cx + tw / 2; }
+            var bottom, top;
+            if (cand.ya === 'bottom') { bottom = cy; top = cy + th; }
+            else if (cand.ya === 'top') { bottom = cy - th; top = cy; }
+            else { bottom = cy - th / 2; top = cy + th / 2; }
+            var boxCx = (left + right) / 2, boxCy = (bottom + top) / 2;
+
+            // Hard overlap count still breaks ties first - a slot that
+            // overlaps nothing beats one with lower energy but a visible
+            // collision.
+            var overlap = 0;
+            for (var j = 0; j < n; j++) {
+              if (j === i) continue;
+              if (px[j] >= left && px[j] <= right && py[j] >= bottom && py[j] <= top) overlap += 1;
+            }
+            for (var b = 0; b < placed.length; b++) {
+              var box = placed[b];
+              if (!(left >= box.right || right <= box.left || bottom >= box.top || top <= box.bottom)) overlap += 1;
+            }
+
+            // Electrostatic-style potential energy at this slot's box
+            // center: every other point and every placed label pushes back
+            // harder the closer they are.
+            var energy = 0;
+            for (var k = 0; k < n; k++) {
+              if (k === i) continue;
+              var dk = Math.max(6, Math.hypot(boxCx - px[k], boxCy - py[k]));
+              energy += 1 / (dk * dk);
+            }
+            for (var b2 = 0; b2 < placed.length; b2++) {
+              var db = Math.max(6, Math.hypot(boxCx - placed[b2].cx, boxCy - placed[b2].cy));
+              energy += 30 / (db * db); // another label crowds a slot more than a bare point does
+            }
+
+            if (overlap < bestOverlap || (overlap === bestOverlap && energy < bestEnergy)) {
+              bestOverlap = overlap; bestEnergy = energy; bestCand = cand;
+            }
+          }
+
+          out.xshift.push(bestCand.dx); out.yshift.push(bestCand.dy);
+          out.xanchor.push(bestCand.xa); out.yanchor.push(bestCand.ya);
+
+          var fcx = px[i] + bestCand.dx, fleft, fright, fbottom, ftop;
+          if (bestCand.xa === 'left') { fleft = fcx; fright = fcx + tw; }
+          else if (bestCand.xa === 'right') { fleft = fcx - tw; fright = fcx; }
+          else { fleft = fcx - tw / 2; fright = fcx + tw / 2; }
+          var fcy = py[i] + bestCand.dy;
+          if (bestCand.ya === 'bottom') { fbottom = fcy; ftop = fcy + th; }
+          else if (bestCand.ya === 'top') { fbottom = fcy - th; ftop = fcy; }
+          else { fbottom = fcy - th / 2; ftop = fcy + th / 2; }
+          placed.push({cx: (fleft + fright) / 2, cy: (fbottom + ftop) / 2, left: fleft, right: fright, bottom: fbottom, top: ftop});
+        }
+        return out;
+      }
+
+      // Auto-shrink the construct labels, dots and axis titles as the
+      // widget gets narrower, and recompute their placement for the real
+      // current size instead of just rescaling font on a layout planned
+      // for a different one. Skipped once the user has manually set a text
+      // size, so it never fights their choice.
+      var pbBaseAnnotations = JSON.parse(JSON.stringify(el.layout.annotations || []));
+      // The construct labels come back doubled here (same text, same
+      // position, twice) - keep only the first copy of each. Without this,
+      // our resize logic only had 21 fresh positions (one per construct)
+      // for 42 annotations, so the second copy of each label never got
+      // updated and was left behind at its original spot: what looked like
+      // a duplicated label was really its stale twin staying put while
+      // the real one moved.
+      (function() {
+        var seen = {};
+        pbBaseAnnotations = pbBaseAnnotations.filter(function(a) {
+          if (seen[a.text]) return false;
+          seen[a.text] = true;
+          return true;
+        });
+      })();
+      function fitPbLabels() {
+        if (pbUserAdjustedTextSize) return;
+        var w = el.clientWidth; if (!w) return;
+        var scale = Math.max(0.55, Math.min(1, w / 640));
+        var fontPx = Math.max(8, Math.round(12 * scale));
+        var marginL = Math.max(40, Math.round(55 * scale));
+        var marginB = Math.max(28, Math.round(40 * scale));
+        var innerW = Math.max(20, w - marginL - 20);
+        var innerH = Math.max(20, (el.clientHeight || 480) - marginB - 10);
+        var fresh = computePbLayout(x.orig_x, x.orig_y, x.constructs, innerW, innerH, fontPx);
+        var anns = pbBaseAnnotations.map(function(a, i) {
+          var b = Object.assign({}, a);
+          b.font = Object.assign({}, a.font, {size: fontPx});
+          if (fresh.xshift[i] !== undefined) {
+            b.xshift = fresh.xshift[i]; b.yshift = fresh.yshift[i];
+            b.xanchor = fresh.xanchor[i]; b.yanchor = fresh.yanchor[i];
+          }
+          return b;
+        });
+        var titleFontPx = Math.max(11, Math.round(20 * scale));
+        var standoffPx = Math.max(2, Math.round(4 * scale));
+        var tickFontPx = Math.max(9, Math.round(13 * scale));
+        Plotly.relayout(el, {
+          annotations: anns,
+          'xaxis.title.font.size': titleFontPx, 'xaxis.title.standoff': standoffPx,
+          'yaxis.title.font.size': titleFontPx, 'yaxis.title.standoff': standoffPx,
+          'xaxis.tickfont.size': tickFontPx, 'yaxis.tickfont.size': tickFontPx,
+          'margin.l': marginL, 'margin.b': marginB
+        }).then(clampPbEdgeLabels);
+        Plotly.restyle(el, {'marker.size': Math.max(4, Math.round(7 * scale))}, [0]);
+      }
+      // A label anchored to extend leftward from a point close to the left
+      // edge (x = 0, where Presence is defined to start) - or rightward
+      // from a point near the right edge - can render past that edge and
+      // get clipped, especially at narrow widths where the precomputed
+      // collision-free layout has less room to work with than it assumed.
+      // Once real positions are on screen, re-anchor any label whose
+      // rendered edge crosses the plot's actual drawing area so it points
+      // back inward instead.
+      function clampPbEdgeLabels() {
+        var elRect = el.getBoundingClientRect();
+        var plotLeftPx = elRect.left + el._fullLayout.margin.l;
+        var plotRightPx = elRect.right - el._fullLayout.margin.r;
+        var xrange = el._fullLayout.xaxis.range;
+        var xSpan = xrange[1] - xrange[0];
+        var byText = {};
+        el.querySelectorAll('.annotation-text').forEach(function(n) { byText[n.textContent] = n; });
+        var changed = false;
+        var anns = (el.layout.annotations || []).map(function(a) {
+          var b = Object.assign({}, a);
+          var node = byText[a.text];
+          if (!node) return b;
+          var r = node.getBoundingClientRect();
+          // Only flip a label toward whichever edge its OWN point is
+          // actually near - re-anchoring a label that overflows simply
+          // because it's long, with its point nowhere near that edge,
+          // would just swing it past the opposite edge instead.
+          var frac = (a.x - xrange[0]) / xSpan;
+          if (r.left < plotLeftPx - 1 && b.xanchor !== 'left' && frac < 0.5) {
+            b.xanchor = 'left'; b.xshift = 3; changed = true;
+          } else if (r.right > plotRightPx + 1 && b.xanchor !== 'right' && frac > 0.5) {
+            b.xanchor = 'right'; b.xshift = -3; changed = true;
+          }
+          return b;
+        });
+        if (changed) Plotly.relayout(el, {annotations: anns});
+      }
+      var pbLastWidth = el.clientWidth;
+      setTimeout(fitPbLabels, 50);
+      setInterval(function() {
+        var w = el.clientWidth;
+        if (w && w !== pbLastWidth) { pbLastWidth = w; fitPbLabels(); }
+      }, 300);
+
+      // Plotly's tickformat can't drop a leading zero on its own (\".2\"
+      // instead of \"0.2\"), so strip it straight from the rendered tick
+      // text - this fires on every redraw, including the relayout calls
+      // above, so it stays correct as the plot rescales.
+      function stripPbLeadingZeros() {
+        el.querySelectorAll('.xtick text, .ytick text').forEach(function(t) {
+          var s = t.textContent;
+          // Plotly renders the minus sign as U+2212, not a plain hyphen.
+          var m = /^([-\\u2212]?)0(\\.\\d+)$/.exec(s);
+          if (!m) return;
+          var isZero = /^\\.0+$/.test(m[2]);
+          var out = isZero ? '0' : (m[1] + m[2]);
+          if (out !== s) t.textContent = out;
+        });
+      }
+      el.on('plotly_afterplot', stripPbLeadingZeros);
+      setTimeout(stripPbLeadingZeros, 60);
     }
   "
   

@@ -502,9 +502,9 @@ repgrid_dilemmas <- function(x, text_size = 1, only_involved = FALSE, ...) {
     font = list(size = 12 * text_size, color = if (inv) "#333333" else "#aaaaaa"))
   ann <- c(
     lapply(seq_along(disc), function(k)
-      lab_ann(0, unname(yd)[k], lab_html(disc[k]), inv_d[k], "right", -14)),
+      lab_ann(0, unname(yd)[k], lab_html(disc[k]), inv_d[k], "right", -25)),
     lapply(seq_along(cong), function(k)
-      lab_ann(1, unname(yc)[k], lab_html(cong[k]), inv_c[k], "left", 14))
+      lab_ann(1, unname(yc)[k], lab_html(cong[k]), inv_c[k], "left", 25))
   )
   # Correlation values (.xx) on a white box that hides the line behind them
   val_ann <- lapply(seq_len(nrow(dl)), function(i) list(
@@ -512,18 +512,7 @@ repgrid_dilemmas <- function(x, text_size = 1, only_involved = FALSE, ...) {
     xref = "x", yref = "y", text = sub("^0", "", sprintf("%.2f", dl$r[i])),
     showarrow = FALSE, bgcolor = "#ffffff", borderpad = 2,
     font = list(size = 12 * text_size, color = "#666666")))
-  # Small arrowheads at both ends of each line (two-way association)
-  arrow_ann <- unlist(lapply(seq_len(nrow(dl)), function(i) {
-    y0 <- unname(yd[as.character(dl$id_d[i])]); y1 <- unname(yc[as.character(dl$id_c[i])])
-    w <- 1 + 1.5 * dl$r[i]
-    mk <- function(x, y, ax, ay) list(
-      x = x, y = y, ax = ax, ay = ay, xref = "x", yref = "y", axref = "x", ayref = "y",
-      showarrow = TRUE, text = "", arrowhead = 2, arrowsize = 1.1, arrowwidth = w,
-      arrowcolor = col_e, standoff = 6)
-    list(mk(0, y0, 0.06, y0 + 0.06 * (y1 - y0)),
-         mk(1, y1, 0.94, y1 + 0.06 * (y0 - y1)))
-  }), recursive = FALSE)
-  ann <- c(ann, arrow_ann, val_ann)
+  ann <- c(ann, val_ann)
 
   fig %>% plotly::layout(
     xaxis = list(visible = FALSE, range = c(-0.05, 1.05), fixedrange = TRUE),

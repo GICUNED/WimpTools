@@ -16,7 +16,7 @@ A `browsable` HTML object containing the tabbed interface.
 }
 \description{
 Creates a standalone HTML widget containing a two-tab interface for Psychlab integration.
-The first tab displays the interactive digraph network, and the second tab displays 
+The first tab displays the interactive digraph network, and the second tab displays
 the weight matrix heatmap.
 }
 \examples{

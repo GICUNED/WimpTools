@@ -1,8 +1,54 @@
+# Shared responsive CSS for widget chrome (tabs, floating icon buttons, tables).
+# Every widget renders inside its own iframe, so `vw`/`vh` units and `@media`
+# queries below are scoped to that widget's own rendered size, not the browser
+# window - shrinking the GridStack card shrinks these exactly like a container
+# query would, without needing @container support.
+.wt_responsive_css <- function() "
+  .wt-tab-header button, .wct-tab-header button, .wsim-tab-btn, .wrg-tab-header button, .wt-tab-btn {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+  table { font-size: 13px; }
+  @media (max-width: 520px) {
+    .wt-tab-header button, .wct-tab-header button, .wsim-tab-btn, .wrg-tab-header button, .wt-tab-btn {
+      padding: 8px 6px !important;
+      font-size: 12px !important;
+    }
+    table { font-size: 12px; }
+    table th, table td { padding: 7px 8px !important; }
+    /* Leave a gutter for the floating info/export/fullscreen buttons so they
+       don't sit on top of plot traces or axis tick labels drawn near the
+       right edge (e.g. the RepGrid dilemmas dumbbell chart). Deliberately
+       excludes .wt-tab-content > .html-widget: in widget_digraph the
+       floating buttons are appended INSIDE that same html-widget div, so
+       shrinking it drags the buttons in with it, leaving a dead gap between
+       them and the widget's actual right edge instead of a gutter. */
+    .wct-tab-content > .html-widget,
+    .wsim-tab-content .html-widget, .wrg-tab-content > .html-widget {
+      width: calc(100% - 58px) !important;
+    }
+  }
+  @media (max-width: 340px) {
+    .wt-tab-header button, .wct-tab-header button, .wsim-tab-btn, .wrg-tab-header button, .wt-tab-btn {
+      padding: 6px 4px !important;
+      font-size: 10.5px !important;
+    }
+    table { font-size: 11px; }
+    table th, table td { padding: 5px 6px !important; }
+    .wct-tab-content > .html-widget,
+    .wsim-tab-content .html-widget, .wrg-tab-content > .html-widget {
+      width: calc(100% - 48px) !important;
+    }
+  }
+"
+
 #' Generate Tabbed HTML Widget for Psychlab
 #'
 #' @description
 #' Creates a standalone HTML widget containing a two-tab interface for Psychlab integration.
-#' The first tab displays the interactive digraph network, and the second tab displays 
+#' The first tab displays the interactive digraph network, and the second tab displays
 #' the weight matrix heatmap.
 #'
 #' @param x A \code{wimp} object created by \code{\link{wimp}}.
@@ -118,7 +164,8 @@ widget_digraph <- function(x, lang = "en", ...) {
       flex-grow: 1;
     }
   "
-  
+  css <- paste0(css, .wt_responsive_css())
+
   # 3. Define vanilla JS for tab switching
   js <- "
     function openPsychlabTab(evt, tabName) {
@@ -180,15 +227,15 @@ widget_digraph <- function(x, lang = "en", ...) {
         h,
         htmltools::HTML(paste0("
           <div id='hm_btn_container' style='position:absolute;bottom:15px;right:15px;display:flex;flex-direction:column;gap:8px;z-index:1000;align-items:center;'>
-            <div style='background-color: rgba(255, 255, 255, 0.95); width: 32px; height: 32px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;' title='", t$info, "' onmouseover=\"this.style.backgroundColor='#f5f5f5'\" onmouseout=\"this.style.backgroundColor='rgba(255, 255, 255, 0.95)'\" onclick=\"var m=document.getElementById('heatmap_info_modal'); m.style.display=(m.style.display==='block'?'none':'block');\">
-              <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'></circle><line x1='12' y1='16' x2='12' y2='12'></line><line x1='12' y1='8' x2='12.01' y2='8'></line></svg>
+            <div style='background-color: rgba(255, 255, 255, 0.95); width: clamp(24px, 4vmin, 32px); height: clamp(24px, 4vmin, 32px); border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;' title='", t$info, "' onmouseover=\"this.style.backgroundColor='#f5f5f5'\" onmouseout=\"this.style.backgroundColor='rgba(255, 255, 255, 0.95)'\" onclick=\"var m=document.getElementById('heatmap_info_modal'); m.style.display=(m.style.display==='block'?'none':'block');\">
+              <svg width='60%' height='60%' viewBox='0 0 24 24' fill='none' stroke='#333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'></circle><line x1='12' y1='16' x2='12' y2='12'></line><line x1='12' y1='8' x2='12.01' y2='8'></line></svg>
             </div>
             <div id='hm_settings_placeholder'></div>
-            <div style='background-color: rgba(255, 255, 255, 0.95); width: 32px; height: 32px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;' title='", t$export_png, "' onmouseover=\"this.style.backgroundColor='#f5f5f5'\" onmouseout=\"this.style.backgroundColor='rgba(255, 255, 255, 0.95)'\" onclick=\"downloadHeatmap()\">
-              <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'></path><polyline points='7 10 12 15 17 10'></polyline><line x1='12' y1='15' x2='12' y2='3'></line></svg>
+            <div style='background-color: rgba(255, 255, 255, 0.95); width: clamp(24px, 4vmin, 32px); height: clamp(24px, 4vmin, 32px); border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;' title='", t$export_png, "' onmouseover=\"this.style.backgroundColor='#f5f5f5'\" onmouseout=\"this.style.backgroundColor='rgba(255, 255, 255, 0.95)'\" onclick=\"downloadHeatmap()\">
+              <svg width='60%' height='60%' viewBox='0 0 24 24' fill='none' stroke='#333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'></path><polyline points='7 10 12 15 17 10'></polyline><line x1='12' y1='15' x2='12' y2='3'></line></svg>
             </div>
-            <div style='background-color: rgba(255, 255, 255, 0.95); width: 32px; height: 32px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;' title='", t$fullscreen, "' onmouseover=\"this.style.backgroundColor='#f5f5f5'\" onmouseout=\"this.style.backgroundColor='rgba(255, 255, 255, 0.95)'\" onclick=\"var el=this.closest('.wt-tab-container')||this.closest('.wt-tab-content'); if(!document.fullscreenElement){el.requestFullscreen().catch(e=>console.log(e))}else{document.exitFullscreen()}\">
-              <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3'></path></svg>
+            <div style='background-color: rgba(255, 255, 255, 0.95); width: clamp(24px, 4vmin, 32px); height: clamp(24px, 4vmin, 32px); border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;' title='", t$fullscreen, "' onmouseover=\"this.style.backgroundColor='#f5f5f5'\" onmouseout=\"this.style.backgroundColor='rgba(255, 255, 255, 0.95)'\" onclick=\"var el=this.closest('.wt-tab-container')||this.closest('.wt-tab-content'); if(!document.fullscreenElement){el.requestFullscreen().catch(e=>console.log(e))}else{document.exitFullscreen()}\">
+              <svg width='60%' height='60%' viewBox='0 0 24 24' fill='none' stroke='#333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3'></path></svg>
             </div>
           </div>
           
@@ -280,7 +327,7 @@ widget_centrality <- function(x, lang = "en", ...) {
     " style='width:100%; max-width:400px; padding:8px 12px; border:1px solid #ddd;",
     " border-radius:6px; font-size:13px; outline:none; font-family:Inter,Roboto,sans-serif;'>",
     "</div>",
-    "<div style='flex:1; overflow:auto; padding:0 70px 60px 20px;'>",
+    "<div style='flex:1; overflow:auto; padding:0 clamp(16px, 10vw, 70px) 60px 20px;'>",
     "<table id='wct_table' style='width:100%; border-collapse:collapse; font-size:13px;'>",
     "<thead><tr style='background:#f8f9fa; border-bottom:2px solid #8cc63f;'>",
     header_cells,
@@ -352,6 +399,7 @@ widget_centrality <- function(x, lang = "en", ...) {
     #wct_table tbody td { padding:9px 14px; color:#333; }
     #wct_search:focus { border-color:#8cc63f !important; box-shadow:0 0 0 2px rgba(140,198,63,0.2); }
   "
+  css <- paste0(css, .wt_responsive_css())
 
   # 5. JS --------------------------------------------------------------------
   js <- sprintf("
@@ -558,23 +606,37 @@ widget_simulation <- function(scn, lang = "en", ...) {
       font-family: 'Inter', 'Roboto', 'Segoe UI', sans-serif;
     }
     #wsim_sidebar {
-      width: 320px;
-      min-width: 320px;
+      width: clamp(180px, 30vw, 320px);
+      min-width: 160px;
+      flex-shrink: 0;
       height: 100%;
       background: #f8f9fa;
       border-right: 1px solid #ddd;
-      padding: 15px;
-      overflow-y: hidden;
+      padding: clamp(8px, 2vw, 15px);
+      overflow-y: auto;
       overflow-x: hidden;
       display: flex;
       flex-direction: column;
     }
     .wsim-main {
       flex: 1;
+      min-width: 0;
       display: flex;
       flex-direction: column;
       height: 100%;
       overflow: hidden;
+    }
+    @media (max-width: 480px) {
+      .wsim-container { flex-direction: column; }
+      #wsim_sidebar {
+        width: 100%;
+        min-width: 0;
+        height: auto;
+        max-height: 45%;
+        border-right: none;
+        border-bottom: 1px solid #ddd;
+      }
+      .wsim-main { flex: 1; min-height: 0; }
     }
     .wsim-tab-header {
       overflow: hidden;
@@ -621,6 +683,7 @@ widget_simulation <- function(scn, lang = "en", ...) {
     }
     .wsim-tab-content .html-widget .js-plotly-plot { height: 100% !important; }
   "
+  css <- paste0(css, .wt_responsive_css())
 
   # 4. JS for tab switching
   js <- "
@@ -831,6 +894,7 @@ widget_implications <- function(x, lang = "en", ...) {
     }
     .wt-tab-content.active { display: flex; flex-direction: column; }
   "
+  css <- paste0(css, .wt_responsive_css())
 
   js <- "
     function openImplicationsTab(evt, tabName) {
@@ -1035,7 +1099,8 @@ widget_adjustment <- function(x, y = NULL, lang = "en", ...) {
     .wt-tab-content { display: none; flex: 1; min-height: 0; position: relative; }
     .wt-tab-content.active { display: flex; }
   "
-  
+  css <- paste0(css, .wt_responsive_css())
+
   js <- "
     function openBienestarTab(evt, tabId) {
       var i, tabcontent, tablinks;
@@ -1203,6 +1268,7 @@ widget_repgrid_biplot <- function(x, lang = "en", ...) {
       border-top: none; flex-grow: 1; height: 0; background-color: #ffffff; border-radius: 0 0 4px 4px; }
     .wrg-tab-content > .html-widget { width: 100% !important; height: 100% !important; flex-grow: 1; }
   "
+  css <- paste0(css, .wt_responsive_css())
 
   js <- "
     function openWrgTab(evt, tabName) {
@@ -1295,7 +1361,7 @@ widget_repgrid_biplot <- function(x, lang = "en", ...) {
       }),
       if (!is.null(settings)) htmltools::HTML(paste0(
         "<div id='wrg_settings_modal' style='position:absolute;",
-        "top:55px;right:10px;left:auto;transform:none;width:90%;max-width:300px;max-height:80vh;overflow-y:auto;box-sizing:border-box;background:#fff;",
+        "top:55px;right:10px;left:auto;transform:none;width:90%;max-width:min(300px, 92vw);max-height:80vh;overflow-y:auto;box-sizing:border-box;background:#fff;",
         "z-index:2000;padding:20px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.2);border:1px solid #eaeaea;display:none;",
         "font-family:Inter,Roboto,sans-serif;'>",
         "<div style='display:flex;justify-content:space-between;align-items:center;",
@@ -1448,7 +1514,7 @@ widget_repgrid_dilemmas <- function(x, lang = "en", ...) {
     kpi(t$n_dilemmas, "wrg_kpi_n", cur$kpi[["n"]]), kpi("PID", "wrg_kpi_pid", cur$kpi[["pid"]]),
     kpi("IID", "wrg_kpi_iid", cur$kpi[["iid"]]), kpi("PICID", "wrg_kpi_picid", cur$kpi[["picid"]]),
     "</div>",
-    "<div style='flex:1;overflow:auto;padding:8px 70px 60px 20px;'>",
+    "<div style='flex:1;overflow:auto;padding:8px clamp(16px, 10vw, 70px) 60px 20px;'>",
     "<table id='wrg_dil_table' style='width:100%;border-collapse:collapse;font-size:13px;'>",
     "<thead><tr style='background:#f8f9fa;border-bottom:2px solid #8cc63f;'>",
     "<th>", t$congruent, "</th><th>", t$discrepant, "</th><th style='text-align:right;'>", t$correlation, "</th>",
@@ -1484,13 +1550,152 @@ widget_repgrid_dilemmas <- function(x, lang = "en", ...) {
       var key = document.getElementById('wrg_dil_mode').value + '|' + r + '|' + (document.getElementById('wrg_dil_only').checked ? 'inv' : 'all');
       var v = WRG_DIL[key]; if (!v) return;
       var el = document.querySelector('#wrg_tab_1 .js-plotly-plot');
-      if (el && window.Plotly) Plotly.react(el, v.fig.data, v.fig.layout, {displayModeBar: false, responsive: true});
+      if (el && window.Plotly) {
+        Plotly.react(el, v.fig.data, v.fig.layout, {displayModeBar: false, responsive: true});
+        el._wrgOrigAnnotations = null; // new data: forget the cached full-length labels
+        wrgFitDilemmaPlot(el);
+      }
       document.getElementById('wrg_dil_tbody').innerHTML = v.rows;
       ['n', 'pid', 'iid', 'picid'].forEach(function(k) { document.getElementById('wrg_kpi_' + k).innerText = v.kpi[k]; });
     }
   ")
 
-  csv_js <- sprintf("
+  # The dilemma plot reserves large fixed pixel margins (see repgrid_dilemmas())
+  # to fit the pole-label annotations either side of the plot. Those margins
+  # don't shrink with the container, so on a narrow GridStack card they can
+  # swallow the whole width and collapse the two marker columns onto each
+  # other. wrgFitDilemmaPlot() re-scales the margins to the plot's actual
+  # rendered width and trims label text with an ellipsis to whatever fits,
+  # measured with canvas so it can never overflow the margin regardless of
+  # font/margin choice. It re-runs on load, on resize (an iframe's own window
+  # fires 'resize' when GridStack changes its size) and after every
+  # Plotly.react() triggered by the settings menu. The full-length label text
+  # is cached once per dataset (el._wrgOrigAnnotations) so enlarging the
+  # widget again always re-expands from the original text instead of
+  # re-trimming an already-shortened string.
+  fit_js <- "
+    function wrgMeasure(text, font) {
+      var c = wrgMeasure._c || (wrgMeasure._c = document.createElement('canvas'));
+      var ctx = c.getContext('2d');
+      ctx.font = font;
+      return ctx.measureText(text).width;
+    }
+    function wrgFitText(text, font, maxWidth) {
+      if (maxWidth <= 0) return '';
+      if (wrgMeasure(text, font) <= maxWidth) return text;
+      var lo = 0, hi = text.length;
+      while (lo < hi) {
+        var mid = Math.ceil((lo + hi) / 2);
+        var candidate = text.slice(0, mid) + '\\u2026';
+        if (wrgMeasure(candidate, font) <= maxWidth) lo = mid; else hi = mid - 1;
+      }
+      return lo === 0 ? '' : text.slice(0, lo) + '\\u2026';
+    }
+    function wrgFitDilemmaPlot(el) {
+      if (!el || !el.layout || !window.Plotly) return;
+      // Base this on the widget's own document width, not el.clientWidth:
+      // the shared responsive CSS already shrinks .html-widget by a fixed
+      // gutter at narrow widths (room for the floating info/export
+      // buttons), and computing margins from that ALREADY-shrunk width
+      // double-counts the gutter, starving the actual plotting area far
+      // below its minimum. Working from the full width and then forcing
+      // el's own rendered width via JS (below) keeps the two independent.
+      var totalW = document.body.clientWidth; if (!totalW) return;
+      if (!el._wrgOrigAnnotations) el._wrgOrigAnnotations = JSON.parse(JSON.stringify(el.layout.annotations || []));
+      var orig = el._wrgOrigAnnotations;
+
+      // Mirror the two breakpoints .wt_responsive_css() uses to reserve
+      // room for the floating info/export buttons, so we know up front how
+      // much of totalW that gutter is already spoken for.
+      var iconGutter = totalW <= 340 ? 38 : (totalW <= 520 ? 46 : 0);
+      var avail = totalW - iconGutter;
+
+      // Reserve a plausible fraction of the width for each side's labels,
+      // but never let the inner plotting area (where the dots/lines live)
+      // drop below a usable minimum - the content area's width always
+      // wins over how much room the margins/labels get, and over the
+      // icon-button gutter if it comes to that.
+      var marginL = Math.min(310, totalW * 0.46);
+      var marginR = Math.min(350, totalW * 0.50);
+      var minInner = 140;
+      if (avail - marginL - marginR < minInner) {
+        var scale = Math.max(0, (avail - minInner) / (marginL + marginR));
+        marginL *= scale; marginR *= scale;
+      }
+      marginL = Math.max(20, marginL); marginR = Math.max(20, marginR);
+      if (avail - marginL - marginR < minInner) {
+        // Margins are already at their floor and it's still not enough:
+        // claim back whatever the icon gutter can spare.
+        iconGutter = Math.max(0, totalW - marginL - minInner - marginR);
+      }
+      // El itself may be narrower than totalW (that same icon-button
+      // gutter, applied via CSS); override it here so the plot always
+      // renders at exactly the width this function just computed.
+      var elWidth = totalW - iconGutter;
+      el.style.setProperty('width', elWidth + 'px', 'important');
+      var w = elWidth;
+      var fontPx = Math.round(Math.max(9, Math.min(12, w / 60)));
+      // Match Plotly's actual annotation font exactly (it falls back to
+      // Verdana here since Open Sans isn't loaded in this iframe, and
+      // Verdana is noticeably wider than a generic sans-serif) - otherwise
+      // this measurement under-estimates the rendered width and the text
+      // spills past its budget into the marker next to it.
+      var font = 'bold ' + fontPx + 'px \"Open Sans\", verdana, arial, sans-serif';
+      var xshiftPad = 20, safety = 26;
+
+      var anns = orig.map(function(a) {
+        var b = Object.assign({}, a);
+        if (a.xanchor) {
+          var m = /^<b>([\\s\\S]*?)<\\/b> - ([\\s\\S]*)$/.exec(a.text);
+          var budget = (a.xanchor === 'right' ? marginL : marginR) - xshiftPad - safety;
+          if (m) {
+            var full = m[1] + ' - ' + m[2];
+            var fitted = wrgFitText(full, font, budget);
+            var sep = fitted.indexOf(' - ');
+            b.text = sep >= 0 ? ('<b>' + fitted.slice(0, sep) + '</b>' + fitted.slice(sep)) : ('<b>' + fitted + '</b>');
+          }
+          b.font = Object.assign({}, a.font, {size: fontPx});
+        } else if (a.bgcolor) {
+          b.font = Object.assign({}, a.font, {size: Math.max(9, fontPx - 1)});
+        }
+        return b;
+      });
+      Plotly.relayout(el, {'margin.l': marginL, 'margin.r': marginR, annotations: anns});
+
+      // Marker size follows the same scale as the label font so the dots
+      // stay visually in proportion as the widget shrinks or grows; the
+      // two marker traces (discrepant, congruent) are always the last two
+      // in el.data, after one line trace per dilemma.
+      var markerSize = Math.max(6, Math.min(11, Math.round(fontPx * 0.9167)));
+      var n = el.data.length;
+      if (n >= 2) Plotly.restyle(el, {'marker.size': markerSize}, [n - 2, n - 1]);
+    }
+    function wrgDilemmaPlotEl() { return document.querySelector('#wrg_tab_1 .js-plotly-plot'); }
+    window.addEventListener('load', function() {
+      setTimeout(function() { wrgFitDilemmaPlot(wrgDilemmaPlotEl()); }, 50);
+      // Resizing the GridStack card resizes this iframe's CSS box, but that
+      // does NOT fire a native 'resize' event inside the iframe's own
+      // window (only an actual top-level window resize does), and a
+      // ResizeObserver watching document.body from inside this same iframe
+      // was unreliable in testing (it never notified for a resize driven
+      // purely by the parent changing the iframe's box). Polling the
+      // rendered width is cheap and has no such edge cases - it just
+      // re-fits whenever the width actually changed since the last check.
+      var wrgLastWidth = document.body.clientWidth;
+      setInterval(function() {
+        var w = document.body.clientWidth;
+        if (w && w !== wrgLastWidth) {
+          wrgLastWidth = w;
+          wrgFitDilemmaPlot(wrgDilemmaPlotEl());
+        }
+      }, 300);
+    });
+    window.addEventListener('resize', function() {
+      wrgFitDilemmaPlot(wrgDilemmaPlotEl());
+    });
+  "
+
+  csv_js <- paste0(fit_js, sprintf("
     function downloadDilemmasCSV() {
       var rows = [['%s','%s','%s']];
       document.querySelectorAll('#wrg_dil_table tbody tr').forEach(function(r) {
@@ -1500,7 +1705,7 @@ widget_repgrid_dilemmas <- function(x, lang = "en", ...) {
       a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(rows.map(function(r){ return r.join(','); }).join('\\n'));
       a.download = 'RepGrid_Implicative_Dilemmas.csv';
       a.click();
-    }", t$congruent, t$discrepant, t$correlation)
+    }", t$congruent, t$discrepant, t$correlation))
 
   .rg_tabbed_widget(list(plot, htmltools::HTML(table_html)),
                     c(t$dilemma_graph_tab, t$dilemma_table_tab),
@@ -1542,7 +1747,7 @@ widget_repgrid_indices <- function(x, lang = "en") {
     "<th onclick=\"wrgSortTable('%s', %d)\" style='cursor:pointer;user-select:none;%s'>%s <span style='font-size:13px;color:#aaa;'>&#8597;</span></th>",
     tbl, i, if (right) "text-align:right;" else "", label)
   shell <- function(inner) paste0(
-    "<div style='width:100%;height:100%;overflow:auto;padding:16px 70px 60px 20px;box-sizing:border-box;font-family:Inter,Roboto,sans-serif;'>",
+    "<div style='width:100%;height:100%;overflow:auto;padding:16px clamp(16px, 10vw, 70px) 60px 20px;box-sizing:border-box;font-family:Inter,Roboto,sans-serif;'>",
     inner, "</div>")
 
   # Tab 1: global indices, grouped
