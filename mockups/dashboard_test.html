@@ -549,6 +549,13 @@
             from { opacity: 0; transform: translateY(10px); }
             to   { opacity: 1; transform: translateY(0); }
         }
+        @keyframes homeCursorBlink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        #homeTaglineCursor {
+            animation: homeCursorBlink 0.9s step-start infinite;
+        }
         .empty-state-big-icon {
             width: 90px;
             height: 90px;
@@ -822,10 +829,10 @@
             </div>
             <!-- Icons match the main PsychLab app 1:1 (lucide: house / users-round / message-square-text / settings / credit-card / briefcase-business) -->
             <nav class="sidebar-nav">
-                <a href="#" class="nav-item">
+                <a href="#" class="nav-item active" onclick="showHome(); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); this.classList.add('active'); return false;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg> <span class="nav-label">Inicio</span>
                 </a>
-                <a href="#" class="nav-item active" onclick="showPatientsList(); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); this.classList.add('active'); return false;">
+                <a href="#" class="nav-item" onclick="showPatientsList(); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); this.classList.add('active'); return false;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 21a8 8 0 0 0-16 0"></path><circle cx="10" cy="8" r="5"></circle><path d="M22 20c0-3.37-2-6.5-4-8a5 5 0 0 0-.45-8.3"></path></svg> <span class="nav-label">Casos</span>
                 </a>
 
@@ -862,7 +869,7 @@
         <div class="app-main-content">
             
             <!-- PATIENTS VIEW -->
-            <div id="patientsView" style="display: flex; flex-direction: column; width: 100%; height: 100%; background: #fdfdfd; overflow-y: auto;">
+            <div id="patientsView" style="display: none; flex-direction: column; width: 100%; height: 100%; background: #fdfdfd; overflow-y: auto;">
                 <div class="header">
                     <div style="display: flex; align-items: center; gap: 15px;">
                         <button onclick="document.getElementById('appSidebar').classList.toggle('collapsed')" style="background:none; border:none; cursor:pointer; padding:5px; color:#555;">
@@ -1150,6 +1157,66 @@
                 </div> <!-- END FILES MODE WRAPPER -->
 
             </div> <!-- END DASHBOARD VIEW -->
+
+            <!-- HOME VIEW — clinician landing dashboard, configurable with general (non-caso) widgets -->
+            <div id="homeView" style="display: none; flex-direction: column; width: 100%; height: 100%;">
+                <div class="header">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <button onclick="document.getElementById('appSidebar').classList.toggle('collapsed')" style="background:none; border:none; cursor:pointer; padding:5px; color:#555;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16M4 12h16M4 19h16"></path></svg>
+                        </button>
+                        <h1 style="display: flex; align-items: center; gap: 8px; font-size: 18px; margin: 0;">
+                            <span style="color: #333; font-weight: 600;">Inicio</span>
+                        </h1>
+                    </div>
+                    <div class="controls" style="display: flex; gap: 8px;">
+                        <button onclick="document.getElementById('addHomeWidgetModal').style.display='block'" title="Añadir Widget" style="display:flex; align-items:center; justify-content:center; padding:6px; width:28px; height:28px; background:white; color:#555; border:1px solid #ddd; border-radius:6px; cursor:pointer; transition:0.2s;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
+                        <button id="homeEditModeBtn" onclick="toggleEditMode()" title="Modo Edición" style="display:flex; align-items:center; justify-content:center; padding:6px; width:28px; height:28px;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Welcome banner + widget area share ONE continuous gradient (no seam between
+                     them) that fades out toward the bottom, with a faint constructs-network motif
+                     in the banner (nods to the digraph widgets) instead of a flat color block or a
+                     patient-style photo. -->
+                <div style="position:relative; flex:1; min-height:0; display:flex; flex-direction:column; background:
+                    radial-gradient(80% 115% at 100% 0%, #cbe98a 0%, #d9f0a4 25%, #eef8e0 50%, transparent 75%),
+                    linear-gradient(180deg, #ffffff 0%, #fbfdf7 35%, #fdfdfd 65%, #fdfdfd 100%);">
+                    <!-- Full-bleed constructs-network motif behind the whole banner + widget area
+                         (nods to the digraph widgets). Real photo/vector asset (9343.jpg/.eps from
+                         the PsychLab brand folder), tinted by the green gradient underneath via
+                         multiply blending — no extra color filter needed. Flipped horizontally so
+                         its faded side sits behind the logo/title (readable) and the denser side
+                         spreads to the right and down. Widget cards simply sit on top of it. -->
+                    <img src="assets/network-bg-green.png" alt="" aria-hidden="true" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center top; transform:scaleX(-1); pointer-events:none;">
+
+                <div style="position:relative; flex-shrink:0; display:flex; align-items:center; gap:18px; padding:22px 30px 16px;">
+                    <div style="flex:1; min-width:0; position:relative;">
+                        <div style="font-size:13px; font-weight:700; letter-spacing:.13em; text-transform:uppercase; color:#7a9c4a; margin-bottom:5px;">Bienvenido a PsychLab</div>
+                        <div style="font-size:24px; font-weight:800; color:#20301a; letter-spacing:-.02em; line-height:1.2; min-height:1.5em;"><span id="homeTagline"></span><span id="homeTaglineCursor" style="color:#5a9c00; font-weight:400;">|</span></div>
+                    </div>
+
+                    <div style="display:flex; gap:10px; flex-shrink:0; position:relative;">
+                        <span style="display:inline-flex; align-items:center; gap:6px; background:white; color:#5a9c00; padding:7px 14px; border-radius:20px; font-size:12px; font-weight:600; border:1px solid #d3ebb8; white-space:nowrap; box-shadow:0 2px 6px rgba(90,156,0,0.08);">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 21a8 8 0 0 0-16 0"></path><circle cx="10" cy="8" r="5"></circle></svg>
+                            12 casos activos
+                        </span>
+                        <span style="display:inline-flex; align-items:center; gap:6px; background:white; color:#c9820f; padding:7px 14px; border-radius:20px; font-size:12px; font-weight:600; border:1px solid #f6dfb0; white-space:nowrap; box-shadow:0 2px 6px rgba(201,130,15,0.08);">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            6 evaluaciones pendientes
+                        </span>
+                    </div>
+                </div>
+
+                <div style="flex: 1; min-height: 0; overflow-y: auto;">
+                    <div class="grid-stack" id="homeGrid"></div>
+                </div>
+                </div> <!-- END shared gradient wrapper -->
+            </div> <!-- END HOME VIEW -->
     </div>
         </div> <!-- End app-main-content -->
     </div> <!-- End app-layout -->
@@ -1450,6 +1517,81 @@
         </div>
     </div>
 
+    <!-- Add Home Widget Modal — general widgets catalog for the clinician's Inicio dashboard -->
+    <div id="addHomeWidgetModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:30px; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.2); z-index:10000; width:500px; max-height:80vh; overflow-y:auto; font-family:Inter, sans-serif;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <div>
+                <h3 style="margin: 0; color:#333; font-size:20px;">Añadir Widget</h3>
+                <span style="font-size:13px; color:#777;">Widgets generales para tu panel de Inicio</span>
+            </div>
+            <button onclick="document.getElementById('addHomeWidgetModal').style.display='none'" style="background:none; border:none; color:#888; cursor:pointer; padding:0; display:flex; align-items:center;" onmouseover="this.style.color='#333'" onmouseout="this.style.color='#888'" title="Cerrar">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:12px;">
+            <div class="wcard" onclick="addHomeWidgetAndClose('stats')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#7ccf00'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
+                <div style="background:#f0f7e6; color:#7ccf00; padding:10px; border-radius:8px; flex-shrink:0;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                </div>
+                <div style="flex-grow:1;">
+                    <h4 style="margin:0 0 4px; font-size:15px; color:#333;">Resumen de casos</h4>
+                    <p style="margin:0; font-size:13px; color:#666; line-height:1.4;">Cifras rápidas: casos activos, en pausa y altas recientes.</p>
+                </div>
+            </div>
+
+            <div class="wcard" onclick="addHomeWidgetAndClose('pending')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#7ccf00'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
+                <div style="background:#fff8ec; color:#c9820f; padding:10px; border-radius:8px; flex-shrink:0;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                </div>
+                <div style="flex-grow:1;">
+                    <h4 style="margin:0 0 4px; font-size:15px; color:#333;">Evaluaciones pendientes de revisión</h4>
+                    <p style="margin:0; font-size:13px; color:#666; line-height:1.4;">Registros que tus casos han completado y esperan tu revisión.</p>
+                </div>
+            </div>
+
+            <div class="wcard" onclick="addHomeWidgetAndClose('activity')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#7ccf00'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
+                <div style="background:#eff6ff; color:#1d4ed8; padding:10px; border-radius:8px; flex-shrink:0;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                </div>
+                <div style="flex-grow:1;">
+                    <h4 style="margin:0 0 4px; font-size:15px; color:#333;">Actividad reciente</h4>
+                    <p style="margin:0; font-size:13px; color:#666; line-height:1.4;">Últimas acciones en tus casos: registros completados, paneles compartidos, notas.</p>
+                </div>
+            </div>
+
+            <div class="wcard" onclick="addHomeWidgetAndClose('appointments')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#7ccf00'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
+                <div style="background:#f4f0fb; color:#7c5cbf; padding:10px; border-radius:8px; flex-shrink:0;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                </div>
+                <div style="flex-grow:1;">
+                    <h4 style="margin:0 0 4px; font-size:15px; color:#333;">Próximas citas</h4>
+                    <p style="margin:0; font-size:13px; color:#666; line-height:1.4;">Agenda de sesiones programadas para los próximos días.</p>
+                </div>
+            </div>
+
+            <div class="wcard" onclick="addHomeWidgetAndClose('quicklinks')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#7ccf00'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
+                <div style="background:#f0f0f0; color:#555; padding:10px; border-radius:8px; flex-shrink:0;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect></svg>
+                </div>
+                <div style="flex-grow:1;">
+                    <h4 style="margin:0 0 4px; font-size:15px; color:#333;">Accesos rápidos</h4>
+                    <p style="margin:0; font-size:13px; color:#666; line-height:1.4;">Botones directos para las acciones más frecuentes.</p>
+                </div>
+            </div>
+
+            <div class="wcard" onclick="addHomeWidgetAndClose('notes')" style="display:flex; align-items:flex-start; gap:15px; padding:15px; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#7ccf00'; this.style.background='#fbfdf9';" onmouseout="this.style.borderColor='#eaeaea'; this.style.background='white';">
+                <div style="background:#fef3c7; color:#d97706; padding:10px; border-radius:8px; flex-shrink:0;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"></path></svg>
+                </div>
+                <div style="flex-grow:1;">
+                    <h4 style="margin:0 0 4px; font-size:15px; color:#333;">Notas rápidas</h4>
+                    <p style="margin:0; font-size:13px; color:#666; line-height:1.4;">Un espacio libre para recordatorios y anotaciones del día a día.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- New Patient Modal -->
     <div id="newPatientModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:25px; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.2); z-index:9999; width:500px; font-family:Inter, sans-serif;">
         <h3 style="margin-top:0; color:#333; font-size:18px; margin-bottom: 20px;">Crear Nuevo Caso</h3>
@@ -1580,6 +1722,10 @@
         let tabCount = 0;
         let activeTabId = null;
         const grids = {};
+
+        // Inicio dashboard — separate GridStack instance, general (non-caso) widgets
+        let homeGrid = null;
+        let homeWidgetCount = 0;
 
 
 
@@ -1921,20 +2067,21 @@
         // Function to toggle edit mode
         function toggleEditMode() {
             isEditMode = !isEditMode;
-            const btn = document.getElementById('editModeBtn');
-            
+            const btns = [document.getElementById('editModeBtn'), document.getElementById('homeEditModeBtn')];
+
             if (isEditMode) {
                 document.body.classList.add('edit-mode');
-                btn.classList.add('active');
+                btns.forEach(b => b && b.classList.add('active'));
             } else {
                 document.body.classList.remove('edit-mode');
-                btn.classList.remove('active');
+                btns.forEach(b => b && b.classList.remove('active'));
             }
 
-            // Update ALL grid instances
+            // Update ALL grid instances (per-caso dashboards + the Inicio dashboard)
             Object.values(grids).forEach(gridInstance => {
                 gridInstance.setStatic(!isEditMode);
             });
+            if (homeGrid) homeGrid.setStatic(!isEditMode);
         }
 
         function filterWidgetCards() {
@@ -2331,6 +2478,160 @@
             }
         }
 
+        // ---------- Inicio dashboard — general widgets, own GridStack instance ----------
+        function initHomeGrid() {
+            if (homeGrid) return;
+            homeGrid = GridStack.init({
+                cellHeight: rowHeight + 'px',
+                margin: 8,
+                handle: '.edit-overlay',
+                float: true,
+                disableOneColumnMode: true,
+                resizable: { handles: 'e, se, s, sw, w, n, nw, ne' },
+                staticGrid: !isEditMode
+            }, document.getElementById('homeGrid'));
+
+            // A sensible default layout so Inicio isn't empty on first visit
+            ['stats', 'pending', 'quicklinks', 'activity'].forEach(type => addHomeWidget(type));
+        }
+
+        // Inner HTML + default size for each general widget type. Content is representative
+        // (static mock data), same as the rest of this prototype.
+        function homeWidgetInner(type) {
+            if (type === 'stats') return { w: 4, h: 3, title: 'Resumen de casos', html: `
+                <div style="display:flex; height:100%; gap:12px; padding:16px;">
+                    <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#f0f7e6; border-radius:8px; gap:4px;">
+                        <div style="font-size:26px; font-weight:700; color:#5a9c00;">12</div>
+                        <div style="font-size:11px; color:#66992b; font-weight:600; text-transform:uppercase; letter-spacing:.04em;">Activos</div>
+                    </div>
+                    <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#fff8ec; border-radius:8px; gap:4px;">
+                        <div style="font-size:26px; font-weight:700; color:#c9820f;">3</div>
+                        <div style="font-size:11px; color:#c9820f; font-weight:600; text-transform:uppercase; letter-spacing:.04em;">En pausa</div>
+                    </div>
+                    <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#eff6ff; border-radius:8px; gap:4px;">
+                        <div style="font-size:26px; font-weight:700; color:#1d4ed8;">2</div>
+                        <div style="font-size:11px; color:#1d4ed8; font-weight:600; text-transform:uppercase; letter-spacing:.04em;">Altas (mes)</div>
+                    </div>
+                </div>
+            `};
+            if (type === 'pending') return { w: 4, h: 5, title: 'Evaluaciones pendientes de revisión', html: `
+                <div style="display:flex; flex-direction:column; height:100%; overflow-y:auto; padding:8px 16px;">
+                    ${[
+                        ['Caso SU', 'Rejilla de constructos — sesión 3', 'Hoy'],
+                        ['Caso MR', 'Cuestionario de ajuste — seguimiento', 'Ayer'],
+                        ['Caso LA', 'Rejilla de bienestar — mes 2', 'Hace 2 días'],
+                        ['Caso PT', 'Cuestionario de dilemas', 'Hace 3 días']
+                    ].map(([name, item, when]) => `
+                        <div style="display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #f0f0f0;">
+                            <div style="flex:1; min-width:0;">
+                                <div style="font-size:13px; font-weight:600; color:#333; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item}</div>
+                                <div style="font-size:11.5px; color:#999;">${name} · ${when}</div>
+                            </div>
+                            <button onclick="event.stopPropagation(); alert('Mock: abriría la revisión de ${item} (${name}).')" style="background:#7ccf00; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:600; flex-shrink:0;">Revisar</button>
+                        </div>
+                    `).join('')}
+                </div>
+            `};
+            if (type === 'activity') return { w: 4, h: 5, title: 'Actividad reciente', html: `
+                <div style="display:flex; flex-direction:column; height:100%; overflow-y:auto; padding:8px 16px; gap:14px;">
+                    ${[
+                        ['#7ccf00', 'Caso SU completó "Rejilla de bienestar — mes 2"', 'Hoy, 10:14'],
+                        ['#1d4ed8', 'Compartiste el panel "Seguimiento semanal" con Caso MR', 'Ayer, 17:40'],
+                        ['#c9820f', 'Caso LA dejó pendiente "Cuestionario de ajuste"', 'Ayer, 09:02'],
+                        ['#7c5cbf', 'Añadiste una nota clínica al Caso PT', 'Hace 3 días']
+                    ].map(([color, text, when]) => `
+                        <div style="display:flex; gap:10px; align-items:flex-start;">
+                            <span style="width:8px; height:8px; border-radius:50%; background:${color}; margin-top:5px; flex-shrink:0;"></span>
+                            <div style="flex:1; min-width:0;">
+                                <div style="font-size:13px; color:#333; line-height:1.4;">${text}</div>
+                                <div style="font-size:11px; color:#999; margin-top:2px;">${when}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `};
+            if (type === 'appointments') return { w: 4, h: 5, title: 'Próximas citas', html: `
+                <div style="display:flex; flex-direction:column; height:100%; overflow-y:auto; padding:8px 16px;">
+                    ${[
+                        ['Caso SU', 'Mañana · 10:00'],
+                        ['Caso MR', 'Mañana · 12:30'],
+                        ['Caso LA', 'Jueves · 09:00'],
+                        ['Caso PT', 'Viernes · 16:00']
+                    ].map(([name, when]) => `
+                        <div style="display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #f0f0f0;">
+                            <div style="background:#f4f0fb; color:#7c5cbf; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            </div>
+                            <div style="flex:1; min-width:0;">
+                                <div style="font-size:13px; font-weight:600; color:#333;">${name}</div>
+                                <div style="font-size:11.5px; color:#999;">${when}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `};
+            if (type === 'quicklinks') return { w: 4, h: 3, title: 'Accesos rápidos', html: `
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; height:100%; padding:16px;">
+                    <button onclick="showPatientsList(); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); Array.from(document.querySelectorAll('.nav-item')).find(el=>el.textContent.includes('Casos')).classList.add('active');" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background:#fafafa; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; color:#555; transition:0.2s;" onmouseover="this.style.borderColor='#7ccf00'" onmouseout="this.style.borderColor='#eaeaea'">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Nuevo caso
+                    </button>
+                    <button onclick="alert('Mock: abriría el flujo de nueva evaluación.')" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background:#fafafa; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; color:#555; transition:0.2s;" onmouseover="this.style.borderColor='#7ccf00'" onmouseout="this.style.borderColor='#eaeaea'">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                        Nueva evaluación
+                    </button>
+                    <button onclick="showPatientsList(); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); Array.from(document.querySelectorAll('.nav-item')).find(el=>el.textContent.includes('Casos')).classList.add('active');" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background:#fafafa; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; color:#555; transition:0.2s;" onmouseover="this.style.borderColor='#7ccf00'" onmouseout="this.style.borderColor='#eaeaea'">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                        Ver casos
+                    </button>
+                    <button onclick="alert('Mock: abriría Configuración.')" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background:#fafafa; border:1px solid #eaeaea; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; color:#555; transition:0.2s;" onmouseover="this.style.borderColor='#7ccf00'" onmouseout="this.style.borderColor='#eaeaea'">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        Configuración
+                    </button>
+                </div>
+            `};
+            if (type === 'notes') return { w: 4, h: 3, title: 'Notas rápidas', html: `
+                <div style="height:100%; padding:16px;">
+                    <textarea placeholder="Escribe un recordatorio..." style="width:100%; height:100%; resize:none; border:1px solid #eaeaea; border-radius:8px; padding:10px; font-family:inherit; font-size:13px; color:#333; outline:none; box-sizing:border-box;" onfocus="this.style.borderColor='#7ccf00'" onblur="this.style.borderColor='#eaeaea'"></textarea>
+                </div>
+            `};
+            return { w: 4, h: 3, title: 'Widget', html: '' };
+        }
+
+        function addHomeWidget(type) {
+            homeWidgetCount++;
+            const id = 'homewidget_' + homeWidgetCount;
+            const { w, h, title, html } = homeWidgetInner(type);
+
+            const widgetHTML = `
+                <div class="grid-stack-item" id="${id}" gs-w="${w}" gs-h="${h}">
+                    <div class="grid-stack-item-content">
+                        <div class="edit-overlay">
+                            <div class="drag-hint">✥ Arrastrar</div>
+                            <button class="delete-btn" onclick="removeHomeWidget('${id}')" title="Borrar">✖</button>
+                        </div>
+                        <div style="display:flex; flex-direction:column; width:100%; height:100%; background:white;">
+                            <div style="padding:12px 16px; border-bottom:1px solid #eee; font-size:13px; font-weight:600; color:#333; flex-shrink:0;">${title}</div>
+                            <div style="flex:1; min-height:0;">${html}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            homeGrid.addWidget(widgetHTML);
+        }
+
+        function addHomeWidgetAndClose(type) {
+            addHomeWidget(type);
+            document.getElementById('addHomeWidgetModal').style.display = 'none';
+        }
+
+        function removeHomeWidget(id) {
+            let el = document.getElementById(id);
+            if (el && homeGrid) {
+                homeGrid.removeWidget(el);
+            }
+        }
+
         // Handle window resize to dynamically adjust widget heights to fit screen
         window.addEventListener('resize', function() {
             const newRowHeight = Math.floor((window.innerHeight - 180) / 10);
@@ -2339,12 +2640,86 @@
                     gridInstance.cellHeight(newRowHeight + 'px');
                 }
             });
+            if (homeGrid && typeof homeGrid.cellHeight === 'function') {
+                homeGrid.cellHeight(newRowHeight + 'px');
+            }
         });
 
         // SPA Routing logic
         function showPatientsList() {
             document.getElementById('patientsView').style.display = 'flex';
             document.getElementById('dashboardView').style.display = 'none';
+            document.getElementById('homeView').style.display = 'none';
+        }
+
+        function showHome() {
+            document.getElementById('patientsView').style.display = 'none';
+            document.getElementById('dashboardView').style.display = 'none';
+            document.getElementById('homeView').style.display = 'flex';
+
+            initHomeGrid();
+            startHomeTagline();
+            window.dispatchEvent(new Event('resize'));
+        }
+
+        // ---------- Rotating headline, typewriter-style (same spirit as the old
+        // psychlab.uned.es landing tagline). Whole sentences, not a fill-in-the-blank
+        // template — full original greetings, the way Claude varies its own opening
+        // line. Starts on a random one each time this page loads ("cada vez que
+        // inicias sesión") and keeps cycling every few seconds while Inicio is open. ----------
+        const homeTaglines = [
+            'Bienvenido a tu laboratorio del cambio psicológico.',
+            'Cada constructo cuenta una historia. Vamos a escucharla.',
+            'Donde la mente se convierte en mapa.',
+            'El cambio empieza por entenderse a uno mismo.',
+            'Ciencia y cuidado, en el mismo espacio.',
+            'Aquí la psicología se convierte en datos, y los datos en cambio.',
+            'Antes de intervenir, comprender: cada persona es un sistema único.',
+            'Ningún sistema de significados es igual a otro. Así lo exploramos.',
+            'La estructura de la mente, hecha visible.',
+            'Un laboratorio para las preguntas que importan.',
+            'Cada constructo, una ventana a cómo ve el mundo tu paciente.',
+            'Un espacio donde la ciencia se pone al servicio de cada historia.',
+            'Rigor científico, mirada humana.',
+            'Aquí el cambio se piensa antes de suceder.'
+        ];
+        let homeTaglineStarted = false;
+
+        function startHomeTagline() {
+            if (homeTaglineStarted) return;
+            homeTaglineStarted = true;
+
+            const el = document.getElementById('homeTagline');
+            let idx = Math.floor(Math.random() * homeTaglines.length);
+
+            function typeLoop() {
+                const phrase = homeTaglines[idx];
+                let i = 0;
+                const typing = setInterval(() => {
+                    i++;
+                    el.textContent = phrase.slice(0, i);
+                    if (i >= phrase.length) {
+                        clearInterval(typing);
+                        setTimeout(eraseLoop, 13000);
+                    }
+                }, 45);
+            }
+
+            function eraseLoop() {
+                const phrase = homeTaglines[idx];
+                let i = phrase.length;
+                const erasing = setInterval(() => {
+                    i--;
+                    el.textContent = phrase.slice(0, i);
+                    if (i <= 0) {
+                        clearInterval(erasing);
+                        idx = (idx + 1) % homeTaglines.length;
+                        setTimeout(typeLoop, 700);
+                    }
+                }, 22);
+            }
+
+            typeLoop();
         }
 
         let currentDashboardPatientCard = null;
@@ -2356,8 +2731,9 @@
             }
             
             document.getElementById('patientsView').style.display = 'none';
+            document.getElementById('homeView').style.display = 'none';
             document.getElementById('dashboardView').style.display = 'flex';
-            
+
             // Reset to Dashboard mode (hide files mode)
             document.getElementById('dashboardModeWrapper').style.display = 'flex';
             document.getElementById('filesModeWrapper').style.display = 'none';
@@ -2400,6 +2776,7 @@
 
         window.onload = function() {
             addDashboardTab("Principal");
+            showHome();
         };
         
         // SVG icons for the toggle button
