@@ -57,6 +57,19 @@
        var_exp = var_exp[seq_len(dims)])
 }
 
+# Internal: 8-direction text anchor from a point's angle to the origin, so
+# labels fan out away from their own vector instead of all stacking at a
+# fixed "top center" position. Without this, biplots with many constructs
+# become unreadable label soup as soon as the plot is narrower than ~900px
+# (e.g. a dashboard widget card on a 1080p screen or smaller).
+.rg_textpos <- function(x, y) {
+  ang <- (atan2(y, x) * 180 / pi + 360) %% 360
+  dirs <- c("middle right", "top right", "top center", "top left",
+            "middle left", "bottom left", "bottom center", "bottom right")
+  idx <- floor(((ang + 22.5) %% 360) / 45) + 1
+  dirs[idx]
+}
+
 # repgrid_biplot ---------------------------------------------------------------
 
 #' RepGrid Biplot - repgrid_biplot()
@@ -142,18 +155,23 @@ repgrid_biplot <- function(x, dim = 2, center = "constructs", g = 0,
         line = list(color = col_l[i], dash = "dot", width = 1.25)
       )
     }
+    # Fan each label out along its own vector/point angle instead of
+    # stacking every one of them at a fixed "top center" position.
+    pos_r <- .rg_textpos(cs[, 1], cs[, 2])
+    pos_l <- .rg_textpos(-cs[, 1], -cs[, 2])
+    pos_e <- .rg_textpos(el[, 1], el[, 2])
     fig <- fig %>%
       plotly::add_trace(
         x = cs[, 1], y = cs[, 2], type = "scatter", mode = "text", text = lab_r,
-        textposition = "top center", hoverinfo = "none", showlegend = FALSE,
+        textposition = pos_r, hoverinfo = "none", showlegend = FALSE,
         textfont = list(size = 12 * text_size, color = col_r)) %>%
       plotly::add_trace(
         x = -cs[, 1], y = -cs[, 2], type = "scatter", mode = "text", text = lab_l,
-        textposition = "top center", hoverinfo = "none", showlegend = FALSE,
+        textposition = pos_l, hoverinfo = "none", showlegend = FALSE,
         textfont = list(size = 12 * text_size, color = col_l)) %>%
       plotly::add_trace(
         x = el[, 1], y = el[, 2], type = "scatter", mode = "markers+text",
-        text = el_lab, hovertext = rg$elements, textposition = "top center", hoverinfo = "text",
+        text = el_lab, hovertext = rg$elements, textposition = pos_e, hoverinfo = "text",
         marker = list(color = el_col, size = 9),
         textfont = list(size = 15 * text_size, color = el_txt),
         showlegend = FALSE) %>%
@@ -462,9 +480,13 @@ repgrid_dilemmas <- function(x, text_size = 1, only_involved = FALSE, ...) {
           font = list(size = 15, color = "#999999")))))
   }
 
-  # Self pole (left, after alignment) in bold
+  # Self pole (left, after alignment) in bold. Kept short (16 chars) because
+  # the label sits in a fixed-width margin outside the plotting area (see
+  # `margin` below) - a longer truncation needs a wider margin than most
+  # dashboard widget cards have on a 1080p screen or smaller, which cuts the
+  # text off against the left/right edge instead of just wrapping it.
   lab_html <- function(k) {
-    l <- .rg_short(cl$left[k], 22); r <- .rg_short(cl$right[k], 22)
+    l <- .rg_short(cl$left[k], 16); r <- .rg_short(cl$right[k], 16)
     paste0("<b>", l, "</b> - ", r)
   }
   # Both columns hang from the top; any blank space is left at the bottom
@@ -518,7 +540,12 @@ repgrid_dilemmas <- function(x, text_size = 1, only_involved = FALSE, ...) {
     xaxis = list(visible = FALSE, range = c(-0.05, 1.05), fixedrange = TRUE),
     yaxis = list(visible = FALSE, range = c(0.3, max(length(cong), length(disc)) + 0.7),
                  fixedrange = TRUE),
-    margin = list(l = 310, r = 350, t = 20, b = 20),
+    # Was l = 310, r = 350: sized for full-width exports only. On a narrower
+    # widget card (e.g. a dashboard grid cell on a 1080p screen or smaller)
+    # that left almost no room for the actual plot area, cutting the pole
+    # labels off against the edges. Shortened labels above let this shrink
+    # to a still-generous but no longer overflowing margin.
+    margin = list(l = 220, r = 220, t = 20, b = 20),
     annotations = ann, showlegend = FALSE)
 }
 
