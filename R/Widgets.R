@@ -1435,14 +1435,117 @@ widget_repgrid_cluster <- function(x, lang = "en", ...) {
         Plotly.restyle(el, {y: [d.pos]}, [1]);
         Plotly.restyle(el, {x: [d.hx], y: [d.hy], text: [d.hx.map(function(h){ return 'd = ' + h.toFixed(2); })]}, [2]);
         Plotly.relayout(el, {'xaxis.range': [d.hmax * 1.05, -d.hmax * 0.02], 'yaxis.ticktext': d.ticktext});
+        // The label set/order just changed (new dist/method): drop the
+        // cached full-length labels so wrgFitClusterPlot re-derives them
+        // from this new ticktext instead of re-trimming the old one.
+        el._wrgOrigTicktext = null;
+        wrgFitClusterPlot(el);
       });
     }
   ")
 
+  # Labels here are the y-axis's own ticktext (right side, automargin off),
+  # not custom annotations like the dilemmas widget - so instead of
+  # repositioning annotation objects, this shrinks the tick font and
+  # right margin to the widget's real width, and once that's not enough,
+  # truncates the tick strings with an ellipsis (canvas-measured, so it
+  # never overflows). The right margin is sized from the CURRENT labels'
+  # own longest width rather than a fixed guess, so a tab with short
+  # labels (elements) naturally gives the dendrogram far more room than
+  # one with long labels (constructs) - the two tabs are no longer forced
+  # to share the same oversized margin. The dendrogram's own drawing area
+  # (between the two margins) never drops below 200px.
+  fit_js <- "
+    function wrgClMeasure(text, font) {
+      var c = wrgClMeasure._c || (wrgClMeasure._c = document.createElement('canvas'));
+      var ctx = c.getContext('2d');
+      ctx.font = font;
+      return ctx.measureText(text).width;
+    }
+    function wrgClFitText(text, font, maxWidth) {
+      if (maxWidth <= 0) return '';
+      if (wrgClMeasure(text, font) <= maxWidth) return text;
+      var lo = 0, hi = text.length;
+      while (lo < hi) {
+        var mid = Math.ceil((lo + hi) / 2);
+        var candidate = text.slice(0, mid) + '\\u2026';
+        if (wrgClMeasure(candidate, font) <= maxWidth) lo = mid; else hi = mid - 1;
+      }
+      return lo === 0 ? '' : text.slice(0, lo) + '\\u2026';
+    }
+    function wrgClPlain(html) { return String(html).replace(/<[^>]*>/g, ''); }
+
+    function wrgFitClusterPlot(el) {
+      if (!el || !el.layout || !window.Plotly) return;
+      var totalW = document.body.clientWidth; if (!totalW) return;
+      if (!el._wrgOrigTicktext) el._wrgOrigTicktext = (el.layout.yaxis.ticktext || []).slice();
+      var orig = el._wrgOrigTicktext;
+
+      var iconGutter = totalW <= 340 ? 38 : (totalW <= 520 ? 46 : 0);
+      var avail = totalW - iconGutter;
+      var marginL = 40;
+      var minInner = 200;
+      var fontPx = Math.round(Math.max(9, Math.min(12, totalW / 60)));
+      var font = 'bold ' + fontPx + 'px \"Open Sans\", verdana, arial, sans-serif';
+
+      var longest = 0;
+      orig.forEach(function(txt) {
+        var w2 = wrgClMeasure(wrgClPlain(txt), font);
+        if (w2 > longest) longest = w2;
+      });
+      var marginR = Math.min(330, longest + 24);
+      if (avail - marginL - marginR < minInner) {
+        marginR = Math.max(30, avail - marginL - minInner);
+      }
+      if (avail - marginL - marginR < minInner) {
+        // Margin is already at its floor and it's still not enough: claim
+        // back whatever the icon gutter can spare.
+        iconGutter = Math.max(0, totalW - marginL - minInner - marginR);
+        avail = totalW - iconGutter;
+      }
+      var elWidth = totalW - iconGutter;
+      el.style.setProperty('width', elWidth + 'px', 'important');
+
+      var budget = marginR - 16;
+      var newTicktext = orig.map(function(txt) {
+        var plain = wrgClPlain(txt);
+        if (wrgClMeasure(plain, font) <= budget) return txt;
+        // Doesn't fit even at this font size: fall back to the plain,
+        // truncated text (losing the bold/colour styling only in that case).
+        return wrgClFitText(plain, font, budget);
+      });
+
+      Plotly.relayout(el, {
+        'yaxis.ticktext': newTicktext,
+        'yaxis.tickfont.size': fontPx,
+        'margin.l': marginL,
+        'margin.r': marginR
+      });
+    }
+    function wrgClusterPlotEls() {
+      return [document.querySelector('#wrg_tab_1 .js-plotly-plot'), document.querySelector('#wrg_tab_2 .js-plotly-plot')];
+    }
+    window.addEventListener('load', function() {
+      setTimeout(function() { wrgClusterPlotEls().forEach(wrgFitClusterPlot); }, 50);
+      var wrgClLastWidth = document.body.clientWidth;
+      setInterval(function() {
+        var w = document.body.clientWidth;
+        if (w && w !== wrgClLastWidth) {
+          wrgClLastWidth = w;
+          wrgClusterPlotEls().forEach(wrgFitClusterPlot);
+        }
+      }, 300);
+    });
+    window.addEventListener('resize', function() {
+      wrgClusterPlotEls().forEach(wrgFitClusterPlot);
+    });
+  "
+
   .rg_tabbed_widget(plots, c(t$cluster_constructs_tab, t$cluster_elements_tab),
                     c("RepGrid_Cluster_Constructs", "RepGrid_Cluster_Elements"),
                     t$info_text_cluster, t,
-                    settings = list(html = html, js = js))
+                    settings = list(html = html, js = js),
+                    extra_js = fit_js)
 }
 
 
