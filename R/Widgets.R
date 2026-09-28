@@ -4,6 +4,19 @@
 # window - shrinking the GridStack card shrinks these exactly like a container
 # query would, without needing @container support.
 .wt_responsive_css <- function() "
+  .wt-float-btns {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+  }
+  .wt-tab-content:hover .wt-float-btns,
+  .wct-tab-content:hover .wt-float-btns,
+  .wsim-tab-content:hover .wt-float-btns,
+  .wrg-tab-content:hover .wt-float-btns,
+  .wt-float-btns:focus-within {
+    opacity: 1;
+    pointer-events: auto;
+  }
   .wt-tab-header button, .wct-tab-header button, .wsim-tab-btn, .wrg-tab-header button, .wt-tab-btn {
     white-space: nowrap;
     overflow: hidden;
@@ -226,7 +239,7 @@ widget_digraph <- function(x, lang = "en", ...) {
       htmltools::tags$div(id = "psychlab_tab_heatmap", class = "wt-tab-content", 
         h,
         htmltools::HTML(paste0("
-          <div id='hm_btn_container' style='position:absolute;bottom:15px;right:15px;display:flex;flex-direction:column;gap:8px;z-index:1000;align-items:center;'>
+          <div id='hm_btn_container' class='wt-float-btns' style='position:absolute;bottom:15px;right:15px;display:flex;flex-direction:column;gap:8px;z-index:1000;align-items:center;'>
             <div style='background-color: rgba(255, 255, 255, 0.95); width: clamp(24px, 4vmin, 32px); height: clamp(24px, 4vmin, 32px); border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;' title='", t$info, "' onmouseover=\"this.style.backgroundColor='#f5f5f5'\" onmouseout=\"this.style.backgroundColor='rgba(255, 255, 255, 0.95)'\" onclick=\"var m=document.getElementById('heatmap_info_modal'); m.style.display=(m.style.display==='block'?'none':'block');\">
               <svg width='60%' height='60%' viewBox='0 0 24 24' fill='none' stroke='#333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'></circle><line x1='12' y1='16' x2='12' y2='12'></line><line x1='12' y1='8' x2='12.01' y2='8'></line></svg>
             </div>
@@ -530,7 +543,7 @@ widget_centrality <- function(x, lang = "en", ...) {
         style = "display:flex; flex-direction:column;",
         pb_p,
         .modal("pb_info_modal", t$pb_plot_tab, t$info_text_pb),
-        htmltools::HTML("<div style='position:absolute;bottom:15px;right:15px;z-index:1000;display:flex;flex-direction:column;gap:8px;align-items:center;'>"),
+        htmltools::HTML("<div class='wt-float-btns' style='position:absolute;bottom:15px;right:15px;z-index:1000;display:flex;flex-direction:column;gap:8px;align-items:center;'>"),
         .btn(0, t$info,       "var m=document.getElementById('pb_info_modal'); m.style.display=(m.style.display==='block'?'none':'block');", svg_i),
         .btn(0, t$export_png, "downloadPBPlot()",                                                svg_dl),
         .btn(0, t$fullscreen, fs_onclick,                                                        svg_fs),
@@ -541,7 +554,7 @@ widget_centrality <- function(x, lang = "en", ...) {
       htmltools::tags$div(id = "wct_tab_table", class = "wct-tab-content",
         htmltools::HTML(table_html),
         .modal("ct_info_modal", t$centrality_tab, t$info_text_centrality),
-        htmltools::HTML("<div style='position:absolute;bottom:15px;right:15px;z-index:1000;display:flex;flex-direction:column;gap:8px;align-items:center;'>"),
+        htmltools::HTML("<div class='wt-float-btns' style='position:absolute;bottom:15px;right:15px;z-index:1000;display:flex;flex-direction:column;gap:8px;align-items:center;'>"),
         .btn(0, t$info,       "var m=document.getElementById('ct_info_modal'); m.style.display=(m.style.display==='block'?'none':'block');", svg_i),
         .btn(0, t$export_png, "downloadCentralityCSV()",                                         svg_dl),
         .btn(0, t$fullscreen, fs_onclick,                                                        svg_fs),
@@ -788,7 +801,7 @@ widget_simulation <- function(scn, lang = "en", ...) {
         htmltools::tags$div(id = "wsim_tab_pcsd", class = "wsim-tab-content",
           style = "position:relative;",
           htmltools::tags$div(id = "wsim_pcsd_plot", style = "flex:1; width:100%; height:100%; position:relative;", plotly_plot),
-          htmltools::HTML("<div style='position:absolute;bottom:15px;right:15px;z-index:1000;display:flex;flex-direction:column;gap:8px;align-items:center;'>"),
+          htmltools::HTML("<div class='wt-float-btns' style='position:absolute;bottom:15px;right:15px;z-index:1000;display:flex;flex-direction:column;gap:8px;align-items:center;'>"),
           .btn(0, t$download_img, "downloadSimPcsd()", "<path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'></path><polyline points='7 10 12 15 17 10'></polyline><line x1='12' y1='15' x2='12' y2='3'></line>"),
           .btn(0, t$info, "var m=document.getElementById('wsim_info_pcsd'); m.style.display=(m.style.display==='block'?'none':'block');", "<circle cx='12' cy='12' r='10'></circle><line x1='12' y1='16' x2='12' y2='12'></line><line x1='12' y1='8' x2='12.01' y2='8'></line>"),
           .btn(0, t$fullscreen, fs_onclick, svg_fs),
@@ -955,7 +968,7 @@ widget_implications <- function(x, lang = "en", ...) {
   
   gen_buttons <- function(tab_id) {
     htmltools::HTML(paste0(
-      "<div style='position:absolute;bottom:15px;right:15px;z-index:1000;display:flex;flex-direction:column;gap:8px;align-items:center;'>",
+      "<div class='wt-float-btns' style='position:absolute;bottom:15px;right:15px;z-index:1000;display:flex;flex-direction:column;gap:8px;align-items:center;'>",
       .btn(t$info, paste0("var m=document.getElementById('", tab_id, "_info_modal'); m.style.display=(m.style.display==='block'?'none':'block');"), svg_info),
       .btn(t$hm_settings, paste0("var m=document.getElementById('", tab_id, "_settings_modal'); m.style.display=(m.style.display==='block'?'none':'block');"), svg_set),
       .btn(t$export_png, paste0("downloadImplPlot('", tab_id, "', '", tab_id, "_Export');"), svg_down),
@@ -1063,12 +1076,12 @@ widget_adjustment <- function(x, y = NULL, lang = "en", ...) {
   tab2_id <- "bienestar_tab2"
 
   if (is.null(y)) {
-    plot1 <- self_plot(x, ...)
+    plot1 <- self_plot(x, ..., legend = FALSE)
     plot2 <- ssi_heatmap(x, ...)
     tab1_title <- if(lang=="es") "Análisis del Self" else "Self Analysis"
     tab2_title <- if(lang=="es") "Estructura SSI" else "SSI Structure"
   } else {
-    plot1 <- monitoring_self(x, y, ...)
+    plot1 <- monitoring_self(x, y, ..., legend = FALSE)
     plot2 <- monitoring_ssi(x, y, ...)
     tab1_title <- if(lang=="es") "Monitorización del Self" else "Self Monitoring"
     tab2_title <- if(lang=="es") "Monitorización SSI" else "SSI Monitoring"
@@ -1077,6 +1090,7 @@ widget_adjustment <- function(x, y = NULL, lang = "en", ...) {
   # Ensure plots occupy full container (plotly standard)
   if (inherits(plot1, "plotly")) {
     plot1 <- plotly::layout(plot1, autosize = TRUE)
+    plot1 <- plotly::config(plot1, displayModeBar = FALSE)
     plot1$sizingPolicy$defaultHeight <- "100%"
     plot1$sizingPolicy$defaultWidth <- "100%"
     plot1$height <- "100%"
@@ -1084,6 +1098,7 @@ widget_adjustment <- function(x, y = NULL, lang = "en", ...) {
   }
   if (inherits(plot2, "plotly")) {
     plot2 <- plotly::layout(plot2, autosize = TRUE)
+    plot2 <- plotly::config(plot2, displayModeBar = FALSE)
     plot2$sizingPolicy$defaultHeight <- "100%"
     plot2$sizingPolicy$defaultWidth <- "100%"
     plot2$height <- "100%"
@@ -1091,9 +1106,10 @@ widget_adjustment <- function(x, y = NULL, lang = "en", ...) {
   }
   
   css <- "
-    .wt-tab-container { width: 100%; height: 100vh; display: flex; flex-direction: column; font-family: 'Inter', Roboto, sans-serif; background: #fafafa; }
-    .wt-tab-header { display: flex; background: #fff; border-bottom: 2px solid #eaeaea; padding: 0 10px; flex-shrink: 0; }
-    .wt-tab-btn { background: none; border: none; padding: 14px 20px; cursor: pointer; font-size: 14px; font-weight: 600; color: #888; border-bottom: 3px solid transparent; transition: all 0.2s; }
+    body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
+    .wt-tab-container { width: 100%; height: 100%; display: flex; flex-direction: column; font-family: 'Inter', Roboto, sans-serif; background: #fafafa; }
+    .wt-tab-header { display: flex; background: #fff; border-bottom: 2px solid #eaeaea; flex-shrink: 0; }
+    .wt-tab-btn { flex-grow: 1; background: none; border: none; padding: 14px 20px; cursor: pointer; font-size: 14px; font-weight: 600; color: #888; border-bottom: 3px solid transparent; transition: all 0.2s; }
     .wt-tab-btn:hover { color: #333; }
     .wt-tab-btn.active { color: #8cc63f; border-bottom-color: #8cc63f; }
     .wt-tab-content { display: none; flex: 1; min-height: 0; position: relative; }
@@ -1157,7 +1173,7 @@ widget_adjustment <- function(x, y = NULL, lang = "en", ...) {
   
   gen_buttons <- function(tab_id) {
     htmltools::HTML(paste0(
-      "<div style='position:absolute;bottom:15px;right:15px;z-index:1000;display:flex;flex-direction:column;gap:8px;align-items:center;'>",
+      "<div class='wt-float-btns' style='position:absolute;bottom:15px;right:15px;z-index:1000;display:flex;flex-direction:column;gap:8px;align-items:center;'>",
       .btn(t$info, paste0("var m=document.getElementById('", tab_id, "_info_modal'); m.style.display=(m.style.display==='block'?'none':'block');"), svg_info),
       .btn(t$hm_settings, paste0("var m=document.getElementById('", tab_id, "_settings_modal'); m.style.display=(m.style.display==='block'?'none':'block');"), svg_set),
       .btn(t$export_png, paste0("downloadBienestarPlot('", tab_id, "', '", tab_id, "_Export');"), svg_down),
@@ -1332,7 +1348,7 @@ widget_repgrid_biplot <- function(x, lang = "en", ...) {
       style = if (display) "display:flex; flex-direction:column;" else NULL,
       plot,
       .modal(modal_id, tab_title, info),
-      htmltools::HTML("<div style='position:absolute;bottom:15px;right:15px;z-index:1000;display:flex;flex-direction:column;gap:8px;align-items:center;'>"),
+      htmltools::HTML("<div class='wt-float-btns' style='position:absolute;bottom:15px;right:15px;z-index:1000;display:flex;flex-direction:column;gap:8px;align-items:center;'>"),
       .btn(t$info, sprintf("var m=document.getElementById('%s'); m.style.display=(m.style.display==='block'?'none':'block');", modal_id), svg_i),
       if (!is.null(settings)) .btn(t$hm_settings, "var m=document.getElementById('wrg_settings_modal'); m.style.display=(m.style.display==='block'?'none':'block');", svg_set),
       .btn(if (is.null(export_js) || is.na(export_js[i])) t$export_png else t$export_csv,

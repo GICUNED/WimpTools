@@ -199,6 +199,7 @@ self_index <- function(wimp, method = "ssi", rc = TRUE, alpha = .5, beta = .5) {
 #'
 #' @param wimp Subject's WimpGrid. It must be a "wimp" S3 object
 #'        imported by the \code{\link{importwimp}} function.
+#' @param legend If TRUE, displays legend of plot. Default is TRUE.
 #'
 #' @return Interactive Plotly radar chart with self (blue) and ideal (green)
 #'         traces, including SSI Index in the legend.
@@ -212,7 +213,7 @@ self_index <- function(wimp, method = "ssi", rc = TRUE, alpha = .5, beta = .5) {
 #' self_plot(example_wimp)
 #'
 
-self_plot <- function(wimp) {
+self_plot <- function(wimp, legend = TRUE) {
 
   wimp <- .align_wimp(wimp, exclude_dilemmatics = FALSE)
 
@@ -223,9 +224,7 @@ self_plot <- function(wimp) {
   ideal <- c(ideal, ideal[1])
 
   r_poles <- wimp$vertices$right_pole
-  l_poles <- wimp$vertices$left_pole
-  poles <- paste(r_poles, " (", l_poles, ")", sep = "")
-  poles <- c(poles, poles[1])
+  poles <- c(r_poles, r_poles[1])
 
   construct <- .construct_names(wimp)
   construct <- c(construct, construct[1])
@@ -276,12 +275,20 @@ self_plot <- function(wimp) {
     )
   plot <- plot %>%
     layout(
-      showlegend = TRUE,
+      showlegend = legend,
+      margin = list(l = 110, r = 110, t = 40, b = 40, autoexpand = FALSE),
       polar = list(
         radialaxis = list(
           visible = TRUE,
           range = c(-1.2, 1),
-          tickvals = seq(-1, 1, by = 0.2)
+          tickvals = seq(-1, 1, by = 0.2),
+          showticklabels = FALSE,
+          ticks = "",
+          showline = FALSE
+        ),
+        angularaxis = list(
+          showline = FALSE,
+          ticks = ""
         )
       )
     )

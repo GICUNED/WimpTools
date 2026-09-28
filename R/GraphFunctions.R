@@ -1441,6 +1441,7 @@ digraph <- function(wimp, vertex_vector = NA, ideal_vector = NA, width = "100%",
 
       // Button Container (Flexbox)
       var btnContainer = document.createElement('div');
+      btnContainer.className = 'wt-float-btns';
       Object.assign(btnContainer.style, {
         position: 'absolute', bottom: '15px', right: '15px', zIndex: '1000',
         display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center'

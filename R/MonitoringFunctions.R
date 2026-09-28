@@ -60,9 +60,7 @@ monitoring_self <- function(wimp_t0, wimp_t1, legend = TRUE) {
   ideal_t0 <- c(ideal_t0, ideal_t0[1])
 
   right_poles_t0 <- wimp_t0$vertices$right_pole[merge$index1]
-  left_poles_t0 <- wimp_t0$vertices$left_pole[merge$index1]
-  poles_t0 <- paste(right_poles_t0, " (", left_poles_t0, ")", sep = "")
-  poles_t0 <- c(poles_t0, poles_t0[1])
+  poles_t0 <- c(right_poles_t0, right_poles_t0[1])
 
   construct_t0 <- paste(wimp_t0$vertices$left_pole[merge$index1], " - ",
                         wimp_t0$vertices$right_pole[merge$index1], sep = "")
@@ -162,11 +160,19 @@ monitoring_self <- function(wimp_t0, wimp_t1, legend = TRUE) {
   fig <- fig %>%
     layout(
       showlegend = legend,
+      margin = list(l = 110, r = 110, t = 40, b = 40, autoexpand = FALSE),
       polar = list(
         radialaxis = list(
           visible = TRUE,
           range = c(-1.2, 1),
-          tickvals = seq(-1, 1, by = 0.2)
+          tickvals = seq(-1, 1, by = 0.2),
+          showticklabels = FALSE,
+          ticks = "",
+          showline = FALSE
+        ),
+        angularaxis = list(
+          showline = FALSE,
+          ticks = ""
         )
       )
     )

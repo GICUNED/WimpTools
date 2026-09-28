@@ -145,6 +145,26 @@
     margin-bottom: 4px;
     flex-wrap: wrap;
   }
+  .resizable-box {
+    resize: both;
+    overflow: hidden;
+    border: 1px dashed #bbb;
+    min-width: 100px;
+    min-height: 120px;
+    max-width: 95vw;
+    max-height: 85vh;
+    background: white;
+  }
+  .resizable-box iframe {
+    width: 100%;
+    height: 100%;
+  }
+  .resize-hint {
+    font-size: 11px;
+    font-weight: 400;
+    color: #999;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+  }
 </style>
 </head>
 <body>
@@ -164,6 +184,19 @@
 </header>
 
 <main>
+  <div class="section-title">Redimensionable con el ratón</div>
+  <div class="row" id="resizeRow">
+    <div class="card">
+      <div class="card-head">
+        <span id="resizeLabel">400 x 480px</span>
+        <span class="resize-hint">arrastra la esquina inferior derecha ↘</span>
+      </div>
+      <div class="resizable-box" id="resizableBox" style="width:400px;height:480px;">
+        <iframe id="resizableIframe" style="border:none;display:block;"></iframe>
+      </div>
+    </div>
+  </div>
+
   <div class="section-title">Anchos predefinidos</div>
   <div class="row" id="presetRow"></div>
 
@@ -224,6 +257,8 @@
   const state = loadState();
   if (state.widget && WIDGETS.includes(state.widget)) widgetSelect.value = state.widget;
   if (state.height) document.getElementById('heightInput').value = state.height;
+  if (state.resizeW) document.getElementById('resizableBox').style.width = state.resizeW + 'px';
+  if (state.resizeH) document.getElementById('resizableBox').style.height = state.resizeH + 'px';
 
   function currentWidget() { return widgetSelect.value; }
   function currentHeight() { return parseInt(document.getElementById('heightInput').value, 10) || 480; }
@@ -271,7 +306,25 @@
     document.querySelectorAll('#customRow .card iframe').forEach(f => {
       f.src = cacheBustSrc(currentWidget());
     });
+    document.getElementById('resizableIframe').src = cacheBustSrc(currentWidget());
   }
+
+  // Resizable box: the browser's native CSS `resize: both` lets the user
+  // drag the corner directly, no drag-handling JS needed. A ResizeObserver
+  // on the box itself (a plain DOM element the user is resizing, unlike an
+  // iframe resized from outside - see wrgFitDilemmaPlot's comments on why
+  // that case needs polling instead) fires reliably here, so it's used to
+  // keep the label live and to persist the chosen size.
+  const resizableBox = document.getElementById('resizableBox');
+  const resizeLabel = document.getElementById('resizeLabel');
+  let resizeSaveTimer = null;
+  new ResizeObserver(entries => {
+    const { width, height } = entries[0].contentRect;
+    const w = Math.round(width), h = Math.round(height);
+    resizeLabel.textContent = w + ' x ' + h + 'px';
+    clearTimeout(resizeSaveTimer);
+    resizeSaveTimer = setTimeout(() => saveState({ resizeW: w, resizeH: h }), 300);
+  }).observe(resizableBox);
 
   document.getElementById('widgetSelect').addEventListener('change', () => {
     saveState({ widget: currentWidget() });
@@ -293,6 +346,8 @@
   });
 
   renderPresets();
+  document.getElementById('resizableIframe').src = cacheBustSrc(currentWidget());
+  resizeLabel.textContent = resizableBox.offsetWidth + ' x ' + resizableBox.offsetHeight + 'px';
 </script>
 
 </body>
